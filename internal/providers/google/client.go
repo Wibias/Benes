@@ -198,7 +198,7 @@ func (c *Client) Open(ctx context.Context, dispatch providers.DispatchRequest) (
 	if c.keys != nil {
 		attempts = 1
 	}
-	resp, err := Do(ctx, client, req, RetryPolicy{Attempts: attempts})
+	resp, err := DoForTurn(ctx, client, req, RetryPolicy{Attempts: attempts}, dispatch.Turn, "google")
 	if err != nil {
 		return nil, err
 	}

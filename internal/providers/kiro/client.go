@@ -144,7 +144,7 @@ func (c *Client) Open(ctx context.Context, dispatch providers.DispatchRequest) (
 	req.Header.Set("Content-Type", "application/x-amz-json-1.0")
 	req.Header.Set("Accept", "application/vnd.amazon.eventstream")
 	req.Header.Set("x-amz-target", generateTarget)
-	resp, err := c.postGenerate(ctx, req, payload, body)
+	resp, err := c.postGenerate(ctx, req, payload, body, dispatch.Turn)
 	if err != nil {
 		return nil, err
 	}
