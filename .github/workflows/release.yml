@@ -18,7 +18,7 @@ on:
           - preview
         default: latest
       dry-run:
-        description: "Pack and verify only; leave this on unless you intend to publish"
+        description: "Pack and verify only; turn this off to stage or finalize a release"
         required: false
         type: boolean
         default: true
@@ -77,7 +77,7 @@ jobs:
       contents: write # Git tag + GitHub Release after npm succeeds
       actions: read # Look up push CI evidence for this SHA
       pull-requests: read # Associated PRs / generate-notes enrichment
-      id-token: write # npm trusted publishing (OIDC). No npm token.
+      id-token: write # npm trusted staging (OIDC). No npm token.
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -104,21 +104,17 @@ jobs:
           node-version: 24
           registry-url: "https://registry.npmjs.org"
 
-      # Trusted Publishing needs npm >= 11.5.1. Node 24 already ships a
-      # compatible npm. Do not replace the bundled npm globally: a self-update
-      # can drop publish-time dependencies such as sigstore.
-      - name: Require npm for trusted publishing
+      # Staged publishing requires npm >= 11.15.0. Pin an exact npm that
+      # contains the staged-publishing CLI and the bundled sigstore fix.
+      - name: Pin npm for staged trusted publishing
         run: |
+          npm install --global npm@12.0.2
           npm_version="$(npm --version)"
           echo "npm=${npm_version}"
-          # shellcheck disable=SC2016 # the node script deliberately avoids shell expansion
-          node -e '
-            const [major, minor] = process.argv[1].split(".").map(Number);
-            if (major < 11 || (major === 11 && minor < 5)) {
-              console.error(`npm ${process.argv[1]} is too old for trusted publishing; need >= 11.5.1`);
-              process.exit(1);
-            }
-          ' "$npm_version"
+          if [ "$npm_version" != "12.0.2" ]; then
+            echo "::error::expected pinned npm 12.0.2, got ${npm_version}"
+            exit 1
+          fi
 
       - name: Drop dummy npm token so publish uses OIDC
         run: |
@@ -134,7 +130,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Benes release
+      - name: Stage or finalize Benes release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ inputs.version }}
