@@ -755,6 +755,9 @@ func (rt *fabricRuntime) syncPrimaryClaim(repo *fabric.Repo, live *fabricLiveRun
 func (rt *fabricRuntime) finishPrimaryDrive(ctx context.Context, repo *fabric.Repo, live *fabricLiveRun, outcome modelTurnResult, err error) {
 	claim := live.claimSnapshot()
 	if err == nil && outcome.Status == "completed" && live.selectTerminal(fabricIntentComplete) {
+		if hook := fabricTestBeforeTerminalPersist; hook != nil {
+			hook()
+		}
 		if persistErr := repo.CompleteExecute(claim); persistErr != nil {
 			_ = rt.reconcileTerminalPersist(repo, live, persistErr)
 			return
