@@ -77,7 +77,7 @@ body:
     attributes:
       label: benes version or commit
       description: Output of `benes version`, or a full commit SHA.
-      placeholder: "2.18.0"
+      placeholder: "0.1.0-preview.0"
     validations:
       required: true
 
