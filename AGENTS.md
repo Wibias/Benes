@@ -86,9 +86,9 @@ Agent-created issues and pull requests go through the repository templates. The 
 - **Pull requests:** complete every section of `.github/PULL_REQUEST_TEMPLATE.md` (Summary, Verification, Checklist). `enforce-target` rejects descriptions that are empty, thin, or malformed, and a title or description that mentions `gui` needs a screenshot of the UI change in the description unless a maintainer applies `gui-screenshot-waived`. Reference the issue with `Closes #<number>`. GitHub only auto-closes on merge into the default branch (`main`), while work lands on `dev`, so close the issue by hand once the change is on `dev`.
 ## Branch policy
 
-- `dev` — the single integration branch, and the base for every pull request.
+- `dev` — the single integration branch, and the base for every ordinary pull request.
 - `main` — the release branch. It moves only by maintainer-controlled promotion from `dev` (releases, docs deploys). Feature pull requests do not target it.
-- `preview` — the prerelease train (`x.y.z-preview.*`).
+- `preview` — the prerelease train (`x.y.z-preview.*`). It moves only by maintainer-controlled promotion from `dev`.
 
 Go on `dev` is the only runtime line. If native code ever returns, it lands as an incremental module on `dev`, not as a second full-runtime branch.
 
@@ -108,7 +108,7 @@ Authors with repository push permission skip the ancestry heuristic only. As wit
 Every review on this repository follows these, automated reviewers (Codex, CodeRabbit) included.
 
 - **Language:** review in English even when the pull request or issue is not. Be specific and concrete — file, line, the failure mode that occurs, and the fix you suggest. Vague or purely stylistic comments are noise.
-- **Branch targeting:** flag any pull request that does not target `dev`. Releases and maintainer promotions are the only exceptions.
+- **Branch targeting:** flag any ordinary pull request that does not target `dev`. Exact same-repository maintainer promotions from `dev` to `preview` or `main`, plus stacked children on an open parent PR, are the only exceptions.
 - **Security boundary (highest priority):** authentication, credential and token handling, OAuth flows, GitHub Actions workflows, release automation (`scripts/release.ts`, `.github/workflows/release.yml`), and dependency installation need explicit security review per `MAINTAINERS.md`. Token logging or serialization, secret exposure, workflow permission escalation, and mutable third-party action refs are release blockers.
 - **Runtime constraints:** the proxy is Go. Flag any TypeScript backend path under `cmd/` or `internal/`, and any production launcher that spawns a non-Go child.
 - **Tests:** a behavior change in `cmd/` or `internal/` needs a focused Go regression test beside the existing tests for that subsystem. Shared routing, adapter, config, or server changes need `go test ./...` green.
