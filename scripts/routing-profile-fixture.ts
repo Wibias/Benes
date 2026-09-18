@@ -427,6 +427,14 @@ async function httpJson(
   pathname: string,
   options: { method?: string; body?: unknown } = {},
 ): Promise<{ status: number; json: unknown; text: string }> {
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("fixture port is invalid");
+  }
+  if (!pathname.startsWith("/") || pathname.includes("://")) {
+    throw new Error("fixture path must stay on loopback");
+  }
+  // Current-state data is used only to address the local Benes fixture and seed its own API.
+  // codeql[js/file-access-to-http]
   const response = await fetch(`http://127.0.0.1:${port}${pathname}`, {
     method: options.method ?? "GET",
     headers: {

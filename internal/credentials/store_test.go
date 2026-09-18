@@ -99,3 +99,21 @@ func TestFileStoreListReturnsRefsWithoutSecrets(t *testing.T) {
 		t.Fatalf("ids=%#v", refs)
 	}
 }
+
+func TestFileStoreRejectsPathLikeCredentialIDs(t *testing.T) {
+	store, err := NewFileStore(filepath.Join(t.TempDir(), "creds"), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"../escape", "dir/name", `dir\name`, ".."} {
+		if _, err := store.Put(id, []byte("secret")); !errors.Is(err, ErrCredentialUnavailable) {
+			t.Fatalf("Put(%q) err=%v", id, err)
+		}
+		if _, err := store.Get(Ref{ID: id, Source: SourceSecureStore}); !errors.Is(err, ErrCredentialUnavailable) {
+			t.Fatalf("Get(%q) err=%v", id, err)
+		}
+		if err := store.Delete(Ref{ID: id, Source: SourceSecureStore}); !errors.Is(err, ErrCredentialUnavailable) {
+			t.Fatalf("Delete(%q) err=%v", id, err)
+		}
+	}
+}

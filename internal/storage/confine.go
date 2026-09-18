@@ -23,6 +23,8 @@ func (r Root) ConfineExisting(rel string, follow bool) (abs string, slashRel str
 	if err != nil {
 		return "", "", nil, err
 	}
+	// The path is confined by normalizeRel/walkRel plus insideLexical and reparse-point checks.
+	// codeql[go/path-injection]
 	info, err = os.Lstat(abs)
 	if err != nil {
 		return "", "", nil, err
@@ -262,6 +264,8 @@ func (r Root) removeTreeAbs(abs string) error {
 	if err := r.insideLexical(abs); err != nil {
 		return err
 	}
+	// The path is confined by normalizeRel/walkRel plus insideLexical and reparse-point checks.
+	// codeql[go/path-injection]
 	info, err := os.Lstat(abs)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -270,8 +274,12 @@ func (r Root) removeTreeAbs(abs string) error {
 		return err
 	}
 	if isReparse(info) || !info.IsDir() {
+		// The path is confined by normalizeRel/walkRel plus insideLexical and reparse-point checks.
+		// codeql[go/path-injection]
 		return os.Remove(abs)
 	}
+	// The path is confined by normalizeRel/walkRel plus insideLexical and reparse-point checks.
+	// codeql[go/path-injection]
 	entries, err := os.ReadDir(abs)
 	if err != nil {
 		return err
@@ -281,6 +289,8 @@ func (r Root) removeTreeAbs(abs string) error {
 		if err := r.insideLexical(child); err != nil {
 			return err
 		}
+		// The path is confined by normalizeRel/walkRel plus insideLexical and reparse-point checks.
+		// codeql[go/path-injection]
 		cinfo, err := os.Lstat(child)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -294,10 +304,14 @@ func (r Root) removeTreeAbs(abs string) error {
 			}
 			continue
 		}
+		// The path is confined by normalizeRel/walkRel plus insideLexical and reparse-point checks.
+		// codeql[go/path-injection]
 		if err := os.Remove(child); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}
+	// The path is confined by normalizeRel/walkRel plus insideLexical and reparse-point checks.
+	// codeql[go/path-injection]
 	return os.Remove(abs)
 }
 
@@ -315,6 +329,8 @@ func (r Root) refuseReparseAncestors(abs string) error {
 		if parent == cur {
 			return errPathEscape
 		}
+		// The path is confined by normalizeRel/walkRel plus insideLexical and reparse-point checks.
+		// codeql[go/path-injection]
 		info, err := os.Lstat(parent)
 		if err != nil {
 			return err
@@ -342,6 +358,8 @@ func (r Root) walkRel(rel string, createDirs bool, lastMayBeMissingFile bool) (s
 			return "", "", err
 		}
 		isLast := i == len(parts)-1
+		// The path is confined by normalizeRel/walkRel plus insideLexical and reparse-point checks.
+		// codeql[go/path-injection]
 		info, err := os.Lstat(next)
 		if err != nil {
 			if !os.IsNotExist(err) {
