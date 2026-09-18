@@ -9,7 +9,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "benes": "./bin/benes.mjs"
+    "benes": "bin/benes.mjs"
   },
   "files": [
     "bin",
