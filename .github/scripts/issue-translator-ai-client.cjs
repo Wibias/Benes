@@ -27,6 +27,7 @@ function copilotArgs(prompt) {
     "--no-ask-user",
     "--deny-tool=shell",
     "--deny-tool=write",
+    "--deny-tool=read",
     "--deny-tool=url",
     "--deny-tool=memory",
     "--deny-tool=github",
