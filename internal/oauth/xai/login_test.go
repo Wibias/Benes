@@ -69,3 +69,26 @@ func TestXaiCallbackPersistsWithoutLeakingVerifier(t *testing.T) {
 	}
 	_ = time.Now
 }
+
+func TestValidateEndpointAcceptsOnlyTrustedOAuthAuthorities(t *testing.T) {
+	for _, raw := range []string{
+		"https://auth.x.ai/oauth/token",
+		"https://accounts.x.ai/oauth/authorize",
+	} {
+		if got, err := validateEndpoint(raw); err != nil || got != raw {
+			t.Fatalf("validateEndpoint(%q) = %q, %v", raw, got, err)
+		}
+	}
+
+	for _, raw := range []string{
+		"https://x.ai/oauth/token",
+		"https://anything.x.ai/oauth/token",
+		"https://user:secret@auth.x.ai/oauth/token",
+		"http://auth.x.ai/oauth/token",
+		"https://auth.x.ai.evil.example/oauth/token",
+	} {
+		if got, err := validateEndpoint(raw); err == nil {
+			t.Fatalf("validateEndpoint(%q) = %q, want rejection", raw, got)
+		}
+	}
+}
