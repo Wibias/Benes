@@ -60,11 +60,24 @@ func NewFileStore(dir string, allowPlaintext bool) (*FileStore, error) {
 	return &FileStore{dir: dir, allowPlaintext: allowPlaintext}, nil
 }
 
+func validFileCredentialID(id string) bool {
+	if id == "" || id == "." || id == ".." || len(id) > 255 {
+		return false
+	}
+	if strings.Contains(id, "/") || strings.Contains(id, "\\") || strings.Contains(id, "..") {
+		return false
+	}
+	return true
+}
+
 func (s *FileStore) Put(id string, secret []byte) (Ref, error) {
 	if s == nil {
 		return Ref{}, ErrCredentialUnavailable
 	}
 	id = strings.TrimSpace(id)
+	if id != "" && !validFileCredentialID(id) {
+		return Ref{}, ErrCredentialUnavailable
+	}
 	if id == "" {
 		raw := make([]byte, 16)
 		if _, err := rand.Read(raw); err != nil {
@@ -111,9 +124,13 @@ func (s *FileStore) Get(ref Ref) ([]byte, error) {
 		}
 		return []byte(ref.Hint), nil
 	case SourceSecureStore, "":
+		id := strings.TrimSpace(ref.ID)
+		if !validFileCredentialID(id) {
+			return nil, ErrCredentialUnavailable
+		}
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		data, err := atomicfile.ReadBounded(filepath.Join(s.dir, ref.ID+".json"), 1<<20)
+		data, err := atomicfile.ReadBounded(filepath.Join(s.dir, id+".json"), 1<<20)
 		if err != nil {
 			return nil, ErrCredentialUnavailable
 		}
@@ -130,12 +147,19 @@ func (s *FileStore) Get(ref Ref) ([]byte, error) {
 }
 
 func (s *FileStore) Delete(ref Ref) error {
-	if s == nil || ref.Source != SourceSecureStore || strings.TrimSpace(ref.ID) == "" {
+	if s == nil || ref.Source != SourceSecureStore {
 		return nil
+	}
+	id := strings.TrimSpace(ref.ID)
+	if id == "" {
+		return nil
+	}
+	if !validFileCredentialID(id) {
+		return ErrCredentialUnavailable
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	err := os.Remove(filepath.Join(s.dir, ref.ID+".json"))
+	err := os.Remove(filepath.Join(s.dir, id+".json"))
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
 	}

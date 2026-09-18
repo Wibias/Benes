@@ -88,7 +88,7 @@ func (s *Store) Save(tr *Trace) error {
 
 func (s *Store) Lookup(id string) (*Trace, error) {
 	id = strings.TrimSpace(id)
-	if s == nil || id == "" || strings.ContainsAny(id, `/\`) {
+	if s == nil || id == "" || strings.Contains(id, "/") || strings.Contains(id, "\\") || strings.Contains(id, "..") {
 		return nil, ErrNotFound
 	}
 	if _, err := os.Stat(s.path(id)); err != nil {
@@ -98,8 +98,12 @@ func (s *Store) Lookup(id string) (*Trace, error) {
 }
 
 func (s *Store) Load(id string) (*Trace, error) {
-	if s == nil || strings.TrimSpace(id) == "" {
+	id = strings.TrimSpace(id)
+	if s == nil || id == "" {
 		return New(id, s.limitOrDefault()), nil
+	}
+	if strings.Contains(id, "/") || strings.Contains(id, "\\") || strings.Contains(id, "..") {
+		return nil, ErrNotFound
 	}
 	raw, err := atomicfile.ReadBounded(s.path(id), 64<<10)
 	if err != nil {

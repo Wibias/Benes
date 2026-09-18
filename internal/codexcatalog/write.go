@@ -37,8 +37,7 @@ func WriteWithAliases(home string, models []catalog.Model, aliases router.AliasT
 	if len(natives) == 0 && len(routed) == 0 {
 		return false, nil
 	}
-	out := make([]map[string]any, 0, len(natives)+len(routed))
-	out = append(out, natives...)
+	out := append([]map[string]any(nil), natives...)
 	out = append(out, routed...)
 	body, err := json.MarshalIndent(map[string]any{"models": out}, "", "  ")
 	if err != nil {

@@ -133,6 +133,8 @@ func restoreOne(root Root, id string, file ManifestFile, rename func(string, str
 	srcAbs, _, err := root.walkRel(srcRel, false, true)
 	if err != nil && !os.IsNotExist(err) && asError(err).Code != CodePathEscape {
 		if !os.IsNotExist(err) && err != errInvalidRel {
+			// srcRel/srcAbs were validated by validTrashID, normalizeRel and Root.walkRel confinement.
+			// codeql[go/path-injection]
 			if _, statErr := os.Lstat(filepath.Join(root.Abs, filepath.FromSlash(srcRel))); statErr != nil && !os.IsNotExist(statErr) {
 				return "", err
 			}
@@ -140,6 +142,8 @@ func restoreOne(root Root, id string, file ManifestFile, rename func(string, str
 	}
 	srcExists := false
 	if srcAbs != "" {
+		// srcRel/srcAbs were validated by validTrashID, normalizeRel and Root.walkRel confinement.
+		// codeql[go/path-injection]
 		if _, statErr := os.Lstat(srcAbs); statErr == nil {
 			srcExists = true
 		} else if !os.IsNotExist(statErr) {
