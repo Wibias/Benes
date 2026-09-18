@@ -14,6 +14,7 @@ import (
 
 	"github.com/Wibias/Benes/internal/protocol"
 	"github.com/Wibias/Benes/internal/providers"
+	"github.com/Wibias/Benes/internal/resourcebudget"
 	"github.com/Wibias/Benes/internal/responses/parsed"
 	requestwire "github.com/Wibias/Benes/internal/responses/request"
 	"github.com/Wibias/Benes/internal/transport"
@@ -365,3 +366,49 @@ func TestOpenDoesNotRetry503WhenPolicyDisabled(t *testing.T) {
 		t.Fatalf("hits=%d", hits)
 	}
 }
+
+func TestOpenStopsTransientRetriesAtTurnPhysicalSendBudget(t *testing.T) {
+	hits := 0
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = io.WriteString(w, `{"error":"temporary"}`)
+	}))
+	t.Cleanup(upstream.Close)
+
+	client, err := New(Config{
+		Endpoint:   upstream.URL,
+		APIKey:     "key",
+		HTTPClient: upstream.Client(),
+		Transient5xx: transport.Transient5xxPolicy{
+			Enabled:  true,
+			Attempts: 4,
+			Sleep:    func(context.Context, time.Duration) error { return nil },
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	budget := resourcebudget.NewManager(resourcebudget.Limits{MaxPhysicalSends: 2})
+	turn, err := budget.AcquireTurn(context.Background(), "responses-budget")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer turn.Close()
+
+	dispatch := canonicalRequest(t, `{"model":"openai-apikey/gpt-5.6","input":"hello"}`, "gpt-5.6")
+	dispatch.Turn = turn
+	_, err = client.Open(context.Background(), dispatch)
+	if !errors.Is(err, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+		t.Fatalf("err=%v", err)
+	}
+	if hits != 2 {
+		t.Fatalf("physical hits=%d want=2", hits)
+	}
+	records := turn.PhysicalSends()
+	if len(records) != 2 || records[0].Reason != "openai-responses" || records[1].Reason != "openai-responses" {
+		t.Fatalf("records=%#v", records)
+	}
+}
+

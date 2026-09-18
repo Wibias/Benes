@@ -3,11 +3,14 @@ package transport
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/Wibias/Benes/internal/resourcebudget"
 )
 
 func TestDoTransient5xxRetries503ThenSucceeds(t *testing.T) {
@@ -75,3 +78,40 @@ func TestDoTransient5xxDisabledSendsOnce(t *testing.T) {
 		t.Fatalf("hits=%d status=%d", hits, resp.StatusCode)
 	}
 }
+
+func TestDoTransient5xxForTurnStopsAtPhysicalSendBudget(t *testing.T) {
+	hits := 0
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	t.Cleanup(upstream.Close)
+
+	req, err := http.NewRequest(http.MethodPost, upstream.URL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	budget := resourcebudget.NewManager(resourcebudget.Limits{MaxPhysicalSends: 2})
+	turn, err := budget.AcquireTurn(context.Background(), "transient-budget")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer turn.Close()
+
+	_, err = DoTransient5xxForTurn(context.Background(), upstream.Client(), req, Transient5xxPolicy{
+		Enabled:  true,
+		Attempts: 4,
+		Sleep:    func(context.Context, time.Duration) error { return nil },
+	}, turn, "test-provider")
+	if !errors.Is(err, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+		t.Fatalf("err=%v", err)
+	}
+	if hits != 2 {
+		t.Fatalf("physical hits=%d want=2", hits)
+	}
+	records := turn.PhysicalSends()
+	if len(records) != 2 || records[0].Reason != "test-provider" || records[1].Reason != "test-provider" {
+		t.Fatalf("records=%#v", records)
+	}
+}
+
