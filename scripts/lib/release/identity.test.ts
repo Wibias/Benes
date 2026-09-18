@@ -3,6 +3,7 @@ import { describe, test } from "node:test";
 import {
   assertPackageVersion,
   parseFullSha,
+  parsePackageName,
   parseRepository,
   resolveIdentity,
 } from "./identity.ts";
@@ -29,17 +30,37 @@ describe("resolveIdentity", () => {
     });
   });
 
-  test("builds a preview identity on preview", () => {
+  test("builds a preview identity on preview for the scoped Benes package", () => {
     const identity = resolveIdentity({
-      packageName: "benes",
+      packageName: "@wibias/benes",
       version: "4.2.0-preview.2",
       sourceSha: SHA,
       branch: "refs/heads/preview",
       distTag: "preview",
     });
+    assert.equal(identity.packageName, "@wibias/benes");
     assert.equal(identity.distTag, "preview");
     assert.equal(identity.branch, "preview");
     assert.equal(identity.gitTag, "v4.2.0-preview.2");
+  });
+
+  test("accepts canonical unscoped and scoped npm package names", () => {
+    assert.equal(parsePackageName("benes"), "benes");
+    assert.equal(parsePackageName("@wibias/benes"), "@wibias/benes");
+    assert.equal(parsePackageName(" @wibias/benes "), "@wibias/benes");
+  });
+
+  test("rejects malformed scoped package names", () => {
+    for (const name of [
+      "@wibias",
+      "@Wibias/benes",
+      "@wibias/",
+      "@wibias/../evil",
+      "@wibias/benes/extra",
+      "../evil",
+    ]) {
+      assert.throws(() => parsePackageName(name), ReleaseError, name);
+    }
   });
 
   test("rejects dev, abbreviated SHA, and dist-tag mismatch", () => {
