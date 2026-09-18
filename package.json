@@ -1,5 +1,5 @@
 {
-  "name": "benes",
+  "name": "@wibias/benes",
   "version": "2.18.0",
   "description": "Local Go proxy: Codex, Claude Code, and other clients reach configured providers on 127.0.0.1:23100",
   "type": "module",
@@ -94,6 +94,9 @@
     "url": "https://github.com/Wibias/Benes/issues"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "postcss": "8.5.26",
     "ws": "8.21.3"
