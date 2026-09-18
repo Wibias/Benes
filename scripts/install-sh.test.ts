@@ -157,7 +157,7 @@ describe("scripts/install.sh", { skip: SKIP }, () => {
   test("refuses a missing npm", () => {
     const run = install({ ...READY, npm: null });
     assert.equal(run.status, 1);
-    assert.match(run.stderr, /npm is required to install the published @wibias/benes package\./);
+    assert.match(run.stderr, /npm is required to install the published @wibias\/benes package\./);
     assert.deepEqual(run.trace, []);
   });
 
@@ -197,7 +197,7 @@ describe("scripts/install.sh", { skip: SKIP }, () => {
     assert.equal(run.status, 1);
     assert.match(
       run.stderr,
-      /@wibias/benes is installed but benes is not on PATH\. Add the npm global bin directory, then open a new shell: \/fake\/npm\/prefix\/bin/,
+      /@wibias\/benes is installed but benes is not on PATH\. Add the npm global bin directory, then open a new shell: \/fake\/npm\/prefix\/bin/,
     );
   });
 
