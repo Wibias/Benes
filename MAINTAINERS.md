@@ -44,7 +44,7 @@ Everything lands on `dev` first; nothing else integrates.
 **Direct pushes and promotion**
 
 - Direct pushes are reserved for maintainer-owned integration work, urgent repairs, and incident recovery. Test and documentation requirements do not relax for them.
-- Promotion from `dev` to `preview` or `main`, and npm releases, remain maintainer-controlled.
+- Promotion from `dev` to `preview` or `main`, and npm releases, remain maintainer-controlled. CI may only stage npm versions through OIDC; a maintainer must approve each staged package with 2FA before it becomes public, then rerun the release to finalize the Git tag and GitHub Release.
 
 ## Maintainer changes
 
