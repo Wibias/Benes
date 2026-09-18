@@ -48,18 +48,23 @@ describe("Copilot issue AI client", () => {
   it("gives the child only the dedicated Copilot token precedence", () => {
     const oldGh = process.env.GH_TOKEN;
     const oldGithub = process.env.GITHUB_TOKEN;
+    const oldOther = process.env.UNRELATED_SECRET;
     process.env.GH_TOKEN = "wrong-gh-token";
     process.env.GITHUB_TOKEN = "wrong-github-token";
+    process.env.UNRELATED_SECRET = "must-not-propagate";
     try {
       const env = copilotEnv("copilot-secret");
       assert.equal(env.COPILOT_GITHUB_TOKEN, "copilot-secret");
       assert.equal(Object.hasOwn(env, "GH_TOKEN"), false);
       assert.equal(Object.hasOwn(env, "GITHUB_TOKEN"), false);
+      assert.equal(Object.hasOwn(env, "UNRELATED_SECRET"), false);
     } finally {
       if (oldGh === undefined) delete process.env.GH_TOKEN;
       else process.env.GH_TOKEN = oldGh;
       if (oldGithub === undefined) delete process.env.GITHUB_TOKEN;
       else process.env.GITHUB_TOKEN = oldGithub;
+      if (oldOther === undefined) delete process.env.UNRELATED_SECRET;
+      else process.env.UNRELATED_SECRET = oldOther;
     }
   });
 
