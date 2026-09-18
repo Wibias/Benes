@@ -12,10 +12,7 @@ function read(rel) {
 }
 
 function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\function read(rel) {
-  return fs.readFileSync(path.join(ROOT, rel), "utf8");
-}
-");
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 describe("CODEOWNERS", () => {
