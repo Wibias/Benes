@@ -66,7 +66,7 @@ export type ReleaseWorld = {
   watchDispatchedRelease(sha: string, branch: string): Promise<void>;
   preparePackage(): Promise<void>;
   packDryRun(): Promise<void>;
-  publishNpm(distTag: DistTag): Promise<void>;
+  stageNpm(distTag: DistTag): Promise<void>;
   createTag(tag: string, sha: string): Promise<void>;
   createGithubRelease(input: {
     tag: string;

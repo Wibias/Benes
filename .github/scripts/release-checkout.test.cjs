@@ -45,14 +45,14 @@ test("validate-dispatch loads the default-branch guard and inspects the trigger"
   assert.match(header, /observedSha:\s*process\.env\.GITHUB_SHA/);
 });
 
-test("publish uses OIDC trusted publishing without NPM_TOKEN or a global npm replace", () => {
+test("release uses stage-only OIDC with a pinned staged-publishing-capable npm", () => {
   const workflow = readWorkflow();
   const publish = workflow.split(/^  publish:/m)[1];
   assert.ok(publish, "publish job missing");
   assert.match(publish, /id-token:\s*write/);
   assert.match(publish, /registry-url:\s*"https:\/\/registry\.npmjs\.org"/);
-  assert.match(publish, /need >= 11\.5\.1/);
-  assert.doesNotMatch(publish, /^\s+run:.*npm i(?:nstall)?\s+-g\s+npm/m);
+  assert.match(publish, /npm install --global npm@12\.0\.2/);
+  assert.doesNotMatch(publish, /npm install --global npm@(latest|\^)/);
   assert.doesNotMatch(publish, /NPM_TOKEN/);
   assert.match(publish, /unset NODE_AUTH_TOKEN/);
   assert.match(publish, /npm ci/);
@@ -60,4 +60,5 @@ test("publish uses OIDC trusted publishing without NPM_TOKEN or a global npm rep
   assert.match(workflow, /inputs\.dry-run/);
   assert.match(workflow, /default:\s*true/);
   assert.match(publish, /scripts\/release\.ts publish/);
+  assert.doesNotMatch(publish, /npm publish/);
 });

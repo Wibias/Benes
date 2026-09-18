@@ -3,7 +3,7 @@ import { buildNotes, type HistoryCommit, type NotesModel } from "./notes.ts";
 import { compareReleaseVersions, ReleaseError } from "./semver.ts";
 import type { GithubReleaseState, PublicSnapshot } from "./world.ts";
 
-export type MutationKind = "publish-npm" | "create-tag" | "create-github-release";
+export type MutationKind = "stage-npm" | "create-tag" | "create-github-release";
 
 export type PlanIntent =
   | { kind: "fresh"; mutations: MutationKind[] }
@@ -101,7 +101,7 @@ export function classifyPublic(identity: ReleaseIdentity, snapshot: PublicSnapsh
   }
 
   const mutations: MutationKind[] = [];
-  if (!snapshot.npmHasVersion) mutations.push("publish-npm");
+  if (!snapshot.npmHasVersion) mutations.push("stage-npm");
   if (!snapshot.tagSha) mutations.push("create-tag");
   if (!snapshot.githubRelease) mutations.push("create-github-release");
 
@@ -212,7 +212,7 @@ export function assemblePublicationPlan(input: {
   assertDistTagAdvance(
     input.identity,
     input.snapshot.distTags,
-    intent.mutations.includes("publish-npm"),
+    intent.mutations.includes("stage-npm"),
   );
   const notes = buildNotes({
     version: input.identity.version,
