@@ -96,7 +96,7 @@ describe("CI", () => {
   it("folds go-core into the aggregate ci check", () => {
     assert.ok(jobs["go-core"], "ci.yml must have a go-core job");
     assert.match(jobs["go-core"], /uses:\s+\.\/\.github\/workflows\/go-core\.yml/);
-    const goCoreLines = goCore.split(/\\r?\\n/);
+    const goCoreLines = goCore.split(/\r?\n/);
     const onLine = goCoreLines.indexOf("on:");
     const workflowCallLine = goCoreLines.indexOf("  workflow_call:");
     assert.ok(onLine >= 0 && workflowCallLine === onLine + 1, "go-core.yml must expose workflow_call under on");
