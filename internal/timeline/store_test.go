@@ -1,6 +1,7 @@
 package timeline
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -55,5 +56,17 @@ func TestStoreSaveNeverIncludesSecretsAndWriteFailureIsIgnored(t *testing.T) {
 	}
 	if err := NewStore(blockedPath, 4).Save(New("x", 1)); err != nil {
 		t.Fatalf("write failure must not surface: %v", err)
+	}
+}
+
+func TestStoreRejectsPathLikeTraceIDs(t *testing.T) {
+	store := NewStore(t.TempDir(), 4)
+	for _, id := range []string{"../escape", "dir/name", `dir\name`, ".."} {
+		if _, err := store.Lookup(id); !errors.Is(err, ErrNotFound) {
+			t.Fatalf("Lookup(%q) err=%v", id, err)
+		}
+		if _, err := store.Load(id); !errors.Is(err, ErrNotFound) {
+			t.Fatalf("Load(%q) err=%v", id, err)
+		}
 	}
 }

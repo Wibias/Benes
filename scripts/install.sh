@@ -20,7 +20,8 @@
 # the preflight loop and its remedies are derived from it so they cannot drift.
 set -euo pipefail
 
-readonly PACKAGE="benes"
+readonly PACKAGE="@wibias/benes"
+readonly CLI="benes"
 readonly NODE_FLOOR=18
 readonly NODE_ORIGIN="https://nodejs.org/"
 readonly GO_ORIGIN="https://go.dev/dl/"
@@ -61,18 +62,18 @@ stage_package() {
 }
 
 stage_locate() {
-  located "$PACKAGE" || abort \
-    "${PACKAGE} is installed but not on PATH. Add the npm global bin directory, then open a new shell: $(npm prefix -g)/bin"
+  located "$CLI" || abort \
+    "${PACKAGE} is installed but ${CLI} is not on PATH. Add the npm global bin directory, then open a new shell: $(npm prefix -g)/bin"
 }
 
 stage_health() {
-  "$PACKAGE" help >/dev/null || abort \
-    "${PACKAGE} is on PATH but '${PACKAGE} help' failed. Check the global npm install."
+  "$CLI" help >/dev/null || abort \
+    "${CLI} is on PATH but '${CLI} help' failed. Check the global npm install."
 }
 
 stage_handoff() {
   announce ""
-  announce "${PACKAGE} is installed. Next: ${PACKAGE} init"
+  announce "${PACKAGE} is installed. Next: ${CLI} init"
 }
 
 main() {

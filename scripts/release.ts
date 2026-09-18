@@ -58,7 +58,7 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env)
     }
     console.log(
       command.publish
-        ? "\nPublished dispatch complete. Try:  npm install -g benes"
+        ? "\nPublished dispatch complete. Try:  npm install -g @wibias/benes"
         : "\nDry-run dispatch complete. Re-run with --publish to publish for real.",
     );
     return;

@@ -1,4 +1,4 @@
-export const packageName = "benes";
+export const packageName = "@wibias/benes";
 export const cliCommand = "benes";
 
 export async function loadApi() {

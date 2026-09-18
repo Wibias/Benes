@@ -8,7 +8,7 @@ Benes ships as an npm package whose launcher execs a Go binary. You need **Node 
 ## Package
 
 ```bash
-npm install -g benes
+npm install -g @wibias/benes
 benes version
 ```
 

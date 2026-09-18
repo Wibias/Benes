@@ -36,8 +36,57 @@ function problems(extra) {
 }
 
 describe("branch gate", () => {
-  it("fails a pull request targeting main", () => {
-    assert.equal(problems({ baseRef: "main" }).includes("wrong_base"), true);
+  it("fails an ordinary pull request targeting main", () => {
+    assert.equal(
+      problems({ baseRef: "main", headRef: "feat/x", sameRepository: true, authorPermission: "write" })
+        .includes("wrong_base"),
+      true,
+    );
+  });
+
+  it("allows same-repository maintainer promotion from dev to preview", () => {
+    assert.equal(
+      problems({
+        baseRef: "preview",
+        headRef: "dev",
+        sameRepository: true,
+        authorPermission: "write",
+      }).includes("wrong_base"),
+      false,
+    );
+  });
+
+  it("allows same-repository maintainer promotion from dev to main", () => {
+    assert.equal(
+      problems({
+        baseRef: "main",
+        headRef: "dev",
+        sameRepository: true,
+        authorPermission: "admin",
+      }).includes("wrong_base"),
+      false,
+    );
+  });
+
+  it("rejects promotion-shaped pulls from forks or non-maintainers", () => {
+    assert.equal(
+      problems({
+        baseRef: "preview",
+        headRef: "dev",
+        sameRepository: false,
+        authorPermission: "write",
+      }).includes("wrong_base"),
+      true,
+    );
+    assert.equal(
+      problems({
+        baseRef: "preview",
+        headRef: "dev",
+        sameRepository: true,
+        authorPermission: "read",
+      }).includes("wrong_base"),
+      true,
+    );
   });
 
   it("passes the branch portion for dev", () => {

@@ -30,8 +30,7 @@ func (l *Ledger) Append(record []byte) error {
 	if err != nil {
 		return err
 	}
-	line := make([]byte, 0, len(record)+1)
-	line = append(line, record...)
+	line := append([]byte(nil), record...)
 	line = append(line, '\n')
 	need := int64(len(line))
 	if size > 0 && size+need > l.target {

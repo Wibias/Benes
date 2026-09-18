@@ -1014,12 +1014,12 @@ func scanState(query func() (*sql.Rows, error), exists func() (bool, error), cou
 		switch key {
 		case "schema_version":
 			state.seenVersion = true
-			n, err := parseNonNegInt64(value, "schema_version")
+			n, err := parseNonNegInt(value, "schema_version")
 			if err != nil {
 				malformed = err.Error()
 				continue
 			}
-			state.schemaVersion = int(n)
+			state.schemaVersion = n
 		case "source_size":
 			n, err := parseNonNegInt64(value, "source_size")
 			if err != nil {
@@ -1051,12 +1051,12 @@ func scanState(query func() (*sql.Rows, error), exists func() (bool, error), cou
 			state.indexedOffset = n
 			state.hasOffset = true
 		case "indexed_rows":
-			n, err := parseNonNegInt64(value, "indexed_rows")
+			n, err := parseNonNegInt(value, "indexed_rows")
 			if err != nil {
 				malformed = err.Error()
 				continue
 			}
-			state.indexedRows = int(n)
+			state.indexedRows = n
 			state.hasIndexedRows = true
 		case "last_error":
 			state.lastError = value
@@ -1148,6 +1148,20 @@ type colNeed struct {
 	notnull bool
 	text    bool
 	integer bool
+}
+
+func parseNonNegInt(value, name string) (int, error) {
+	if value == "" || strings.TrimSpace(value) != value {
+		return 0, fmt.Errorf("%s is malformed", name)
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("%s is malformed", name)
+	}
+	if n < 0 {
+		return 0, fmt.Errorf("%s is negative", name)
+	}
+	return n, nil
 }
 
 func parseNonNegInt64(value, name string) (int64, error) {

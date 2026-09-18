@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import path from "node:path";
-import { lstat, mkdir, readFile, readdir, realpath, rm, writeFile } from "node:fs/promises";
+import { lstat, mkdir, open, readFile, readdir, realpath, rm, writeFile } from "node:fs/promises";
 
 const MARKER_NAME = ".benes-evidence-owner.json";
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -235,11 +235,16 @@ export async function validateEvidenceScratchForCleanup(
   const markerPath = path.join(canonicalTarget, MARKER_NAME);
   let markerRaw: string;
   try {
-    const markerInfo = await lstat(markerPath);
-    if (markerInfo.isSymbolicLink() || !markerInfo.isFile()) {
-      throw new Error("ownership marker must be a regular file");
+    const markerFile = await open(markerPath, "r");
+    try {
+      const markerInfo = await markerFile.stat();
+      if (!markerInfo.isFile()) {
+        throw new Error("ownership marker must be a regular file");
+      }
+      markerRaw = await markerFile.readFile("utf8");
+    } finally {
+      await markerFile.close();
     }
-    markerRaw = await readFile(markerPath, "utf8");
   } catch (error) {
     if (error instanceof Error && /ownership marker/.test(error.message)) throw error;
     throw new Error("ownership marker is missing or unreadable");

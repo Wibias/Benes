@@ -159,7 +159,6 @@ func ExchangeAuthorizationCode(ctx context.Context, client *http.Client, code, v
 	form := url.Values{
 		"grant_type":    {"authorization_code"},
 		"client_id":     {oauthClientID},
-		"client_secret": {oauthClientSecret},
 		"code":          {code},
 		"redirect_uri":  {redirectURI},
 		"code_verifier": {verifier},

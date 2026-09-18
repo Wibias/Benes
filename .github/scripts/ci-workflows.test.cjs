@@ -93,13 +93,30 @@ describe("CI", () => {
     assert.match(jobs.credentials, /node --experimental-strip-types scripts\/keyring-smoke\.ts/);
   });
 
-  it("folds go-core into the aggregate ci check", () => {
+  it("folds path-scoped go-core into the aggregate ci check", () => {
     assert.ok(jobs["go-core"], "ci.yml must have a go-core job");
     assert.match(jobs["go-core"], /uses:\s+\.\/\.github\/workflows\/go-core\.yml/);
-    assert.match(goCore, /^on:\n(?:[ \t]+.+\n)*[ \t]+workflow_call:/m);
-    assert.match(goCore, /^\s+run:\s+go test \.\/\.\.\.\s*$/m);
-    assert.match(goCore, /^\s+run:\s+go vet \.\/\.\.\.\s*$/m);
-    assert.match(goCore, /^\s+run:\s+go test -race \.\/\.\.\.\s*$/m);
+    assert.match(jobs["go-core"], /windows:\s+\$\{\{ needs\.changes\.outputs\.windows == 'true' \}\}/);
+    assert.match(jobs["go-core"], /macos:\s+\$\{\{ needs\.changes\.outputs\.darwin == 'true' \}\}/);
+
+    const goCoreLines = goCore.split(/\r?\n/);
+    const onLine = goCoreLines.indexOf("on:");
+    const workflowCallLine = goCoreLines.indexOf("  workflow_call:");
+    assert.ok(onLine >= 0 && workflowCallLine === onLine + 1, "go-core.yml must expose workflow_call under on");
+
+    const nativeJobs = jobMap(goCore);
+    assert.deepEqual(Object.keys(nativeJobs).sort(), ["linux", "macos", "windows"]);
+    assert.match(nativeJobs.linux, /^\s+run:\s+go test \.\/\.\.\.\s*$/m);
+    assert.match(nativeJobs.linux, /^\s+run:\s+go vet \.\/\.\.\.\s*$/m);
+    assert.match(nativeJobs.linux, /^\s+run:\s+go test -race \.\/\.\.\.\s*$/m);
+    assert.match(nativeJobs.linux, /GOOS=windows GOARCH=amd64 go build/);
+    assert.match(nativeJobs.linux, /GOOS=darwin GOARCH=amd64 go build/);
+    assert.match(nativeJobs.windows, /inputs\.windows/);
+    assert.match(nativeJobs.macos, /inputs\.macos/);
+    assert.match(nativeJobs.windows, /^\s+run:\s+go test \.\/\.\.\.\s*$/m);
+    assert.match(nativeJobs.macos, /^\s+run:\s+go test \.\/\.\.\.\s*$/m);
+    assert.doesNotMatch(nativeJobs.windows, /go test -race/);
+    assert.doesNotMatch(nativeJobs.macos, /go test -race/);
     assert.doesNotMatch(goCore, /^  pull_request:/m);
     assert.match(goCore, /go-version-file:\s+go\.mod/);
   });
@@ -118,7 +135,7 @@ describe("CI", () => {
     assert.doesNotMatch(gate, /\.linux\.result == "success"/);
   });
 
-  it("bounds every local job; reusable jobs pin go-core.yml instead", () => {
+  it("bounds every local and native Go job", () => {
     for (const [name, body] of Object.entries(jobs)) {
       if (/^\s+uses:\s+\.\//m.test(body)) {
         assert.equal(timeoutMinutes(body), undefined, `${name} reusable job cannot set timeout-minutes`);
@@ -126,7 +143,9 @@ describe("CI", () => {
       }
       assert.equal(typeof timeoutMinutes(body), "number", `${name} must set timeout-minutes`);
     }
-    assert.equal(timeoutMinutes(jobMap(goCore).test), 15);
+    for (const [name, body] of Object.entries(jobMap(goCore))) {
+      assert.equal(timeoutMinutes(body), 15, `go-core ${name} must be bounded`);
+    }
   });
 
   it("keeps GUI lint/build, CLI help, and packaging smokes", () => {

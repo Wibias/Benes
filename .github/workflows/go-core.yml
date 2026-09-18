@@ -1,26 +1,32 @@
 name: Go core
 
-# Cross-platform Go build/test/vet. Called from ci.yml so the aggregate `ci`
-# check cannot go green without `go test ./...`. workflow_dispatch remains for
-# a maintainer who wants the Go matrix without the packaging jobs.
+# Linux is the authority lane for every Go change. It always builds, runs the
+# complete test/vet suite, runs the race detector, and cross-compiles the CLI
+# for Windows and macOS so ordinary Go changes still prove cross-platform
+# compilation. Native Windows/macOS suites are opt-in from ci.yml for paths
+# whose behavior is OS/filesystem/service/credential sensitive.
 on:
   workflow_call:
+    inputs:
+      windows:
+        description: Run the native Windows Go suite.
+        required: false
+        type: boolean
+        default: false
+      macos:
+        description: Run the native macOS Go suite.
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  test:
-    name: Go ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
-    runs-on: ${{ matrix.os }}
+  linux:
+    name: Go ubuntu-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Check out repository
@@ -35,22 +41,81 @@ jobs:
           cache: false
 
       - name: Verify toolchain
-        shell: bash
         run: go version
 
       - name: Build CLI
-        shell: bash
         run: go build -o benes ./cmd/benes
 
-      - name: Test
+      - name: Cross-compile CLI
         shell: bash
+        run: |
+          set -euo pipefail
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o "$RUNNER_TEMP/benes-windows-amd64.exe" ./cmd/benes
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o "$RUNNER_TEMP/benes-darwin-amd64" ./cmd/benes
+
+      - name: Test
         run: go test ./...
 
       - name: Vet
-        shell: bash
         run: go vet ./...
 
       - name: Race detector
-        if: runner.os == 'Linux'
-        shell: bash
         run: go test -race ./...
+
+  windows:
+    name: Go windows-latest
+    if: github.event_name == 'workflow_dispatch' || inputs.windows
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Verify toolchain
+        run: go version
+
+      - name: Build CLI
+        run: go build -o benes.exe ./cmd/benes
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vet
+        run: go vet ./...
+
+  macos:
+    name: Go macos-latest
+    if: github.event_name == 'workflow_dispatch' || inputs.macos
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Verify toolchain
+        run: go version
+
+      - name: Build CLI
+        run: go build -o benes ./cmd/benes
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vet
+        run: go vet ./...
