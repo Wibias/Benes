@@ -1,6 +1,6 @@
 name: Release
 
-# Maintainer-only publish. scripts/release.ts is the authority.
+# Maintainer-controlled staged release. scripts/release.ts is the authority.
 # package.json on the audited commit must already equal the requested version.
 on:
   workflow_dispatch:
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
-      contents: write # Git tag + GitHub Release after npm succeeds
+      contents: write # Used only on the post-approval rerun to create tag + GitHub Release
       actions: read # Look up push CI evidence for this SHA
       pull-requests: read # Associated PRs / generate-notes enrichment
       id-token: write # npm trusted staging (OIDC). No npm token.
@@ -90,11 +90,11 @@ jobs:
           EXPECTED_SHA: ${{ inputs.expected-sha }}
         run: |
           if [ -z "$EXPECTED_SHA" ]; then
-            echo "::error::expected-sha is required; refusing to publish without an audited commit"
+            echo "::error::expected-sha is required; refusing to release without an audited commit"
             exit 1
           fi
           if [ "$GITHUB_SHA" != "$EXPECTED_SHA" ]; then
-            echo "::error::branch moved after the release audit (expected ${EXPECTED_SHA}, got ${GITHUB_SHA}) — refusing to publish an unaudited commit"
+            echo "::error::branch moved after the release audit (expected ${EXPECTED_SHA}, got ${GITHUB_SHA}) — refusing to release an unaudited commit"
             exit 1
           fi
 
@@ -116,7 +116,7 @@ jobs:
             exit 1
           fi
 
-      - name: Drop dummy npm token so publish uses OIDC
+      - name: Drop dummy npm token so staging uses OIDC
         run: |
           unset NODE_AUTH_TOKEN || true
           node -e '
