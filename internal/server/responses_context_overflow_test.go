@@ -38,6 +38,7 @@ func TestResponsesStreamingProvider413BecomesTerminalContextOverflow(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
+	h = attachHandlerClose(t, h)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/responses", strings.NewReader(`{"model":"target/gpt-5.6","store":false,"stream":true,"input":"oversized turn"}`))
 	req.Header.Set("Authorization", "Bearer local-secret")
@@ -84,6 +85,7 @@ func TestResponsesNonStreamingProvider413Keeps413WithCanonicalCode(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
+	h = attachHandlerClose(t, h)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/responses", strings.NewReader(`{"model":"target/gpt-5.6","store":false,"stream":false,"input":"oversized turn"}`))
 	req.Header.Set("Authorization", "Bearer local-secret")
