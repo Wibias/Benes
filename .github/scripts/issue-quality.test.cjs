@@ -12,7 +12,7 @@ const BUG = [
   "### Commands that reproduce it",
   "go run ./cmd/benes start then curl -N http://127.0.0.1:23100/v1/responses",
   "### benes version or commit",
-  "2.18.0",
+  "0.1.0-preview.0",
   "### Host OS",
   "Windows 11 24H2",
 ].join("\n");
@@ -48,7 +48,7 @@ describe("valid live-form reports", () => {
       "### Smallest redacted request",
       "curl -X POST http://127.0.0.1:23100/v1/messages -d '{\"model\":\"x\"}'",
       "### benes version or commit",
-      "2.18.0",
+      "0.1.0-preview.0",
       "### Upstream spec",
       "https://docs.anthropic.com/en/api/messages",
     ].join("\n");
@@ -80,7 +80,7 @@ describe("title-prefix classification cannot bypass live forms", () => {
       "### Notes",
       "The listener dropped the SSE stream after the first combo target and left Codex hanging without a terminal event.",
       "### Extra",
-      "I tried several times on Windows 11 with benes 2.18.0 and the same hang returned every time.",
+      "I tried several times on Windows 11 with benes 0.1.0-preview.0 and the same hang returned every time.",
     ].join("\n");
     const result = validateIssue({ title: "[Bug]: SSE hang", body, labels: [] });
     assert.equal(detectIssueKind({ title: "[Bug]: SSE hang", body, labels: [] }), "bug");
@@ -110,7 +110,7 @@ describe("title-prefix classification cannot bypass live forms", () => {
       "### Commands that reproduce it",
       "go run ./cmd/benes start dann curl -N http://127.0.0.1:23100/v1/responses",
       "### benes version or commit",
-      "2.18.0",
+      "0.1.0-preview.0",
       "### Host OS",
       "Windows 11 24H2",
     ].join("\n");
@@ -124,7 +124,7 @@ describe("title-prefix classification cannot bypass live forms", () => {
       "### What happened",
       "POST /v1/responses hung after the first combo target.",
       "### benes version or commit",
-      "2.18.0",
+      "0.1.0-preview.0",
       "### Host OS",
       "Windows 11 24H2",
       "### Extra diary",
@@ -147,7 +147,7 @@ describe("insufficient and echoed reports", () => {
       "### Commands that reproduce it",
       "The listener dropped the SSE stream.",
       "### benes version or commit",
-      "2.18.0",
+      "0.1.0-preview.0",
       "### Host OS",
       "Windows 11",
     ].join("\n");
@@ -171,7 +171,7 @@ describe("insufficient and echoed reports", () => {
       "### Client that hit the failure",
       "Codex",
       "### benes version or commit",
-      "2.18.0",
+      "0.1.0-preview.0",
       "### Host OS",
       "Windows 11 24H2",
     ].join("\n");
@@ -243,7 +243,7 @@ describe("insufficient and echoed reports", () => {
         "### Smallest redacted request",
         "curl -X POST http://127.0.0.1:23100/v1/messages",
         "### benes version or commit",
-        "2.18.0",
+        "0.1.0-preview.0",
         "### Upstream spec",
         "https://docs.anthropic.com/en/api/messages",
       ].join("\n"),
@@ -265,7 +265,7 @@ describe("insufficient and echoed reports", () => {
         "### Smallest redacted request",
         "curl -X POST http://127.0.0.1:23100/v1/messages",
         "### benes version or commit",
-        "2.18.0",
+        "0.1.0-preview.0",
         "### Upstream spec",
         "",
       ].join("\n"),
@@ -287,7 +287,7 @@ describe("insufficient and echoed reports", () => {
         "### Smallest redacted request",
         "curl -X POST http://127.0.0.1:23100/v1/messages",
         "### benes version or commit",
-        "2.18.0",
+        "0.1.0-preview.0",
         "### Upstream spec",
         "no public spec",
       ].join("\n"),
@@ -301,7 +301,7 @@ describe("insufficient and echoed reports", () => {
       "### Notes",
       "The listener dropped the SSE stream after the first combo target and left Codex hanging.",
       "### Extra",
-      "I tried several times on Windows 11 with benes 2.18.0 and the same hang returned.",
+      "I tried several times on Windows 11 with benes 0.1.0-preview.0 and the same hang returned.",
     ].join("\n");
     const result = validateIssue({ title: "SSE hang", body, labels: [] });
     assert.equal(result.valid, false);
