@@ -105,13 +105,12 @@ export async function executePlan(
     return { outcome: "already-complete" };
   }
   for (const mutation of plan.intent.mutations) {
-    if (mutation === "publish-npm") {
-      await world.publishNpm(plan.identity.distTag);
-      await world.waitUntilPublishedIdentity({
-        name: plan.identity.packageName,
-        version: plan.identity.version,
-        sourceSha: plan.identity.sourceSha,
-      });
+    if (mutation === "stage-npm") {
+      await world.stageNpm(plan.identity.distTag);
+      world.log(
+        `npm staged ${plan.identity.packageName}@${plan.identity.version}. Review and approve the staged package with 2FA, then rerun this exact release workflow to finalize the Git tag and GitHub Release.`,
+      );
+      return { outcome: "staged-awaiting-approval" };
     } else if (mutation === "create-tag") {
       await world.createTag(plan.identity.gitTag, plan.identity.sourceSha);
     } else if (mutation === "create-github-release") {
