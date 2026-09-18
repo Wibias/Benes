@@ -353,7 +353,7 @@ func (c *Client) Open(ctx context.Context, dispatch providers.DispatchRequest) (
 		return nil, err
 	}
 
-	response, err := transport.DoTransient5xx(ctx, c.httpClient, req, c.transient5xx)
+	response, err := transport.DoTransient5xxForTurn(ctx, c.httpClient, req, c.transient5xx, dispatch.Turn, "openai-responses")
 	if err != nil {
 		bound.Release()
 		return nil, fmt.Errorf("OpenAI Responses request failed: %w", err)
