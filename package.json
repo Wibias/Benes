@@ -1,6 +1,6 @@
 {
   "name": "@wibias/benes",
-  "version": "2.18.0",
+  "version": "0.1.0-preview.0",
   "description": "Local Go proxy: Codex, Claude Code, and other clients reach configured providers on 127.0.0.1:23100",
   "type": "module",
   "main": "./bin/package-main.mjs",
