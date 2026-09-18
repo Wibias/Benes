@@ -26,7 +26,7 @@ func fileAffinityDispatch(t *testing.T) providers.DispatchRequest {
 	}`, "gpt-5.6")
 }
 
-func successfulForwardResponse() *http.Response {
+func fileAffinitySuccessfulResponse() *http.Response {
 	return &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header{"Content-Type": []string{"text/event-stream"}},
@@ -78,7 +78,7 @@ func TestForwardPreservesResponsesFileReferences(t *testing.T) {
 			if err := json.NewDecoder(req.Body).Decode(&got); err != nil {
 				t.Fatal(err)
 			}
-			return successfulForwardResponse(), nil
+			return fileAffinitySuccessfulResponse(), nil
 		})},
 		CredentialAuthority: forwardCredentialAuthorityFunc(func(context.Context, providers.DispatchRequest) (ForwardCredential, error) {
 			return ForwardCredential{
@@ -178,7 +178,7 @@ func TestForwardAuthRetryKeepsFileReferenceOnSameAccount(t *testing.T) {
 				if err := json.NewDecoder(req.Body).Decode(&retryBody); err != nil {
 					t.Fatal(err)
 				}
-				return successfulForwardResponse(), nil
+				return fileAffinitySuccessfulResponse(), nil
 			default:
 				t.Fatalf("unexpected physical send %d", calls)
 				return nil, nil
