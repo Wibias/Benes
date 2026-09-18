@@ -20,7 +20,6 @@ test("locale sync is idempotent and does not rewrite override source", async () 
   assert.match(result.stdout, /no extra override keys/);
   assert.match(result.stdout, /de: \d+ overrides/);
   // This test intentionally compares file contents and metadata before/after a local child process.
-  // codeql[js/file-system-race]
   const after = await readFile(overridesPath, "utf8");
   const afterStat = await stat(overridesPath);
   assert.equal(after, before);
