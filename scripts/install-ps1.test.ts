@@ -140,7 +140,7 @@ describe("scripts/install.ps1", { skip: SKIP }, () => {
   test("refuses a missing npm", () => {
     const run = install({ ...READY, npm: null });
     assert.equal(run.status, 1);
-    assert.match(run.stderr, /npm is required to install the published @wibias/benes package\./);
+    assert.match(run.stderr, /npm is required to install the published @wibias\/benes package\./);
   });
 
   test("refuses a missing go", () => {
@@ -171,7 +171,7 @@ describe("scripts/install.ps1", { skip: SKIP }, () => {
   test("propagates the npm install exit code rather than a generic failure", () => {
     const run = install({ ...READY, npm: { exit: 3 } });
     assert.equal(run.status, 3);
-    assert.match(run.stderr, /npm install -g @wibias/benes failed with exit code 3/);
+    assert.match(run.stderr, /npm install -g @wibias\/benes failed with exit code 3/);
     assert.doesNotMatch(run.stdout, /is installed\. Next:/);
   });
 
@@ -180,7 +180,7 @@ describe("scripts/install.ps1", { skip: SKIP }, () => {
     assert.equal(run.status, 1);
     assert.match(
       run.stderr,
-      /@wibias/benes is installed but benes is not on PATH\. Add the npm global bin directory, then reopen PowerShell: C:\\fake\\npm\\prefix/,
+      /@wibias\/benes is installed but benes is not on PATH\. Add the npm global bin directory, then reopen PowerShell: C:\\fake\\npm\\prefix/,
     );
   });
 
@@ -194,7 +194,7 @@ describe("scripts/install.ps1", { skip: SKIP }, () => {
     assert.match(run.stdout, /^npm install visible output$/m);
     assert.match(
       run.stderr,
-      /@wibias/benes is installed but benes is not on PATH\. Add the npm global bin directory, then reopen PowerShell: C:\\visible\\npm\\prefix/,
+      /@wibias\/benes is installed but benes is not on PATH\. Add the npm global bin directory, then reopen PowerShell: C:\\visible\\npm\\prefix/,
     );
     assert.deepEqual(
       run.trace.filter((line) => line.startsWith("npm")),
