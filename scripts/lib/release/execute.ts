@@ -224,7 +224,9 @@ export async function runCut(input: {
     input.world.readGithubRelease(identity.gitTag),
     input.world.npmDistTags(identity.packageName),
   ]);
-  if (npmHasVersion || tagSha || githubRelease) {
+  const approvedStageReadyToFinalize =
+    alreadyAtVersion && npmHasVersion && !tagSha && !githubRelease;
+  if ((npmHasVersion || tagSha || githubRelease) && !approvedStageReadyToFinalize) {
     const reasons = [
       npmHasVersion ? `npm already has ${identity.packageName}@${identity.version}` : "",
       tagSha ? `remote tag ${identity.gitTag} exists at ${tagSha}` : "",
@@ -232,10 +234,15 @@ export async function runCut(input: {
     ].filter(Boolean);
     throw new ReleaseError(
       "already_used",
-      `${reasons.join("\n")}\nFor a partial npm success, dispatch publish on the audited SHA instead of cutting again.`,
+      `${reasons.join("\n")}\nFor an approved staged package on this exact branch version, rerun the release command to finalize GitHub metadata.`,
     );
   }
-  assertDistTagAdvance(identity, distTags, true);
+  if (approvedStageReadyToFinalize) {
+    input.world.log(
+      `npm already has approved ${identity.packageName}@${identity.version}; dispatching recovery to create the audited Git tag and GitHub Release`,
+    );
+  }
+  assertDistTagAdvance(identity, distTags, !npmHasVersion);
 
   await input.world.runLocalChecks();
   let sha: string;
@@ -267,5 +274,5 @@ export async function runCut(input: {
     dryRun: !input.publish,
   });
   await input.world.watchDispatchedRelease(sha, identity.branch);
-  return { sha, outcome: input.publish ? "dispatched-publish" : "dispatched-dry-run" };
+  return { sha, outcome: input.publish ? "dispatched-stage-or-finalize" : "dispatched-dry-run" };
 }
