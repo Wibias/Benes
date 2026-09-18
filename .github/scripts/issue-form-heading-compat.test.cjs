@@ -64,7 +64,7 @@ const SAMPLE_BY_ID = {
     "POST /v1/responses returned 200, then the SSE stream never sent a terminal event.",
   "expected-result": "The stream should close after the last output delta.",
   rerun: "go run ./cmd/benes start then curl -N http://127.0.0.1:23100/v1/responses",
-  "benes-build": "2.18.0",
+  "benes-build": "0.1.0-preview.0",
   "host-os": "Windows 11 24H2",
   job: "When the first combo target is down, Codex on loopback should try the next target.",
   "blocked-by":
