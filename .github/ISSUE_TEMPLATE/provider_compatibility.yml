@@ -49,7 +49,7 @@ body:
     id: benes-build
     attributes:
       label: benes version or commit
-      placeholder: "2.18.0"
+      placeholder: "0.1.0-preview.0"
     validations:
       required: true
 
