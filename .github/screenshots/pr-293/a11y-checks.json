@@ -1,0 +1,16 @@
+{
+  "sessionsBanner": {
+    "filterRootPresentInCapture": true,
+    "mutedLabelVisible": true,
+    "notes": "Captured on synthetic BENES_HOME with #sessions?policy=primary and #sessions?combo=fast"
+  },
+  "subagents": {
+    "radiogroup": 1,
+    "radios": 3,
+    "notes": "Agent interface v1/default/v2 radios present"
+  },
+  "environment": {
+    "BENES_HOME": ".tmp/293-benes-home",
+    "port": 23193
+  }
+}

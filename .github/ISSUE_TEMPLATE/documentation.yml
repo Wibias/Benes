@@ -1,0 +1,42 @@
+name: Documentation
+description: Wrong, missing, or stale copy in public docs, README, or in-repo guides.
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Public docs are English Starlight in `docs/` (`https://wibias.github.io/Benes/`). Cite `cmd/benes` or `internal/` when you claim a command, port, env, or HTTP path.
+
+  - type: input
+    id: doc-path
+    attributes:
+      label: Page or file
+      description: Repo path, or `https://wibias.github.io/Benes/…`.
+      placeholder: docs/src/content/docs/use/combos.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: inaccuracy
+    attributes:
+      label: What is wrong
+      description: Missing command, wrong port, leftover TypeScript path, dead link.
+    validations:
+      required: true
+
+  - type: textarea
+    id: accurate
+    attributes:
+      label: What it should say
+      description: The accurate command, file, env, or HTTP path.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: secret-screen
+    attributes:
+      label: Redaction
+      options:
+        - label: This report contains no secrets or personal data.
+          required: true

@@ -1,0 +1,40 @@
+---
+title: "benes"
+description: Go listener on 127.0.0.1:23100. Clients keep their UIs. Combos are failover only. OpenCode is a third-party client, not this project.
+template: splash
+head:
+  - tag: title
+    content: "benes — local Go proxy"
+  - tag: meta
+    attrs:
+      name: description
+      content: Codex, Claude Code, Claude Desktop, and Grok Build talk to loopback. The Go process routes OpenAI Responses, Anthropic Messages, and Chat Completions.
+  - tag: meta
+    attrs:
+      name: theme-color
+      content: "#0b1220"
+  - tag: meta
+    attrs:
+      property: og:locale
+      content: en_US
+  - tag: meta
+    attrs:
+      property: og:title
+      content: benes
+  - tag: meta
+    attrs:
+      property: og:description
+      content: Local Go proxy. Default bind 127.0.0.1:23100. State under ~/.benes.
+tableOfContents: false
+---
+
+import Landing from '../../components/Landing.astro';
+
+{/*
+  Public landing for the Go product.
+  Copy and layout: src/components/Landing.astro and Header.astro.
+  GitHub Pages: site https://wibias.github.io, base /Benes/.
+  English only. Combos are failover. OpenCode is a third-party client.
+*/}
+
+<Landing />

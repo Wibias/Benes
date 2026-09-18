@@ -1,0 +1,272 @@
+name: Service lifecycle
+
+on:
+  pull_request:
+    paths:
+      - "cmd/benes/service.go"
+      - "cmd/benes/service_launchd.go"
+      - "cmd/benes/service_native.go"
+      - "cmd/benes/stop.go"
+      - "internal/servicectl/**"
+      - "internal/winsw/**"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/service-lifecycle.yml"
+  push:
+    branches: [main, preview, dev]
+    paths:
+      - "cmd/benes/service.go"
+      - "cmd/benes/service_launchd.go"
+      - "cmd/benes/service_native.go"
+      - "cmd/benes/stop.go"
+      - "internal/servicectl/**"
+      - "internal/winsw/**"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/service-lifecycle.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: service-lifecycle-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Build CLI
+        run: go build -o benes ./cmd/benes
+
+      - name: Enable systemd user session
+        run: |
+          sudo loginctl enable-linger "$(whoami)"
+          echo "XDG_RUNTIME_DIR=/run/user/$(id -u)" >> "$GITHUB_ENV"
+
+      - name: Write empty-provider config
+        run: |
+          mkdir -p ~/.benes
+          printf '%s\n' '{"port":23100,"providers":{}}' > ~/.benes/config.json
+
+      - name: Install, health, stop, and crash-restart
+        run: |
+          set -euo pipefail
+          dump() { systemctl --user status benes-proxy --no-pager || true; journalctl --user-unit benes-proxy --no-pager -n 200 || true; }
+          wait_until() {
+            local deadline=$((SECONDS + "$1"))
+            shift
+            until "$@"; do
+              if (( SECONDS >= deadline )); then return 1; fi
+              sleep 2
+            done
+          }
+
+          ./benes service install
+          wait_until 45 bash -c 'systemctl --user is-active --quiet benes-proxy && curl --max-time 2 -sf http://127.0.0.1:23100/healthz >/dev/null' \
+            || { dump; echo "::error::systemd unit did not become healthy"; exit 1; }
+
+          ./benes stop
+          wait_until 20 bash -c '! systemctl --user is-active --quiet benes-proxy && ! curl --max-time 2 -sf http://127.0.0.1:23100/healthz >/dev/null' \
+            || { dump; echo "::error::benes stop left the unit or /healthz up"; exit 1; }
+
+          ./benes service start
+          old_pid="$(systemctl --user show benes-proxy --property MainPID --value)"
+          case "$old_pid" in
+            ""|0|*[!0-9]*) echo "::error::no MainPID before crash probe"; exit 1 ;;
+          esac
+          kill -9 "$old_pid"
+          wait_until 45 bash -c '
+            new_pid="$(systemctl --user show benes-proxy --property MainPID --value 2>/dev/null || true)"
+            systemctl --user is-active --quiet benes-proxy \
+              && [ -n "$new_pid" ] && [ "$new_pid" != 0 ] && [ "$new_pid" != "'"$old_pid"'" ] \
+              && curl --max-time 2 -sf http://127.0.0.1:23100/healthz >/dev/null
+          ' || { dump; echo "::error::unit did not return healthy with a new MainPID"; exit 1; }
+
+      - name: Uninstall service
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          wait_until() {
+            local deadline=$((SECONDS + "$1"))
+            shift
+            until "$@"; do
+              if (( SECONDS >= deadline )); then return 1; fi
+              sleep 2
+            done
+          }
+          ./benes service uninstall
+          wait_until 20 bash -c '
+            [ ! -e "$HOME/.config/systemd/user/benes-proxy.service" ] \
+              && ! systemctl --user is-active --quiet benes-proxy \
+              && ! curl --max-time 2 -sf http://127.0.0.1:23100/healthz >/dev/null
+          ' || {
+            systemctl --user status benes-proxy --no-pager || true
+            journalctl --user-unit benes-proxy --no-pager -n 200 || true
+            echo "::error::unit file or proxy survived uninstall"
+            exit 1
+          }
+
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Build CLI
+        run: go build -o benes ./cmd/benes
+
+      - name: Write empty-provider config
+        run: |
+          mkdir -p ~/.benes
+          printf '%s\n' '{"port":23100,"providers":{}}' > ~/.benes/config.json
+
+      - name: Install, health, and stop
+        run: |
+          set -euo pipefail
+          dump() { launchctl list | grep com.benes.proxy || true; tail -n 200 "$HOME/.benes/service.log" || true; }
+          wait_until() {
+            local deadline=$((SECONDS + "$1"))
+            shift
+            until "$@"; do
+              if (( SECONDS >= deadline )); then return 1; fi
+              sleep 2
+            done
+          }
+
+          ./benes service install
+          wait_until 45 bash -c 'launchctl list | grep -q com.benes.proxy && curl --max-time 2 -sf http://127.0.0.1:23100/healthz >/dev/null' \
+            || { dump; echo "::error::launchd agent did not become healthy"; exit 1; }
+
+          ./benes stop
+          wait_until 20 bash -c '! launchctl list | grep -q com.benes.proxy && ! curl --max-time 2 -sf http://127.0.0.1:23100/healthz >/dev/null' \
+            || { dump; echo "::error::benes stop left the launchd label or /healthz up"; exit 1; }
+
+      - name: Uninstall service
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          wait_until() {
+            local deadline=$((SECONDS + "$1"))
+            shift
+            until "$@"; do
+              if (( SECONDS >= deadline )); then return 1; fi
+              sleep 2
+            done
+          }
+          ./benes service uninstall
+          wait_until 20 bash -c '
+            [ ! -e "$HOME/Library/LaunchAgents/com.benes.proxy.plist" ] \
+              && ! launchctl list | grep -q com.benes.proxy \
+              && ! curl --max-time 2 -sf http://127.0.0.1:23100/healthz >/dev/null
+          ' || {
+            launchctl list | grep com.benes.proxy || true
+            tail -n 200 "$HOME/.benes/service.log" || true
+            echo "::error::plist or proxy survived uninstall"
+            exit 1
+          }
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Build CLI
+        shell: bash
+        run: go build -o benes.exe ./cmd/benes
+
+      - name: Write empty-provider config
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.benes" | Out-Null
+          Set-Content -Path "$env:USERPROFILE\.benes\config.json" -Value '{"port":23100,"providers":{}}'
+
+      - name: Install, health, and stop
+        shell: pwsh
+        run: |
+          function Test-Health {
+            try {
+              $response = Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:23100/healthz -TimeoutSec 2
+              return $response.StatusCode -eq 200
+            } catch {
+              return $false
+            }
+          }
+          function Wait-Until {
+            param([int]$Seconds, [scriptblock]$Condition)
+            $deadline = (Get-Date).AddSeconds($Seconds)
+            do {
+              if (& $Condition) { return $true }
+              if ((Get-Date) -ge $deadline) { return $false }
+              Start-Sleep -Seconds 2
+            } while ($true)
+          }
+          function Show-Task {
+            Get-ScheduledTask -TaskName benes-proxy -ErrorAction SilentlyContinue | Format-List *
+            Get-Content "$env:USERPROFILE\.benes\service.log" -Tail 200 -ErrorAction SilentlyContinue
+          }
+
+          .\benes.exe service install
+          if (-not (Wait-Until -Seconds 45 -Condition {
+            $task = Get-ScheduledTask -TaskName benes-proxy -ErrorAction SilentlyContinue
+            $null -ne $task -and $task.State -eq "Running" -and (Test-Health)
+          })) { Show-Task; throw "scheduled task did not become healthy" }
+
+          .\benes.exe stop
+          if (-not (Wait-Until -Seconds 20 -Condition {
+            $task = Get-ScheduledTask -TaskName benes-proxy -ErrorAction SilentlyContinue
+            $null -ne $task -and $task.State -ne "Running" -and -not (Test-Health)
+          })) { Show-Task; throw "benes stop left the task or /healthz up" }
+
+      - name: Uninstall service
+        if: ${{ !cancelled() }}
+        shell: pwsh
+        run: |
+          function Test-Health {
+            try {
+              $response = Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:23100/healthz -TimeoutSec 2
+              return $response.StatusCode -eq 200
+            } catch {
+              return $false
+            }
+          }
+          function Wait-Until {
+            param([int]$Seconds, [scriptblock]$Condition)
+            $deadline = (Get-Date).AddSeconds($Seconds)
+            do {
+              if (& $Condition) { return $true }
+              if ((Get-Date) -ge $deadline) { return $false }
+              Start-Sleep -Seconds 2
+            } while ($true)
+          }
+          .\benes.exe service uninstall
+          if (-not (Wait-Until -Seconds 20 -Condition {
+            $null -eq (Get-ScheduledTask -TaskName benes-proxy -ErrorAction SilentlyContinue) -and -not (Test-Health)
+          })) {
+            Get-ScheduledTask -TaskName benes-proxy -ErrorAction SilentlyContinue | Format-List *
+            Get-Content "$env:USERPROFILE\.benes\service.log" -Tail 200 -ErrorAction SilentlyContinue
+            throw "scheduled task or proxy survived uninstall"
+          }

@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "pr": 297,
+  "issue": 282,
+  "exactHead": "047fb1668b5cf6cd53cc0cd74adb669d384aee98",
+  "evidence": {
+    "kind": "recovered-worktree-render-receipts",
+    "count": 12,
+    "note": "These PNGs were recovered byte-for-byte from the interrupted #282 worktree after the 2026-09-14 incident. They were not regenerated after the incident. The recovered UI source was restored byte-for-byte and committed at the exact head recorded above. No dev-only commit touched the governed render paths covered by these receipts before integration."
+  },
+  "verification": {
+    "exactHeadLocalCI": "PASS",
+    "focusedUiContracts": "30/30 PASS on recovered byte-identical UI source",
+    "typescript": "PASS",
+    "viteBuild": "PASS",
+    "privacyScan": "PASS",
+    "goTest": "PASS",
+    "goVet": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "accessibilityContracts": {
+    "selectComboboxOwnsOnlyVisibleListbox": true,
+    "selectActiveDescendantIsBounded": true,
+    "disabledRowsCannotCommit": true,
+    "callerNamingRelationsPreserved": true,
+    "tooltipDelayAndCancellationPinned": true,
+    "note": "Executable contract receipt; not represented as a fresh post-incident browser accessibility scan."
+  },
+  "screenshots": [
+    {
+      "file": "01-dashboard-light.png",
+      "sha256": "895edf8808c46614aa5edd23d6f0fe2d97eec20ad197eb7af068b06ee0187251",
+      "bytes": 50959
+    },
+    {
+      "file": "02-models-provider-icons.png",
+      "sha256": "0762757bb38e8af514dc368bbcaa7459df7b8d36fe811e9f659ab1b938aa4209",
+      "bytes": 44943
+    },
+    {
+      "file": "03-routing.png",
+      "sha256": "b2af98e708437f94071bd1b754cebccac683b1a4a5257a0ea469d74d89fc27cd",
+      "bytes": 42478
+    },
+    {
+      "file": "04-api-access.png",
+      "sha256": "f3c9898dd674e56743fc741ed8d29e614a03bcf22d9ba220ad4fb173a76dd1cd",
+      "bytes": 32455
+    },
+    {
+      "file": "05-harnesses.png",
+      "sha256": "12bc703fc0ae58d48c467834210d3c2378569bde5258f5d2da48b91c5af654df",
+      "bytes": 119240
+    },
+    {
+      "file": "06-sidebar.png",
+      "sha256": "d9155f745c981e5206ebd79b679115c977531e3a23259b4ed646ce869a5ffc44",
+      "bytes": 17244
+    },
+    {
+      "file": "07-select-open.png",
+      "sha256": "8d7a1e618fc393b0cebe038ea78f3133f7314c003223742f03deff24ab618ab4",
+      "bytes": 119586
+    },
+    {
+      "file": "08-dashboard-dark.png",
+      "sha256": "1d8236982ca97d7e1ce096e044b7c09f90ff256d34bf91f400edc20b5b90b402",
+      "bytes": 51012
+    },
+    {
+      "file": "09-mobile-topbar-closed.png",
+      "sha256": "56c47080d52dbdf65a4a3170a0376a67c9bd16ec9aa8f45bc1703860b16e22ce",
+      "bytes": 31713
+    },
+    {
+      "file": "10-mobile-drawer-open.png",
+      "sha256": "4cce5aaed69f3c5893380b4cb65651426921561e73331561ab68d93a78c92339",
+      "bytes": 40695
+    },
+    {
+      "file": "11-mobile-after-nav.png",
+      "sha256": "56c47080d52dbdf65a4a3170a0376a67c9bd16ec9aa8f45bc1703860b16e22ce",
+      "bytes": 31713
+    },
+    {
+      "file": "12-tooltip-open.png",
+      "sha256": "c1c9d397ccea6e744a4c3d82b28e7ecc3b434293e4733d331167ceeb2cc5bb23",
+      "bytes": 48846
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# Public docs for Wibias/Benes on GitHub Pages.
+# Served from https://wibias.github.io/Benes/robots.txt
+# Crawlers treat that URL as the site root, so Allow: / is correct
+# (do not write Allow: /Benes/ here — that would look for /Benes/Benes/).
+
+User-agent: *
+Allow: /
+
+Sitemap: https://wibias.github.io/Benes/sitemap-index.xml

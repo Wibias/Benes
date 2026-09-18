@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "run_id": "verify-benes-20260915T190758Z",
+  "repository": "Wibias/Benes",
+  "head_sha": "6808750f88a0aa7329d02a2a4a6198e405e6ec25",
+  "surface": "web",
+  "feature": "dashboard-home",
+  "result": "pass",
+  "checks": [
+    {
+      "id": "dashboard-assets-present",
+      "result": "pass",
+      "detail": {
+        "status": 200,
+        "bytes": 1180
+      }
+    },
+    {
+      "id": "api-config-public",
+      "result": "pass",
+      "detail": {
+        "status": 200,
+        "keys": [
+          "defaultProvider",
+          "port",
+          "providers"
+        ]
+      }
+    },
+    {
+      "id": "no-secrets-in-dashboard-payloads",
+      "result": "pass"
+    },
+    {
+      "id": "dashboard-browser-open",
+      "result": "pass",
+      "detail": {
+        "url": "http://127.0.0.1:58222/#dashboard",
+        "title": "benes · proxy dashboard"
+      }
+    },
+    {
+      "id": "dashboard-nav-current",
+      "result": "pass",
+      "detail": "button[data-page=\"dashboard\"][aria-current=\"page\"] visible"
+    },
+    {
+      "id": "dashboard-shell-visible",
+      "result": "pass",
+      "detail": ".dashboard-workspace-shell visible"
+    },
+    {
+      "id": "dashboard-aria-snapshot",
+      "result": "pass",
+      "detail": {
+        "title": "benes · proxy dashboard",
+        "bytes": 1664
+      }
+    },
+    {
+      "id": "dashboard-screenshot",
+      "result": "pass",
+      "detail": {
+        "path": "D:\\codex-worktrees\\benes-308-dashboard-dtos\\.tmp\\verify-benes\\verify-benes-20260915T190758Z\\evidence\\dashboard-home.png"
+      }
+    },
+    {
+      "id": "dashboard-no-pageerror",
+      "result": "pass",
+      "detail": []
+    }
+  ],
+  "artifacts": [
+    "D:\\codex-worktrees\\benes-308-dashboard-dtos\\.tmp\\verify-benes\\verify-benes-20260915T190758Z\\evidence\\dashboard-index.html.txt",
+    "D:\\codex-worktrees\\benes-308-dashboard-dtos\\.tmp\\verify-benes\\verify-benes-20260915T190758Z\\evidence\\api-config.json",
+    "D:\\codex-worktrees\\benes-308-dashboard-dtos\\.tmp\\verify-benes\\verify-benes-20260915T190758Z\\evidence\\dashboard-home.aria.json",
+    "D:\\codex-worktrees\\benes-308-dashboard-dtos\\.tmp\\verify-benes\\verify-benes-20260915T190758Z\\evidence\\dashboard-home.png",
+    "D:\\codex-worktrees\\benes-308-dashboard-dtos\\.tmp\\verify-benes\\verify-benes-20260915T190758Z\\evidence\\dashboard-home-console.json"
+  ],
+  "side_effects": [],
+  "started_resources": [
+    {
+      "kind": "process",
+      "pid": 49176
+    },
+    {
+      "kind": "port",
+      "port": 58222,
+      "hostname": "127.0.0.1"
+    },
+    {
+      "kind": "benes_home",
+      "path": "D:\\codex-worktrees\\benes-308-dashboard-dtos\\.tmp\\verify-benes\\verify-benes-20260915T190758Z\\home"
+    }
+  ],
+  "cleanup": "pass",
+  "blocked_reason": null
+}

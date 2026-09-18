@@ -1,0 +1,59 @@
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+
+# Scratch space. Security working notes — unreleased findings, draft advisories,
+# exploit reasoning, pre-disclosure patch plans — belong here or in a
+# `mktemp -d` path, and nowhere else. See the "Security working notes" section
+# of AGENTS.md.
+.tmp/
+.opencode/
+
+.dirfd-probe-*
+
+# Local agent/session artifacts
+# These are per-machine agent state (goalplans, ledgers, evidence scratch).
+# They are never part of the product and must not be committed, not even with
+# `git add -f` — see tests/repo-hygiene.test.ts, which fails if any path here
+# becomes tracked again.
+.codexclaw/
+**/.codexclaw/
+.omo/
+**/.omo/
+
+# Local development worktrees
+.worktrees/
+
+# Test-generated artifacts
+# Trailing slash matched directories only, but the same tests also leave plain
+# files behind when a run dies mid-write -- and on Windows those can stay locked
+# by an exiting child, so they cannot simply be deleted. An unignorable leftover
+# blocks the release preflight's clean-tree check for work that has nothing to do
+# with it, so ignore both shapes.
+tests/.tmp-*
+.claude/
+
+# Retired Go native-runtime experiment. `go/` is not part of the build, the
+# typecheck, or the test path, and nothing in `src/` imports it. A single file
+# from it (go/internal/cli/config_parity.go) has now been committed by a broad
+# `git add` three separate times and reached `dev` once — see
+# tests/repo-hygiene.test.ts, which fails if any path here becomes tracked again.
+go/
+
+
+# Isolated runtime files for `benes dev --proxy on`
+.benes-dev/
+
+# Local `go build -o benes ./cmd/benes` artifacts from go-core / start:go.
+/benes
+/benes.exe
+
+/docs/.playwright-cli
+/.playwright-cli
+/.cursor
+AGENTS.md
+/gui/.playwright-cli
+/gui/tmp-*.png
+/.agents

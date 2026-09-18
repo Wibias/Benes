@@ -1,0 +1,1945 @@
+/* The page that hosts the provider Shell. The board is flex/overflow-driven, so
+   this is the only width decision the page makes: the Shell is handed a definite
+   column instead of the whole viewport on a wide monitor. */
+.main-inner.main-inner--providers {
+  max-width: 1440px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 10px 28px 8px;
+  overflow: hidden;
+}
+
+.providers-board {
+  --providers-rule-inset: 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.providers-board > .notice,
+.main-inner.main-inner--providers > .notice {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+
+.providers-head {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: center;
+  column-gap: 24px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.providers-head h2 {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+}
+
+.providers-kpis {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  gap: 0;
+  overflow-x: auto;
+}
+
+.providers-kpi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  padding: 10px 24px;
+}
+
+.providers-kpi + .providers-kpi::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--providers-rule-inset);
+  bottom: var(--providers-rule-inset);
+  width: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+
+.providers-kpi-value {
+  font-size: 22px;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.providers-kpi--amber .providers-kpi-value,
+.providers-kpi--amber .providers-kpi-label { color: var(--amber); }
+.providers-kpi--red .providers-kpi-value,
+.providers-kpi--red .providers-kpi-label { color: var(--red); }
+
+.providers-kpi-label {
+  font-size: var(--text-label);
+  line-height: 1.15;
+  color: var(--muted);
+}
+
+.providers-board .pws-shell-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+}
+
+.providers-board .pws-root {
+  flex: 1;
+  min-height: 0;
+  max-width: none;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  gap: 0;
+}
+
+.providers-board .pws-rail {
+  padding-right: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+
+.providers-board .pws-search-row {
+  padding: 16px 8px 8px;
+  gap: 8px;
+}
+
+.providers-board .pws-search-wrap .pws-search-input,
+.providers-board .pws-search-wrap .input {
+  border-radius: var(--radius-2xs);
+  height: 30px;
+}
+
+.providers-head .btn.providers-add,
+.providers-add {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  background: var(--blue);
+  color: #fff;
+  border-color: transparent;
+  border-radius: var(--radius-2xs);
+}
+
+.providers-add:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+.providers-add svg {
+  width: 14px;
+  height: 14px;
+}
+
+.providers-board .pws-rail-list {
+  flex: 1;
+  overflow: auto;
+  padding: 0 8px 8px;
+}
+
+.providers-board .pws-rail-group-head {
+  margin: 8px 8px 6px;
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.providers-board .pws-main {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 24px 8px;
+}
+
+.providers-board .pws-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.providers-board .pws-detail-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.providers-board .pws-detail-icon img,
+.providers-board .pws-detail-icon .provider-icon-mask,
+.providers-board .pws-detail-icon .provider-icon-fallback {
+  width: 32px;
+  height: 32px;
+}
+
+.providers-board .pws-detail-head-main {
+  flex-shrink: 0;
+  align-items: flex-start;
+  margin-bottom: 0;
+  padding-bottom: 8px;
+}
+
+.providers-board .pws-detail-title {
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.providers-board .pws-detail-tabs {
+  flex-shrink: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.providers-board .pws-detail-tab {
+  padding: 4px 12px 8px;
+}
+
+.providers-board .pws-detail-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.providers-board .pws-detail[data-tab="configuration"] .pws-detail-panel,
+.providers-board .pws-detail[data-tab="access"] .pws-detail-panel,
+.providers-board .pws-detail[data-tab="overview"] .pws-detail-panel {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.providers-detail-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.providers-detail-title-row .providers-status {
+  /* No colour here: it would out-specify the pill tone classes and paint every
+     provider neutral, contradicting the rail dot beside it. */
+  font-weight: var(--weight-regular);
+  font-size: var(--text-control);
+}
+
+.providers-detail-title-row .providers-pill-dot {
+  display: none;
+}
+
+.providers-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-control);
+  font-weight: var(--weight-medium);
+}
+
+.providers-pill--on { color: var(--green); }
+.providers-pill--amber { color: var(--amber); }
+.providers-pill--muted { color: var(--muted); }
+
+.providers-pill-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.providers-detail-note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--text-body);
+  line-height: 1.35;
+}
+
+.providers-validated {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: var(--text-control);
+}
+
+.providers-menu {
+  position: relative;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.providers-menu summary svg,
+.providers-menu-icon svg {
+  width: 64%;
+  height: 64%;
+  transform: rotate(90deg);
+}
+
+.providers-menu summary,
+.providers-menu-icon {
+  list-style: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+}
+
+.providers-menu summary {
+  cursor: pointer;
+}
+
+.providers-menu summary::-webkit-details-marker { display: none; }
+.providers-menu summary:hover { background: var(--hover); color: var(--text); }
+
+.providers-menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 8;
+  min-width: 180px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xs);
+  background: var(--surface);
+}
+
+.providers-menu-list button,
+.providers-menu-list .providers-menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-control);
+  padding: 6px 8px;
+  border-radius: var(--radius-2xs);
+  cursor: pointer;
+}
+
+.providers-menu-list button:hover { background: var(--hover); }
+.providers-menu-list button:disabled { color: var(--faint); cursor: default; }
+
+.providers-overview {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 100%;
+  overflow: visible;
+}
+
+.providers-overview:not(.providers-overview-board) {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Auth warning callout in the Overview tab. ProviderOverview.tsx renders the
+   summary as an alert icon plus a wrapping body, and the Overview pane is the
+   only surface that mounts it, so all three parts are owned here rather than
+   split between this sheet and the workspace sheets. */
+.providers-overview .pws-auth-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.providers-overview .pws-auth-summary-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.providers-overview .pws-auth-summary--warn {
+  align-items: flex-start;
+  flex-shrink: 0;
+  padding: 6px 8px;
+  margin: 6px 0 0;
+  border-radius: var(--radius-xs);
+  border: 1px solid color-mix(in srgb, var(--yellow, #eab308) 45%, transparent);
+  background: color-mix(in srgb, var(--yellow, #eab308) 12%, transparent);
+  color: inherit;
+}
+
+.providers-overview .pws-auth-summary--warn svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--yellow, #eab308);
+}
+
+.providers-overview:not(.providers-overview-board) > .providers-block:first-child {
+  border-top: 0;
+  padding-top: 18px;
+}
+
+.providers-overview:not(.providers-overview-board) > .providers-block {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 0;
+  border-top-color: var(--border);
+}
+
+.providers-overview:not(.providers-overview-board) > .providers-block:has(.providers-overview-slot--events) {
+  flex: 1 1 0;
+}
+
+.providers-overview:not(.providers-overview-board) .providers-overview-slot:not(.providers-overview-slot--events) {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.providers-overview:not(.providers-overview-board) .providers-block-head {
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+
+.providers-overview:not(.providers-overview-board) .providers-facts {
+  gap: 8px;
+}
+
+.providers-overview:not(.providers-overview-board) .providers-down-stat {
+  align-items: center;
+  text-align: center;
+}
+
+.providers-overview:not(.providers-overview-board) .providers-events li {
+  padding: 6px 0;
+}
+
+.providers-overview:not(.providers-overview-board) .providers-block h4 {
+  font-weight: var(--weight-medium);
+  letter-spacing: 0;
+}
+
+.providers-overview:not(.providers-overview-board) .providers-block-head h4 {
+  margin: 0;
+}
+
+.providers-overview:not(.providers-overview-board) .providers-link,
+.providers-overview:not(.providers-overview-board) .providers-facts dt,
+.providers-overview:not(.providers-overview-board) .providers-facts dd,
+.providers-overview:not(.providers-overview-board) .providers-models-counts,
+.providers-overview:not(.providers-overview-board) .providers-down-stat span,
+.providers-overview:not(.providers-overview-board) .providers-events time,
+.providers-overview:not(.providers-overview-board) .providers-events span,
+.providers-overview:not(.providers-overview-board) p.muted {
+  font-weight: var(--weight-regular);
+}
+
+.providers-overview:not(.providers-overview-board) .providers-down-stat strong {
+  font-weight: var(--weight-bold);
+  letter-spacing: 0;
+}
+
+.providers-block {
+  margin: 0;
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+  flex: 0 0 auto;
+}
+
+.providers-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.providers-down-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 8px 16px;
+}
+
+.providers-block-head h4 {
+  margin: 0;
+}
+
+.providers-block h4 {
+  margin: 0 0 8px;
+  font-size: var(--text-subtitle);
+  line-height: var(--leading-tight);
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.providers-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.providers-facts > div {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 16px;
+}
+
+.providers-facts dt {
+  color: var(--muted);
+  font-size: var(--text-control);
+}
+
+.providers-facts dd {
+  margin: 0;
+  font-size: var(--text-control);
+  text-align: left;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.providers-facts .providers-status {
+  justify-content: flex-start;
+}
+
+.providers-overview .quota-stacked {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr) max-content max-content;
+  gap: 8px 12px;
+  min-height: 0;
+  flex-shrink: 0;
+}
+
+.providers-overview .quota-stacked-row {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.providers-overview .quota-stacked-head,
+.providers-overview .quota-stacked-bar-row {
+  display: contents;
+}
+
+.providers-overview .quota-stacked-limit-reached {
+  grid-column: 1 / -1;
+}
+
+.providers-overview .quota-stacked-limit {
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  font-size: var(--text-control);
+}
+
+.providers-overview .quota-stacked-bar {
+  height: 6px;
+  min-width: 0;
+}
+
+.providers-overview .quota-stacked-used,
+.providers-overview .quota-stacked-reset {
+  flex-shrink: 0;
+  font-size: var(--text-control);
+  line-height: 1.2;
+  white-space: nowrap;
+  justify-self: start;
+}
+
+.providers-overview .quota-stacked-reset {
+  color: var(--muted);
+}
+
+.providers-quota-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--amber) 12%, transparent);
+  color: var(--amber);
+  font-size: var(--text-control);
+}
+
+.providers-quota-warn svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.providers-models-counts {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-size: var(--text-control);
+  line-height: 1.2;
+}
+
+.providers-models-sep {
+  margin: 0 8px;
+  color: var(--faint);
+  font-weight: var(--weight-regular);
+}
+
+.providers-models-counts .is-on {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+
+.providers-models-counts .is-on .providers-pill-dot {
+  background: var(--green);
+}
+
+.providers-models-counts .is-off { color: var(--muted); }
+
+.providers-models-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, auto);
+  column-gap: 24px;
+  margin-top: 8px;
+}
+
+.providers-models-grid span {
+  display: block;
+  font-size: var(--text-control);
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.providers-link {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--blue);
+  font: inherit;
+  font-weight: var(--weight-regular);
+  font-size: var(--text-control);
+  line-height: 1.25;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.providers-link::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  translate: 0 0.5px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.25 6h6.1'/%3E%3Cpath d='M6.1 3.4 9.7 6 6.1 8.6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.25 6h6.1'/%3E%3Cpath d='M6.1 3.4 9.7 6 6.1 8.6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.providers-link--plain::after {
+  content: none;
+}
+
+.providers-link:hover {
+  color: color-mix(in srgb, var(--blue) 80%, var(--text));
+}
+
+.providers-link:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+.providers-link:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.providers-down-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  min-width: 0;
+}
+
+.providers-down-stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0 16px;
+}
+
+.providers-down-stat:first-child {
+  padding-left: 0;
+}
+
+.providers-down-stat:last-child {
+  padding-right: 0;
+}
+
+.providers-down-stat + .providers-down-stat::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--border-soft);
+  pointer-events: none;
+}
+
+.providers-down-stat strong {
+  font-size: 20px;
+  font-weight: var(--weight-bold);
+  letter-spacing: 0;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.providers-down-stat span {
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+
+.providers-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  line-height: 1.35;
+}
+
+.providers-events li {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+  padding: 2px 0;
+  font-size: var(--text-control);
+}
+
+.providers-events li span:last-child {
+  text-align: right;
+}
+
+/* A recent event paints only the two bands the listener can prove: attention and failure. */
+.providers-events svg { width: 14px; height: 14px; vertical-align: -2px; }
+.providers-events time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.providers-events .is-warn { color: var(--amber); }
+.providers-events .is-error { color: var(--red); }
+
+.providers-access {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.providers-access > .providers-block:first-child,
+.providers-access > .providers-access-tables:first-child > .providers-block {
+  border-top: 0;
+  padding-top: 8px;
+}
+
+.providers-config {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.providers-config > .providers-block:first-child {
+  border-top: 0;
+  padding-top: 8px;
+}
+
+.providers-config > .providers-block {
+  padding: 8px 0;
+}
+
+.providers-config .providers-block-head {
+  margin-bottom: 4px;
+}
+
+.providers-config .providers-block h4 {
+  margin: 0;
+}
+
+.providers-config .providers-facts {
+  gap: 4px;
+}
+
+.providers-config .providers-facts > div {
+  grid-template-columns: auto minmax(0, 1fr);
+  min-height: 1.4em;
+  align-items: center;
+  column-gap: 12px;
+}
+
+.providers-config-inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.providers-config .providers-facts--2,
+.providers-config .providers-facts--pacing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 20px;
+  row-gap: 4px;
+}
+
+.providers-config .providers-facts--pacing > .providers-config-field:nth-last-child(2) {
+  grid-column: 1;
+}
+
+.providers-config .providers-facts--stack > div {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+}
+
+.providers-config .providers-facts--stack dt {
+  white-space: normal;
+}
+
+.providers-config .providers-facts--stack dd {
+  overflow: visible;
+  white-space: normal;
+  width: 100%;
+  min-width: 0;
+  min-height: 1.4em;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.providers-config-on,
+.providers-config-off { color: inherit; }
+
+/* Codex-client rows (account targeting, request-user-input flag) stack without card gaps. */
+.providers-config-codex { display: grid; gap: 0; }
+
+.providers-config-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  color: var(--red);
+  font-size: var(--text-control);
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.providers-config-error[hidden] {
+  display: none;
+}
+
+.providers-config-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.providers-config-edit > label {
+  display: grid;
+  grid-template-columns: 13.5rem minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.providers-config-edit > label > span {
+  color: var(--muted);
+  font-size: var(--text-control);
+}
+
+.providers-config-check {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-control);
+}
+
+.providers-config-edit-actions {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: 1.4em;
+}
+
+.providers-config-edit-actions > .providers-link:first-child {
+  min-width: 6.5rem;
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.providers-config-edit-cancel {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.providers-config-edit-actions.is-editing .providers-config-edit-cancel {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.providers-config-field,
+.providers-config-field dd {
+  min-height: 30px;
+}
+
+.providers-config-field dd {
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  white-space: normal;
+}
+
+.providers-config .providers-facts .input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 30px;
+  min-height: 30px;
+  margin: 0;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xs);
+  background: light-dark(#fff, var(--raised));
+  box-shadow: none;
+  font: inherit;
+  font-size: var(--text-control);
+  line-height: 28px;
+  color: var(--text);
+  overflow: hidden;
+}
+
+.providers-config .providers-facts input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.providers-config .providers-facts input[type="number"]::-webkit-inner-spin-button,
+.providers-config .providers-facts input[type="number"]::-webkit-outer-spin-button {
+  height: 1em;
+}
+
+.providers-config .providers-facts .input:focus {
+  outline: none;
+  border-color: var(--faint);
+  box-shadow: none;
+}
+
+.providers-config .providers-facts .input:disabled {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.providers-config-inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-width: 0;
+  height: 1.4em;
+  max-height: 1.4em;
+  font-size: inherit;
+  line-height: 1.4em;
+  white-space: nowrap;
+}
+
+.providers-config-inline-check input {
+  width: 0.875em;
+  height: 0.875em;
+  margin: 0;
+  padding: 0;
+  flex: none;
+  align-self: center;
+  box-sizing: border-box;
+}
+
+.providers-config-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-control);
+}
+
+.providers-config > .providers-config-overrides {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.providers-config-overrides-grid {
+  --ov-cols: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) max-content;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.providers-config-overrides-head,
+.providers-config-overrides-add,
+.providers-config-overrides-add-link,
+.providers-config-overrides-rows > li {
+  display: grid;
+  grid-template-columns: var(--ov-cols);
+  column-gap: 12px;
+  align-items: center;
+}
+
+.providers-config-overrides-add-link > .providers-link {
+  grid-column: 3 / -1;
+  justify-self: end;
+}
+
+.providers-config-overrides-head {
+  color: var(--muted);
+  font-size: var(--text-control);
+  font-weight: var(--weight-medium);
+}
+
+.providers-config-overrides-head > :last-child,
+.providers-config-overrides-add > :last-child,
+.providers-config-overrides-rows > li > :last-child {
+  justify-self: end;
+  text-align: right;
+}
+
+.providers-config-overrides-add > span {
+  display: block;
+  min-width: 0;
+}
+
+.providers-config-overrides-add .input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 30px;
+  min-height: 30px;
+  margin: 0;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xs);
+  background: light-dark(#fff, var(--raised));
+  box-shadow: none;
+  font: inherit;
+  font-size: var(--text-control);
+  color: var(--text);
+}
+
+.providers-config-overrides-add .input:focus {
+  outline: none;
+  border-color: var(--faint);
+  box-shadow: none;
+}
+
+.providers-config-override-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.providers-config-overrides-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 8.75rem;
+  overflow: auto;
+  min-height: 0;
+}
+
+.providers-config-overrides-rows > li {
+  min-height: 1.75rem;
+  font-size: var(--text-control);
+}
+
+.providers-config-overrides-empty {
+  color: var(--muted);
+}
+
+.providers-config-table-wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.providers-config-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg);
+  text-align: left;
+  color: var(--muted);
+  font-weight: var(--weight-medium);
+  padding: 0 12px 4px 0;
+}
+
+.providers-config-table td {
+  padding: 4px 12px 4px 0;
+  vertical-align: baseline;
+}
+
+.providers-config-table th:last-child,
+.providers-config-table td:last-child {
+  text-align: right;
+  padding-right: 0;
+}
+
+.providers-config-add {
+  margin-top: 4px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.providers-config-override-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.providers-config-override-add .input {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.providers-config-footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.providers-config-footer > :first-child { justify-self: start; }
+.providers-config-footer > :nth-child(2) { justify-self: center; }
+.providers-config-footer > :last-child { justify-self: end; }
+
+.providers-access-hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: var(--text-control);
+  line-height: 1.4;
+}
+
+.providers-access .pwi-auth-section {
+  margin: 0;
+  padding: 12px 0;
+  gap: 8px;
+}
+
+.providers-access .pwi-section-title {
+  margin: 0 0 8px;
+  font-size: var(--text-subtitle);
+  line-height: var(--leading-tight);
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.providers-access .pwi-auth-state {
+  background: none;
+  padding: 0;
+  min-height: 0;
+}
+
+.providers-access .pwi-auth-row {
+  padding: 6px 0;
+  border-radius: 0;
+}
+
+.providers-access .pwi-auth-row:hover {
+  background: transparent;
+}
+
+.providers-access .pwi-auth-row--active,
+.providers-access .pwi-auth-acct--active {
+  background: none;
+}
+
+.providers-access .pwi-auth-add-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  cursor: default;
+}
+
+.providers-access .pwi-auth-body > .btn {
+  align-self: flex-start;
+}
+
+.providers-access .pwi-auth-row .btn-sm {
+  border: 0;
+  background: none;
+  border-radius: 0;
+  padding: 0 4px;
+  color: var(--muted);
+}
+
+.providers-access .pwi-auth-row .btn-sm:hover:not(:disabled) {
+  background: none;
+  color: var(--text);
+}
+
+.providers-board .pws-main:has(.providers-overview-board) {
+  padding: 16px 24px 8px;
+}
+
+/*
+  Fleet board column contract.
+
+  The four sections share one height: the two fact sections keep their natural height and
+  the two list sections take what is left. A section is a column of head + slot, so its
+  own floor is `head + padding + the slot's min-height`; the slot is a scroll port, which
+  means a short viewport may shorten the list but never push a section's content over its
+  neighbour. `min-height: auto` (the automatic content-based minimum of a column flex item
+  with visible overflow) is what keeps that floor, so it must not be reset to 0 here.
+
+  When even those floors no longer fit, the pane is the scroll owner. `overflow-y: hidden`
+  would instead clip the last section, which is the same defect with the evidence removed.
+*/
+.providers-overview-board {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.providers-overview-kpis {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-bottom: 0;
+}
+
+.providers-overview-kpis .providers-kpi {
+  min-height: 40px;
+  padding: 4px 16px 10px 0;
+}
+
+.providers-overview-kpis .providers-kpi + .providers-kpi {
+  padding-left: 16px;
+}
+
+.providers-overview-board .providers-block {
+  flex: 0 0 auto;
+  min-height: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 0;
+}
+
+.providers-overview-board .providers-block:has(.providers-overview-slot) {
+  flex: 1 1 0;
+}
+
+/*
+  A flex base of 0, not `auto`. With an `auto` basis the list's own height becomes the
+  slot's base size, which raises the section's automatic minimum to the whole list and
+  makes the board overflow a viewport it would otherwise fit. The slot still grows to
+  fill its section, and the min-height declared further down stays its floor.
+*/
+.providers-overview-board .providers-overview-slot {
+  flex: 1 1 0;
+}
+
+.providers-overview-board .providers-block:has(> .providers-overview-rule) {
+  padding-bottom: 0;
+}
+
+.providers-overview-board .providers-block > h4,
+.providers-overview-board .providers-block-head {
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+
+.providers-overview-board .providers-block-head h4 {
+  margin-bottom: 0;
+}
+
+.providers-overview-issues {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.providers-overview-issue {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 8px 0;
+}
+
+.providers-overview-issue-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.providers-overview-issue-icon img,
+.providers-overview-issue-icon .provider-icon-mask,
+.providers-overview-issue-icon .provider-icon-fallback {
+  width: 18px;
+  height: 18px;
+}
+
+.providers-overview-issue-body {
+  min-width: 0;
+}
+
+.providers-overview-issue-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.providers-overview-issue-name {
+  font-size: var(--text-control);
+  font-weight: var(--weight-medium);
+}
+
+.providers-overview-issue-status {
+  color: var(--muted);
+  font-size: var(--text-control);
+}
+
+/* Issue rows carry the listener's severity, so a provider that cannot serve is
+   red here exactly as it is in the fleet events below, and an unknown severity
+   stays quiet instead of claiming health. */
+.providers-overview-issue-status.is-warn { color: var(--amber); }
+.providers-overview-issue-status.is-error { color: var(--red); }
+.providers-overview-issue-status.is-off { color: var(--muted); }
+
+.providers-overview-issue-detail {
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+
+.providers-overview-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.providers-overview-facts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.providers-overview-facts > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.providers-overview-facts dt {
+  color: var(--text);
+  font-size: var(--text-control);
+  font-weight: var(--weight-regular);
+}
+
+.providers-overview-facts dd {
+  margin: 0;
+  font-size: var(--text-control);
+  font-weight: var(--weight-regular);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.providers-overview-rule {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-control);
+  color: var(--muted);
+}
+
+.providers-overview-rule .providers-link {
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.providers-overview-sync strong {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+.providers-overview-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--amber);
+  font-size: var(--text-control);
+}
+
+.providers-overview-warn svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.providers-overview-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.providers-overview-events li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: var(--text-control);
+  min-width: 0;
+}
+
+.providers-overview-events time {
+  flex: 0 0 3.25rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.providers-overview-events svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.providers-overview-events .is-warn { color: var(--amber); }
+.providers-overview-events .is-error { color: var(--red); }
+
+.providers-overview-event-name {
+  font-weight: var(--weight-medium);
+}
+
+.providers-overview-empty {
+  margin: 0;
+  font-size: var(--text-control);
+}
+
+.providers-overview-slot {
+  flex: 1 1 auto;
+  min-height: 3.25rem;
+  overflow: auto;
+}
+
+.providers-overview-slot--events {
+  min-height: 6.5rem;
+}
+
+.providers-overview-board .providers-overview-footer,
+.providers-overview-board .providers-overview-rule,
+.providers-overview-board .providers-overview-warn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+  .providers-head {
+    grid-template-columns: 1fr auto;
+  }
+  .providers-head h2 {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .providers-head .page-head-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .providers-kpis {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+  .providers-board .pws-root {
+    display: flex;
+    flex-direction: column;
+  }
+  .providers-board .pws-rail {
+    max-height: 42vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .providers-down-metrics { grid-template-columns: 1fr; }
+  .providers-down-stat { padding: 0; }
+  .providers-down-stat + .providers-down-stat::before { content: none; }
+  .providers-down-links { justify-content: flex-start; }
+  .providers-facts > div { grid-template-columns: 8.5rem minmax(0, 1fr); }
+  .providers-config .providers-facts > div,
+  .providers-config-edit > label { grid-template-columns: auto minmax(0, 1fr); }
+  .providers-config .providers-facts--2,
+  .providers-config .providers-facts--pacing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .providers-config .providers-facts--pacing > .providers-config-field:nth-last-child(2) {
+    grid-column: auto;
+  }
+  .providers-config-footer {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+  .providers-config-footer > :nth-child(2),
+  .providers-config-footer > :last-child { justify-self: start; }
+}
+
+.providers-access-head-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.providers-access-feedback {
+  margin: 0 0 8px;
+  font-size: var(--text-caption);
+  color: var(--muted);
+}
+.providers-access-feedback.is-ok { color: var(--text); }
+.providers-access-feedback.is-err { color: var(--red); }
+
+.providers-access-lanes {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  box-sizing: border-box;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.providers-access-lanes [role="tab"] {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  font: inherit;
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.providers-access-lanes [role="tab"]:hover {
+  color: var(--text);
+}
+
+.providers-access-lanes [role="tab"].is-active {
+  color: var(--bg);
+  background: var(--text);
+}
+
+.providers-access-lanes [role="tab"].is-active:hover {
+  color: var(--bg);
+}
+
+.providers-access-lanes [role="tab"]:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+
+/* Below 360px the header's one-row composition (title, fleet strip, actions)
+   has no room left, so the row becomes a stack and the strip may wrap instead
+   of overflowing the page. */
+@media (max-width: 360px) {
+  .providers-head {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: flex-start;
+    row-gap: 8px;
+  }
+  .providers-head h2 {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .providers-kpis {
+    grid-column: 1;
+    grid-row: 2;
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .providers-head .page-head-actions {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+
+.providers-access-tables {
+  --providers-access-row-height: 52px;
+  --providers-access-scroll-gutter: 16px;
+  flex-shrink: 0;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns:
+    minmax(max-content, 1.3fr)
+    minmax(max-content, 1.13fr)
+    max-content
+    minmax(max-content, 1.16fr)
+    minmax(max-content, 1.28fr)
+    minmax(max-content, 1fr)
+    32px;
+  column-gap: 12px;
+}
+
+.providers-access-tables--switch > .providers-block {
+  grid-row: 1;
+}
+
+.providers-access-tables--switch > .providers-block.is-lane-inactive {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.providers-access-tables > .providers-block {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  border-top-color: var(--border-soft);
+}
+
+.providers-access-tables .providers-block-head,
+.providers-access-tables .providers-overview-footer,
+.providers-access-tables .providers-access-feedback,
+.providers-access-tables .pwi-auth-add-key,
+.providers-access-tables .providers-access-oauth > p,
+.providers-access-tables > .providers-block > h4,
+.providers-access-tables > .providers-block > .providers-access-lanes,
+.providers-access-tables dialog {
+  grid-column: 1 / -1;
+}
+
+.providers-access-tables .providers-block-head:has(.providers-access-lanes) {
+  align-items: stretch;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  margin-bottom: 0;
+  padding-bottom: 8px;
+}
+
+.providers-access-tables .providers-block-head:has(.providers-access-lanes) .providers-access-head-actions {
+  display: flex;
+  align-items: center;
+}
+
+.providers-access-tables--switch .providers-access-table {
+  row-gap: 0;
+}
+
+.providers-access-tables--switch .providers-access-table-body {
+  min-height: var(--providers-access-row-height, 52px);
+}
+
+.providers-access-tables--switch .providers-overview-footer {
+  box-sizing: border-box;
+  height: 26px;
+  min-height: 26px;
+  margin-top: 0;
+  padding-top: 6px;
+}
+
+.providers-access-tables .providers-access-oauth,
+.providers-access-tables .pwi-auth-body,
+.providers-access-tables > .providers-block > div:not(.providers-block-head),
+.providers-access-tables > .providers-block > section {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  gap: 0;
+}
+
+.providers-access-table {
+  display: grid;
+  width: 100%;
+  grid-template-columns:
+    minmax(max-content, 1.3fr)
+    minmax(max-content, 1.13fr)
+    max-content
+    minmax(max-content, 1.16fr)
+    minmax(max-content, 1.28fr)
+    minmax(max-content, 1fr)
+    32px;
+  column-gap: 12px;
+  align-items: center;
+}
+
+.providers-access-tables .providers-access-table {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+}
+
+.providers-access-table-head,
+.providers-access-table-row {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-items: start;
+  padding: 10px 0;
+}
+
+.providers-access-table-head {
+  color: var(--muted);
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+
+.providers-access-table-head > * {
+  white-space: nowrap;
+}
+
+.providers-access-table-body {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  max-height: calc(3 * var(--providers-access-row-height, 52px));
+  /* The row action menu hangs below its row, so a body that fits its rows must not clip. */
+  overflow: visible;
+  overscroll-behavior: contain;
+  align-content: start;
+  box-sizing: content-box;
+  list-style: none;
+  margin: 0 calc(-1 * var(--providers-access-scroll-gutter, 16px)) 0 0;
+  padding: 0 var(--providers-access-scroll-gutter, 16px) 0 0;
+}
+
+.providers-access-table-body--scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.providers-access-table-row {
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  box-sizing: border-box;
+  min-height: var(--providers-access-row-height, 52px);
+}
+
+.providers-access-table-row:last-child {
+  border-bottom: none;
+}
+
+.providers-access-table-row--empty {
+  color: var(--muted);
+}
+
+.providers-access-order-cell {
+  justify-self: start;
+  width: max-content;
+}
+
+select.providers-access-order {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  appearance: none;
+  cursor: pointer;
+}
+
+select.providers-access-order:focus {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.providers-access-order-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.providers-access-order-info {
+  display: inline-flex;
+  color: var(--muted);
+  cursor: help;
+}
+
+.providers-access-order-info svg {
+  width: 12px;
+  height: 12px;
+}
+
+.providers-access-row-menu {
+  justify-self: stretch;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.providers-access .providers-block h4 {
+  font-weight: var(--weight-medium);
+  letter-spacing: 0;
+}
+
+.providers-access-account {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.providers-access-quota {
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.providers-access-quota-used {
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.providers-access-quota-reset {
+  color: var(--muted);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+
+.providers-access-default-check {
+  display: block;
+  width: 14px;
+  height: 14px;
+  color: var(--text);
+}
+
+.providers-access .providers-pill-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: var(--muted);
+}
+.providers-access .providers-pill-dot.is-ok { background: var(--green); }
+.providers-access .providers-pill-dot.is-off { background: var(--muted); }
+/* Account health/reauth is the same attention state the rail dot and the auth
+   list already paint amber; without this the dot inherited the inactive grey. */
+.providers-access .providers-pill-dot.is-warn { background: var(--amber); }
+
+/* Providers board boot placeholders and rail badges. Owner: pages/providers-status.tsx and
+   components/provider-workspace/shell-rail.tsx. */
+.providers-workspace {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: var(--space-4);
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.providers-workspace-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.providers-workspace-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  overflow: auto;
+}
+
+.pwi-rail-badge--free,
+.pwi-rail-badge--local {
+  font-size: var(--text-caption);
+}
+
+.pwi-rail-badge--free {
+  color: var(--green);
+}
+
+.pwi-rail-badge--local {
+  color: var(--muted);
+}

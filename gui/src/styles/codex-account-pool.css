@@ -1,0 +1,157 @@
+/*
+ * Codex account pool surfaces.
+ *
+ * Owner: components/CodexAccountPool.tsx and the account cards it composes — the account picker
+ * setting, the auto-switch setting, the request-user-input setting, the reset-credit list and the
+ * pool strategy controls. These are one product surface, so they keep one sheet instead of adding
+ * account-pool selectors to the dashboard chrome.
+ *
+ * Imported by the entry next to the other surface sheets so the pool's styles are present whenever
+ * any of its cards render, whatever route the dashboard is on.
+ */
+
+.codex-account-picker-card,
+.codex-auto-switch-card,
+.codex-request-user-input-card {
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.codex-account-picker-copy,
+.codex-auto-switch-copy,
+.codex-request-user-input-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.codex-account-picker-controls,
+.codex-auto-switch-controls,
+.codex-request-user-input-controls,
+.account-pool-strategy-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.codex-account-picker-feedback,
+.codex-auto-switch-feedback {
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+
+.codex-auto-switch-threshold,
+.codex-auto-switch-toggle-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.codex-request-user-input-config {
+  display: block;
+  padding: 8px 10px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--fg);
+  font-size: var(--text-label);
+  line-height: var(--leading-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.account-pool-strategy-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* The strategy card's failure line. It is a `.card-sub`, so the tone is the only thing that
+   changes: the message stays at the sub row's size and the colour carries the failure. */
+.account-pool-strategy-card__error {
+  color: var(--red);
+}
+
+/* The request-user-input flag's write result. `codex-request-user-input-sections.tsx` picks the
+   tone, and the failure tone is what raises the colour plus the alert role. */
+.codex-request-user-input-feedback {
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+
+.codex-request-user-input-feedback.is-error {
+  color: var(--red);
+}
+
+.account-pool-strategy-card__retry {
+  align-self: flex-start;
+}
+
+/* The stale-account banner's text span; the banner frame belongs to the board that shows it. */
+.codex-stale-banner-text {
+  flex: 1;
+}
+
+.codex-ticket-badge-slot {
+  gap: var(--space-1);
+}
+
+/* Reset-credit list: one credit per row, the next one flagged. */
+.credit-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.credit-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+}
+
+.credit-item-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.credit-item-label {
+  color: var(--fg);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+}
+
+.credit-item-dates {
+  color: var(--muted);
+  font-size: var(--text-caption);
+}
+
+.credit-next {
+  border-color: var(--accent);
+}
+
+.credit-urgent {
+  border-color: var(--red);
+}
+
+.confirm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--amber-soft);
+  color: var(--amber);
+}

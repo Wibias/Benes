@@ -1,0 +1,56 @@
+name: Go core
+
+# Cross-platform Go build/test/vet. Called from ci.yml so the aggregate `ci`
+# check cannot go green without `go test ./...`. workflow_dispatch remains for
+# a maintainer who wants the Go matrix without the packaging jobs.
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Go ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Verify toolchain
+        shell: bash
+        run: go version
+
+      - name: Build CLI
+        shell: bash
+        run: go build -o benes ./cmd/benes
+
+      - name: Test
+        shell: bash
+        run: go test ./...
+
+      - name: Vet
+        shell: bash
+        run: go vet ./...
+
+      - name: Race detector
+        if: runner.os == 'Linux'
+        shell: bash
+        run: go test -race ./...

@@ -1,0 +1,83 @@
+.main-inner.main-inner--tasks {
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 10px 28px 8px;
+  overflow: hidden;
+}
+
+.tasks-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.main-inner.main-inner--tasks > .page-head,
+.tasks-page > .page-head {
+  flex-shrink: 0;
+}
+
+.tasks-page .page-head-actions .input {
+  width: 168px;
+  border-radius: var(--radius-2xs);
+}
+
+.tasks-split {
+  display: grid;
+  grid-template-columns: minmax(220px, 34%) minmax(0, 1fr);
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  padding-top: 8px;
+}
+
+.tasks-list,
+.tasks-detail {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.tasks-list {
+  padding-right: 18px;
+  border-right: 1px solid var(--border);
+}
+
+.tasks-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tasks-row.is-active {
+  color: var(--blue);
+}
+
+.tasks-detail-actions {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.tasks-timeline {
+  width: 100%;
+}
+
+.tasks-off {
+  padding-top: 8px;
+}

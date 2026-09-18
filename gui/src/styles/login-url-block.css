@@ -1,0 +1,54 @@
+
+/* Benes-owned presentation for the OAuth authorization URL surface.
+   The authorization URL is the value the user has to move into a browser, so it
+   gets a framed, wrapping surface that keeps the whole query string readable, and
+   the copy control sits on that value row instead of in a trailing action row.
+   The manual browser open stays available as a quiet secondary line. */
+
+.login-url {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-url-value-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.login-url-value {
+  flex: 1 1 14rem;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: var(--text-control, 12px);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.login-url-copy {
+  flex: 0 0 auto;
+}
+
+.login-url-manual {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: 100%;
+  color: var(--muted);
+  font-size: var(--text-control, 12px);
+  line-height: 1.35;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.login-url-manual:hover {
+  color: var(--text);
+  text-decoration: underline;
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "benes-330-render-equivalence-v1",
+  "base": {
+    "commit": "cefb3ecfcee6c1d88dac2a20adaa890f4e44f195",
+    "worktree": "benes-330-base",
+    "listener_port": 23412,
+    "captures": 2
+  },
+  "candidate": {
+    "commit": "88965516eaf0dfca6e182abf6078092a009cc8f5",
+    "worktree": "benes-330-inherited-css",
+    "listener_port": 23411,
+    "captures": 2
+  },
+  "surface_renders": 31,
+  "surface_set": "19 routes at 1440x900 light, 7 routes at 480x900 light, 2 routes at 1440x900 dark, plus the Add-provider wizard catalog / Connection / OAuth-wait states",
+  "base_vs_candidate": {
+    "dom_class_changes": 0,
+    "difference_kinds": {
+      "text": 6,
+      "styled-class-presence": 5,
+      "style": 2
+    },
+    "box_geometry_differences": 0,
+    "computed_style_differences": [
+      "data-surface-skeleton__block background: rgba(0, 0, 0, 0) li",
+      "data-surface-skeleton__block background: rgba(0, 0, 0, 0) li"
+    ],
+    "text_differences": [
+      "the loopback port the dashboard prints (base ran on 23412, candidate on 23411)",
+      "wall-clock timestamps in Recent events / activity rows",
+      "the process-scoped order of the seeded Sub-agents roster: proven nondeterministic, not caused by this change"
+    ],
+    "probe_list_artifacts": [
+      ".models-tab-panel--fill and .combos-workspace-shell appear as 'base only' only because the base styles.css still defined them inside a .main-inner--combos selector; both classes remain present in the DOM in both runs, which the zero class-change count above proves"
+    ]
+  },
+  "controls": {
+    "candidate_vs_candidate_repeat_run": {
+      "difference_kinds": {
+        "text": 7,
+        "style": 2
+      },
+      "dom_class_changes": 0
+    },
+    "base_repeat_run": {
+      "dom_class_changes": 0,
+      "note": "two captures of the unchanged base build"
+    },
+    "subagents_roster_order_nondeterminism": "restarting the unchanged base build (same commit, same seed config) produced a third order for the same four models"
+  },
+  "fixture_render": {
+    "note": "deterministic fixture DOM rendered against the base and candidate production CSS bundles",
+    "dialog_actions_real_consumers": "identical computed styles (display:flex, gap:8px, justify-content:flex-end) in both bundles for the two Storage dialog action rows",
+    "historical_dialog_classes": ".dialog and .dialog-backdrop lose their styling as intended (no component renders either class; grep of gui/src finds no consumer)"
+  }
+}

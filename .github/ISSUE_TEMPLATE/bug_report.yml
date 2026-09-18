@@ -1,0 +1,105 @@
+name: Bug report
+description: A reproducible failure in the Go CLI, loopback listener, dashboard, or an adapter.
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Name the build and the steps. Default listener is `127.0.0.1:23100`. Streaming is HTTP/SSE.
+
+        Do not paste tokens, API keys, cookies, `Authorization` headers, account ids, or `auth.json`. Undisclosed security issues go to GitHub Security Advisories, not this form.
+
+  - type: dropdown
+    id: product-surface
+    attributes:
+      label: Which Benes surface failed
+      options:
+        - Loopback proxy
+        - CLI
+        - Dashboard
+        - Provider adapter
+        - Credentials and OAuth
+        - Model catalog
+        - Install and packaging
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: talking-client
+    attributes:
+      label: Client that hit the failure
+      options:
+        - Codex
+        - Claude Code
+        - Claude Desktop
+        - Grok Build
+        - OpenCode
+        - ZCode
+        - Direct HTTP
+        - Dashboard
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+      description: The observable failure. Name the status, hang, or crash.
+      placeholder: POST /v1/responses returned 200, then the SSE stream never sent a terminal event.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-result
+    attributes:
+      label: What should have happened
+      placeholder: The stream should end with a terminal event after the last output delta.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rerun
+    attributes:
+      label: Commands that reproduce it
+      description: Exact commands, bind address, and a redacted request. Say if it is intermittent.
+      placeholder: |
+        1. go run ./cmd/benes start
+        2. curl -N http://127.0.0.1:23100/v1/responses ...
+        3. Stream stays open after the last data event.
+    validations:
+      required: true
+
+  - type: input
+    id: benes-build
+    attributes:
+      label: benes version or commit
+      description: Output of `benes version`, or a full commit SHA.
+      placeholder: "0.1.0-preview.0"
+    validations:
+      required: true
+
+  - type: input
+    id: host-os
+    attributes:
+      label: Host OS
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+
+  - type: textarea
+    id: redacted-trace
+    attributes:
+      label: Redacted log or HTTP trace
+      description: Status, request id, or stack. Strip secrets first.
+      render: shell
+
+  - type: checkboxes
+    id: secret-screen
+    attributes:
+      label: Redaction
+      options:
+        - label: This report contains no tokens, API keys, cookies, Authorization headers, account ids, or other personal data.
+          required: true

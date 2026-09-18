@@ -1,0 +1,440 @@
+/**
+ * Provider Workspace — rail.
+ *
+ * Anatomy of the provider list: search row, filter popover, listbox, groups,
+ * option rows and the row's own trail. Column width and the narrow-container
+ * collapse belong to the Shell frame, not here.
+ *
+ * Selectors carry the Shell root because the dashboard aggregate sheet also
+ * carries provider-workspace rules; scoping states that these declarations
+ * belong to the workspace component alone and keeps the two apart whatever
+ * order the bundler emits them in.
+ *
+ * State comes from the DOM the rail module already renders: "aria-selected"
+ * for the current provider, "aria-pressed" for sort, "aria-expanded" for the
+ * filter popover, and "data-status" for the provider's readiness bin. No
+ * second active-class vocabulary is kept alongside those semantics.
+ */
+
+.pws-shell-container.pws-shell-container .pws-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+/* ---- Search + filter --------------------------------------------------- */
+
+.pws-shell-container.pws-shell-container .pws-search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: none;
+}
+
+.pws-shell-container.pws-shell-container .pws-search-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pws-shell-container.pws-shell-container .pws-search-wrap .pws-search-icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.pws-shell-container.pws-shell-container .pws-search-input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding-left: 28px;
+  border-radius: 8px;
+}
+
+.pws-shell-container.pws-shell-container .pws-search-input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-wrap {
+  position: relative;
+  flex: none;
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-btn {
+  display: grid;
+  place-items: center;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-btn:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-btn[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-btn:focus-visible, .pws-shell-container.pws-shell-container .pws-sort-btn:focus-visible, .pws-shell-container.pws-shell-container .providers-workspace-rail-row:focus-visible, .pws-shell-container.pws-shell-container .providers-workspace-rail-row-remove:focus-visible, .pws-shell-container.pws-shell-container .pws-search-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Anchored to the filter button. The option grid keeps a fixed count column so
+   the numbers line up down the menu whatever the label lengths are. */
+.pws-shell-container.pws-shell-container .pws-filter-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  width: 236px;
+  padding: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: 6px;
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-head {
+  margin: 8px 0 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 2px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-option:hover {
+  background: var(--panel-2);
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-option input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-count {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.pws-shell-container.pws-shell-container .pws-sort-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pws-shell-container.pws-shell-container .pws-sort-btn {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pws-shell-container.pws-shell-container .pws-sort-btn:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.pws-shell-container.pws-shell-container .pws-sort-btn[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.pws-shell-container.pws-shell-container .pws-filter-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---- List -------------------------------------------------------------- */
+
+.pws-shell-container.pws-shell-container .pws-rail-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.pws-shell-container.pws-shell-container .pws-rail-empty {
+  padding: 12px 4px;
+  font-size: 12px;
+}
+
+.pws-shell-container.pws-shell-container .pws-rail-group {
+  display: grid;
+  gap: 2px;
+}
+
+.pws-shell-container.pws-shell-container .pws-rail-group-head {
+  padding: 8px 6px 2px;
+}
+
+.pws-shell-container.pws-shell-container .pws-rail-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The removal control shares the row's surface, so the tint lives on the
+   wrapper and the option button stays transparent inside it. */
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-radius: 9px;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row-wrap:hover, .pws-shell-container.pws-shell-container .providers-workspace-rail-row-wrap:focus-within {
+  background: var(--panel-2);
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row-wrap[data-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The leading accent bar is the selected row's primary signal. */
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+  opacity: 0;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row[aria-selected="true"]::before {
+  opacity: 1;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row[data-status="disabled"] {
+  opacity: 0.62;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row[data-status="disabled"][aria-selected="true"] {
+  opacity: 1;
+}
+
+/* ProviderMark renders a bare wrapper around either an asset mark or the
+   letter fallback, so the rail owns the box and the mark fills it. */
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row .providers-workspace-rail-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: var(--radius-xs);
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row .providers-workspace-rail-icon > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-copy {
+  display: grid;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-primary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-name-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-secondary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-trail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+/* Free / local stay on their existing vocabulary: the badge is shared with
+   other provider surfaces, so the rail only decides how it sits in a row. */
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row .pwi-rail-badge {
+  flex: none;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 15px;
+  color: var(--muted);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+
+.pws-shell-container.pws-shell-container .pwi-default-star {
+  display: grid;
+  place-items: center;
+  color: var(--amber, #f0b429);
+}
+
+/* ---- Status ------------------------------------------------------------ */
+
+/* The dot is the only place the rail states health; the rest of the row keeps
+   its own legibility. The three bins map onto the shared modifier names, so a
+   second owner for these colours would be a leak rather than a variant. */
+.pws-shell-container.pws-shell-container .providers-workspace-rail-status {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-status--active {
+  background: var(--green);
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-status--warning {
+  background: var(--amber);
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-status--inactive {
+  background: var(--muted);
+}
+
+/* ---- Removal ----------------------------------------------------------- */
+
+/* Revealed on hover or when the row holds focus, so the same control serves a
+   pointer and a keyboard user without taking the option's own click target. */
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row-remove {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row-wrap:hover .providers-workspace-rail-row-remove, .pws-shell-container.pws-shell-container .providers-workspace-rail-row-wrap:focus-within .providers-workspace-rail-row-remove {
+  opacity: 1;
+}
+
+.pws-shell-container.pws-shell-container .providers-workspace-rail-row-remove:hover {
+  color: var(--red, #ef4444);
+  background: color-mix(in srgb, var(--red, #ef4444) 14%, transparent);
+}
+
+@media (hover: none) {
+  .pws-shell-container.pws-shell-container .providers-workspace-rail-row-remove {
+    opacity: 1;
+  }
+}

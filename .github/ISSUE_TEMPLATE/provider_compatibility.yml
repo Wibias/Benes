@@ -1,0 +1,96 @@
+name: Provider or API compatibility
+description: The Go adapters mishandle an upstream API or a client wire shape.
+labels:
+  - provider-compatibility
+  - provider
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when a preset, a custom base URL, or a client disagrees with what `internal/providers` emits or accepts.
+
+        Default bind is `127.0.0.1:23100`. There is no WebSocket upgrade. Remote bind `0.0.0.0` requires `BENES_API_AUTH_TOKEN` / `x-benes-api-key`.
+
+        Never paste tokens, API keys, cookies, Authorization headers, or personal data. Redact HAR files.
+
+  - type: input
+    id: vendor
+    attributes:
+      label: Upstream provider
+      description: Preset id from `internal/server/provider_presets.json`, or the vendor name.
+      placeholder: anthropic
+    validations:
+      required: true
+
+  - type: input
+    id: listener-path
+    attributes:
+      label: Listener path or capability
+      description: For example `/v1/responses`, `/v1/messages`, SSE, tools, `/v1/models`, OAuth.
+      placeholder: /v1/responses
+    validations:
+      required: true
+
+  - type: dropdown
+    id: talking-client
+    attributes:
+      label: Client that saw the mismatch
+      options:
+        - Codex
+        - Claude Code
+        - OpenAI-compatible SDK
+        - Direct HTTP
+        - OpenCode
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: benes-build
+    attributes:
+      label: benes version or commit
+      placeholder: "0.1.0-preview.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: spec-says
+    attributes:
+      label: Correct behaviour per spec or client
+    validations:
+      required: true
+
+  - type: textarea
+    id: listener-returned
+    attributes:
+      label: What the listener returned
+      description: HTTP status and a redacted body. No tokens.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: smallest-request
+    attributes:
+      label: Smallest redacted request
+      description: curl against 127.0.0.1:23100, or a tiny SDK snippet. No keys.
+      render: shell
+    validations:
+      required: true
+
+  - type: input
+    id: spec-url
+    attributes:
+      label: Upstream spec
+      description: URL, or write `none` if the vendor publishes no spec.
+      placeholder: https://docs.anthropic.com/en/api/messages
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: secret-screen
+    attributes:
+      label: Redaction
+      options:
+        - label: Request and response bodies contain no tokens, API keys, cookies, Authorization headers, or personal data.
+          required: true

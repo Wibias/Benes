@@ -1,0 +1,93 @@
+name: Enforce PR target branch
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - edited
+      - labeled
+      - unlabeled
+      - ready_for_review
+      - synchronize
+  # Trusted CodeRabbit success is a signal only. The SHA is remapped to exactly
+  # one open PR before any mutation.
+  status:
+
+permissions: {}
+
+jobs:
+  resolve:
+    if: >-
+      (github.event_name == 'status' &&
+       github.event.context == 'CodeRabbit' &&
+       github.event.state == 'success' &&
+       github.event.sender.login == 'coderabbitai[bot]' &&
+       github.event.sender.id == 136622811) ||
+      (github.event_name == 'pull_request_target' &&
+       ((github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
+        github.event.label.name == 'gui-screenshot-waived' ||
+        github.event.label.name == 'intake: hygiene-blocked' ||
+        github.event.label.name == 'maintainer-sponsored' ||
+        github.event.label.name == 'test-exception-approved' ||
+        github.event.label.name == 'suppression-approved' ||
+        github.event.label.name == 'generated-change-approved' ||
+        github.event.label.name == 'dependency-change-approved'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pull-number: ${{ steps.resolve.outputs.pull-number }}
+      trusted-ref: ${{ steps.resolve.outputs.trusted-ref }}
+    steps:
+      - name: Checkout trusted PR-quality scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && (github.event.pull_request.base.ref == 'main' && 'main' || 'dev') || 'dev' }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/scripts
+            MAINTAINERS.md
+
+      - name: Resolve trusted gate event to PR
+        id: resolve
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const { resolveTrustedPullNumber } = require("./.github/scripts/pr-quality-resolve.cjs");
+            await resolveTrustedPullNumber({ github, context, core });
+
+  enforce-target:
+    needs: resolve
+    if: >-
+      needs.resolve.outputs.pull-number != '' &&
+      (needs.resolve.outputs.trusted-ref == 'main' ||
+       needs.resolve.outputs.trusted-ref == 'dev')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    concurrency:
+      group: pr-gate-comment-${{ needs.resolve.outputs.pull-number }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout trusted PR-quality scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ needs.resolve.outputs.trusted-ref }}
+          persist-credentials: false
+          sparse-checkout: |
+            .github/scripts
+            MAINTAINERS.md
+
+      - name: Enforce PR target, ancestry, and description
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        env:
+          RESOLVED_PULL_NUMBER: ${{ needs.resolve.outputs.pull-number }}
+        with:
+          script: |
+            const { runPrQualityGate } = require("./.github/scripts/pr-quality-run.cjs");
+            await runPrQualityGate({ github, context, core });

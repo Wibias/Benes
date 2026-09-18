@@ -1,0 +1,272 @@
+name: CI
+
+on:
+  pull_request: {}
+  push:
+    branches: [main, preview, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      go: ${{ steps.scope.outputs.go }}
+      gui: ${{ steps.scope.outputs.gui }}
+      packaging: ${{ steps.scope.outputs.packaging }}
+      keyring: ${{ steps.scope.outputs.keyring }}
+      automation: ${{ steps.scope.outputs.automation }}
+      privacy: ${{ steps.scope.outputs.privacy }}
+      linux: ${{ steps.scope.outputs.linux }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Classify path scope
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          write_all() {
+            {
+              echo "go=true"
+              echo "gui=true"
+              echo "packaging=true"
+              echo "keyring=true"
+              echo "automation=true"
+              echo "privacy=true"
+              echo "linux=true"
+            } >> "$GITHUB_OUTPUT"
+          }
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            write_all
+            exit 0
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            files="$(git diff --name-only "$PR_BASE...$PR_HEAD")"
+          else
+            zero="0000000000000000000000000000000000000000"
+            if [ -z "${PUSH_BEFORE:-}" ] || [ "$PUSH_BEFORE" = "$zero" ]; then
+              write_all
+              exit 0
+            fi
+            files="$(git diff --name-only "$PUSH_BEFORE...$PUSH_SHA")"
+          fi
+          export CI_PR_FILES="$files"
+          json="$(node --experimental-strip-types scripts/ci-pr-scope.ts)"
+          echo "$json"
+          echo "$json" | jq -r '
+            "go=\(.go | tostring)",
+            "gui=\(.gui | tostring)",
+            "packaging=\(.packaging | tostring)",
+            "keyring=\(.keyring | tostring)",
+            "automation=\(.automation | tostring)",
+            "privacy=\(.privacy | tostring)",
+            "linux=\((.gui or .go or .packaging or .automation or .privacy or .keyring) | tostring)"
+          ' >> "$GITHUB_OUTPUT"
+
+  linux:
+    name: linux
+    needs: changes
+    if: needs.changes.outputs.linux == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Setup Go
+        if: needs.changes.outputs.go == 'true'
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Repository automation tests
+        if: needs.changes.outputs.automation == 'true'
+        run: node .github/scripts/run-automation-tests.cjs
+
+      - name: Privacy scan
+        if: needs.changes.outputs.privacy == 'true'
+        run: node --experimental-strip-types scripts/privacy-scan.ts
+
+      - name: GUI lint and build
+        if: needs.changes.outputs.gui == 'true'
+        working-directory: gui
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: CLI help smoke
+        if: needs.changes.outputs.go == 'true'
+        run: go run ./cmd/benes help
+
+  go-core:
+    name: Go core
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    uses: ./.github/workflows/go-core.yml
+
+  credentials:
+    name: credentials ${{ matrix.name }}
+    needs: changes
+    if: needs.changes.outputs.keyring == 'true'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ubuntu
+            runner: ubuntu-latest
+          - name: windows
+            runner: windows-latest
+          - name: macos
+            runner: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Secret Service dependencies (Linux)
+        if: matrix.name == 'ubuntu'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends dbus-x11 gnome-keyring
+
+      - name: OS keyring create/read/delete smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$RUNNER_OS" != "Linux" ]; then
+            node --experimental-strip-types scripts/keyring-smoke.ts
+            exit 0
+          fi
+
+          keyring_home="$(mktemp -d)"
+          runtime_dir="$(mktemp -d)"
+          cleanup() { rm -rf -- "$keyring_home" "$runtime_dir"; }
+          trap cleanup EXIT
+          chmod 700 "$keyring_home" "$runtime_dir"
+          HOME="$keyring_home" XDG_RUNTIME_DIR="$runtime_dir" dbus-run-session -- bash -euo pipefail -c '
+            od -An -N32 -tx1 /dev/urandom |
+              tr -d "[:space:]" |
+              gnome-keyring-daemon --unlock --components=secrets >/dev/null
+            node --experimental-strip-types scripts/keyring-smoke.ts
+          '
+
+  package:
+    name: package ${{ matrix.os }}
+    needs: changes
+    if: needs.changes.outputs.packaging == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Install package dependencies
+        run: npm install --omit=dev
+
+      - name: Build package assets
+        run: npm run build:gui
+
+      - name: Pack
+        shell: bash
+        run: npm pack --json > pack.json
+
+      - name: Verify packed surface
+        run: node .github/scripts/npm-pack-json.cjs verify pack.json
+
+      - name: Install globally
+        shell: bash
+        run: |
+          set -euo pipefail
+          tarball="$(node .github/scripts/npm-pack-json.cjs filename pack.json)"
+          test -n "$tarball"
+          test -f "$tarball"
+          npm install -g "./$tarball"
+
+      - name: benes help
+        run: benes help
+
+  ci:
+    name: ci
+    if: always()
+    needs: [changes, linux, go-core, credentials, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Assert producers succeeded or were skipped
+        shell: bash
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+          echo "$RESULTS" | jq .
+          echo "$RESULTS" | jq -e '.changes.result == "success"' >/dev/null
+          bad=$(echo "$RESULTS" | jq -r '
+            to_entries[]
+            | select(.key != "changes")
+            | select(.value.result != "success" and .value.result != "skipped")
+            | "\(.key)=\(.value.result)"')
+          if [ -n "$bad" ]; then
+            echo "::error::needed job(s) did not succeed: $bad"
+            exit 1
+          fi

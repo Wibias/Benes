@@ -1,0 +1,198 @@
+/**
+ * Provider Workspace — Shell frame.
+ *
+ * Owns the workspace container and the rail/main composition. The rail's own
+ * anatomy lives in provider-workspace-rail.css and the detail pane in
+ * provider-workspace-detail.css, so this file answers one question: how much
+ * room does each side get, and which region scrolls.
+ *
+ * Sizing is container-relative. The Shell is rendered inside a page board and
+ * can be handed less width than the viewport offers, so a viewport breakpoint
+ * cannot describe the layout it should use. Two container widths drive the
+ * primary model; viewport rules follow as the fallback for engines without
+ * container queries.
+ *
+ * Descendant selectors carry the container class because the dashboard
+ * aggregate sheet also describes the workspace; scoping keeps the two apart
+ * whatever order the bundler emits them in.
+ *
+ * The ProviderMark contract at the end is the one deliberate exception: those
+ * class families belong to a shared component rather than to the workspace, so
+ * they are not container-scoped.
+ */
+
+.pws-shell-container {
+  --pws-rail-w: 330px;
+  --pws-gap: 20px;
+  --pws-narrow: 640px;
+  --pws-medium: 960px;
+  --pws-list-max: 360px;
+  container: pws-shell / inline-size;
+  min-width: 0;
+}
+
+/* The rail/main split. Both columns share the row height, and the rail keeps
+   its intrinsic height so a short list does not stretch into empty space. */
+.pws-shell-container.pws-shell-container .pws-root {
+  display: grid;
+  grid-template-columns: var(--pws-rail-w) minmax(0, 1fr);
+  gap: var(--pws-gap);
+  align-items: stretch;
+  min-width: 0;
+}
+
+.pws-shell-container.pws-shell-container .pws-root > .pws-rail {
+  align-self: start;
+  min-width: 0;
+}
+
+.pws-shell-container.pws-shell-container .pws-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+}
+
+.pws-shell-container.pws-shell-container .pws-main > * {
+  min-height: 0;
+}
+
+.pws-shell-container.pws-shell-container .pws-empty-root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  min-height: 0;
+}
+
+.pws-shell-container.pws-shell-container .pws-empty-root--quiet {
+  padding: 24px 16px;
+}
+
+.pws-shell-container.pws-shell-container .pws-empty-hero {
+  max-width: 620px;
+  min-width: 0;
+  text-align: center;
+}
+
+.pws-shell-container.pws-shell-container .pws-empty-hero h2 {
+  margin: 0 0 14px;
+  font-size: 19px;
+}
+
+.pws-shell-container.pws-shell-container .pws-zero-rail {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-width: 0;
+}
+
+.pws-shell-container.pws-shell-container .pws-zero-rail strong {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---- ProviderMark ------------------------------------------------------ */
+
+/* Emitted by components/ProviderMark.tsx for every provider surface, and the
+   per-surface sheets only resize the avatar (18px in the models catalog and
+   subagents, 22px in Add provider, 36px in setup), so the box and the two
+   theme variants stay here rather than inside the container scope above: a
+   workspace-scoped selector would leave those other surfaces without them.
+
+   provider-icons.ts decides per provider: invertDark marks are dark ink drawn
+   for a light plate, and lightPlate marks carry their own backing colour and
+   radius, which ProviderMark.tsx passes down as custom properties. */
+.provider-icon-fallback {
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  font-weight: var(--weight-semibold);
+  font-size: 13px;
+  line-height: 1;
+  user-select: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) img.provider-icon-img--invert-dark {
+    filter: invert(1);
+  }
+}
+
+:root[data-theme="dark"] img.provider-icon-img--invert-dark {
+  filter: invert(1);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) img.provider-icon-img--light-plate {
+    background: var(--provider-icon-light-plate);
+    border-radius: var(--provider-icon-light-plate-radius, 0);
+  }
+}
+
+:root[data-theme="light"] img.provider-icon-img--light-plate {
+  background: var(--provider-icon-light-plate);
+  border-radius: var(--provider-icon-light-plate-radius, 0);
+}
+
+/* ---- Viewport fallback (engines without container queries) ------------- */
+
+@media (max-width: 1180px) {
+  .pws-shell-container {
+    --pws-rail-w: 288px;
+  }
+}
+
+@media (max-width: 900px) {
+  .pws-shell-container {
+    --pws-rail-w: 252px;
+    --pws-gap: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .pws-shell-container.pws-shell-container .pws-root {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .pws-shell-container.pws-shell-container .pws-root > .pws-rail .pws-rail-list {
+    max-height: var(--pws-list-max);
+    overflow-y: auto;
+  }
+}
+
+/* ---- Container-relative layout (primary model) ------------------------ */
+
+/* Medium: the rail narrows to an identity column instead of holding a
+   desktop-sized slot while the detail is squeezed. The override lands on the
+   grid, because a container query never matches the container itself. */
+@container pws-shell (min-width: 640px) and (max-width: 959px) {
+  .pws-shell-container.pws-shell-container .pws-root {
+    grid-template-columns: 252px minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Narrow: one column, rail above detail, and the rail list becomes the only
+   scroller so the search field stays reachable on a short screen. */
+@container pws-shell (max-width: 639px) {
+  .pws-shell-container.pws-shell-container .pws-root {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .pws-shell-container.pws-shell-container .pws-root > .pws-rail .pws-rail-list {
+    max-height: var(--pws-list-max);
+    overflow-y: auto;
+  }
+}

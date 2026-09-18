@@ -1,0 +1,91 @@
+/* Quota aggregation + boot skeleton used by the Providers workspace. */
+
+.pws-capacity-label,
+.pws-capacity-recovery,
+.pws-capacity-incomplete {
+  font-size: 0.7rem;
+}
+
+.pws-capacity-label {
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+
+.pws-capacity-details {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.pws-capacity-recovery {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--muted);
+}
+
+.pws-capacity-recovery span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pws-capacity-recovery strong {
+  color: var(--text);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+@container (max-width: 520px) {
+  .pws-capacity-recovery {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  .pws-capacity-recovery strong {
+    margin-left: 0;
+    white-space: normal;
+  }
+}
+
+.pws-capacity-current {
+  padding-top: 2px;
+}
+
+.pws-capacity-incomplete {
+  /* Semantic amber: WCAG AA on both themes (6.26:1 light, 9.65:1 dark). */
+  color: var(--amber);
+}
+
+.pws-entitlement {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.pws-entitlement-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.pws-entitlement-row strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.providers-workspace--boot {
+  min-height: 600px;
+}
+
+.providers-workspace-rail--boot {
+  min-height: 600px;
+  opacity: 0.35;
+}

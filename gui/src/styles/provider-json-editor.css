@@ -1,0 +1,56 @@
+/* Current Provider raw JSON editor. #237 owner; not the historical pwi-json panel. */
+.provider-json {
+  min-height: 0;
+  height: 100%;
+}
+.provider-json-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+.provider-json-heading {
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  float: none;
+}
+.provider-json-actions {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.provider-json-help,
+.provider-json-field,
+.provider-json-note {
+  grid-column: 1 / -1;
+}
+.provider-json-help {
+  margin: 0;
+  font-size: var(--text-caption);
+}
+.provider-json-field {
+  min-height: 12rem;
+  height: 100%;
+  font-family: var(--font-code);
+  resize: none;
+}
+.provider-json-field:focus {
+  border-color: var(--accent-ring);
+  outline: none;
+}
+.provider-json-note {
+  margin: 0;
+  font-size: var(--text-caption);
+}
+.provider-json-note--ok { color: var(--green); }
+.provider-json-note--err { color: var(--red); }

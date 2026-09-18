@@ -1,0 +1,275 @@
+/* Benes dashboard styles. */
+/* ============================================================================
+   dashboard-workspace — isolated stylesheet (mirrors providers-workspace layout DNA)
+   Namespace: dashboard-workspace-  |  widgets: dbw-
+   Uses only design tokens from styles.css. No gradients.
+   ============================================================================ */
+
+.main-inner:has(.dashboard-workspace-shell) {
+  max-width: 1320px;
+}
+.main-inner:has(.dashboard-workspace-shell--plane) {
+  max-width: none;
+  margin: 0;
+  padding: 26px 0 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-workspace-shell {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ── Main pane ────────────────────────────────────────── */
+
+.dashboard-workspace-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* List sections (Active providers, Available models): keep them compact in
+   workspace view. Rows scroll inside the pane with a pinned header instead of
+   pushing the whole page down. Classic view keeps natural page scroll. */
+.dashboard-workspace-main .tbl-wrap {
+  max-height: 520px;
+  overflow-y: auto;
+  /* Side/bottom inset only — top padding on a sticky scrollport leaks rows above thead. */
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+/* Top inset without sticky-header leaks: margin on the table, not padding on the
+   scrollport. At rest the table sits below the shell border; while scrolled the
+   sticky thead stays flush at the scrollport top. */
+.dashboard-workspace-main .tbl {
+  margin-top: var(--space-3);
+}
+
+.dashboard-workspace-main .tbl thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+
+/* Available models: search + per-provider accordion with model chips */
+.dash-model-acc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dash-model-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.dash-model-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  transition: background var(--motion-fast);
+}
+
+.dash-model-head:hover {
+  background: var(--hover);
+}
+
+.dash-model-head .count {
+  font-family: var(--font-code);
+  font-weight: var(--weight-medium);
+  color: var(--faint);
+  font-size: var(--text-label);
+}
+
+.dash-model-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 14px 14px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 12px;
+}
+
+.dash-model-chip {
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--raised);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+
+.main-inner:has(.dashboard-workspace-shell) {
+  max-width: 1320px;
+}
+
+.dashboard-workspace-shell--plane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+.dashboard-workspace-shell--plane .dashboard-workspace-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+}
+.dashboard-workspace-shell--plane .page-head {
+  margin-bottom: 14px;
+  padding: 0 28px;
+}
+.dashboard-workspace-shell--plane .page-head h2 {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+}
+.plane-board {
+  --plane-line: light-dark(#cccccc, #384147);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
+  color: var(--text);
+}
+.plane-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--plane-line);
+  border-bottom: 1px solid var(--plane-line);
+  background: light-dark(transparent, #202831);
+}
+.plane-stat {
+  min-width: 0;
+  padding: 16px 20px 18px 36px;
+}
+.plane-stat + .plane-stat {
+  padding-left: 20px;
+  border-left: 1px solid var(--plane-line);
+}
+.plane-stat:last-child {
+  padding-right: 36px;
+}
+.plane-kicker {
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.plane-stat-primary {
+  font-size: 22px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.plane-stat-primary--muted { color: var(--muted); font-weight: var(--weight-medium); font-size: 16px; }
+.plane-stat-secondary {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.plane-stat-mono { font-family: var(--font-code); font-size: 13px; color: var(--text); }
+.plane-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+.plane-split-main {
+  min-width: 0;
+  padding: 18px 28px 20px 36px;
+  border-right: 1px solid var(--plane-line);
+}
+.plane-split-side {
+  min-width: 0;
+  padding: 18px 36px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.plane-block { min-width: 0; }
+.plane-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.plane-block-head .plane-kicker { margin-bottom: 0; }
+.plane-block-head .btn { border-radius: var(--radius-pill); }
+.plane-empty { margin: 0; color: var(--muted); font-size: 13px; }
+.plane-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.plane-table th {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: var(--weight-semibold);
+  padding: 0 12px 8px 0;
+  border-bottom: 1px solid var(--plane-line);
+}
+.plane-table td { padding: 10px 12px 10px 0; }
+.plane-table-empty { color: var(--muted); padding-top: 14px; }
+.plane-chart { margin-top: 28px; }
+.plane-chart-plot {
+  height: 88px;
+  position: relative;
+  border-bottom: 1px solid var(--plane-line);
+}
+.plane-chart-baseline {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: var(--plane-line);
+}
+.plane-chart-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.plane-chart-summary { margin-top: 10px; color: var(--muted); font-size: 12px; }
+.plane-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 16px 36px;
+  margin-top: auto;
+  border-top: 1px solid var(--plane-line);
+  background: light-dark(transparent, #202831);
+}
+@media (max-width: 1100px) {
+  .plane-stats { grid-template-columns: 1fr 1fr; }
+  .plane-stat:nth-child(3),
+  .plane-stat:nth-child(4) { border-top: 1px solid var(--plane-line); }
+  .plane-split { grid-template-columns: 1fr; }
+  .plane-split-main { border-right: 0; padding-right: 36px; border-bottom: 1px solid var(--plane-line); }
+  .plane-split-side { padding-left: 36px; }
+}
+@media (max-width: 720px) {
+  .plane-stats { grid-template-columns: 1fr; }
+  .plane-stat + .plane-stat { border-left: 0; padding-left: 36px; border-top: 1px solid var(--plane-line); }
+}

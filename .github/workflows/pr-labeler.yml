@@ -1,0 +1,34 @@
+name: PR Labeler
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, labeled, unlabeled]
+
+permissions: {}
+
+concurrency:
+  group: pr-labeler-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout trusted scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.event.pull_request.base.ref == 'main' && 'main' || 'dev' }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Apply type label from PR title
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const { runPrLabeler } = require("./.github/scripts/pr-labeler-run.cjs");
+            await runPrLabeler({ github, context, core });

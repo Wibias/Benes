@@ -1,0 +1,341 @@
+#!/usr/bin/env bash
+# Bound remote jobs. Install as ~/bin/benes-run.
+#
+#   benes-run <job> <workdir> <limit> <command...>
+#   benes-run status [job]
+#   benes-run log <job> [lines]
+#   benes-run kill <job>
+#
+# Exclusive start publishes $job/held as a regular file that already
+# contains the runner pid, via ln of a prepared stamp. Inspecting
+# occupancy, clearing stale control files, and publishing held all run
+# under a short-lived exclusive lock on $job/gate (util-linux flock,
+# or perl Fcntl LOCK_EX on Git Bash which does not ship flock). The
+# lock is dropped before the child starts. A missing workdir is
+# refused before any job files are created.
+set -uo pipefail
+
+ROOT="${BENES_RUN_DIR:-$HOME/.benes-run}"
+mkdir -p "$ROOT"
+
+fatal() {
+  echo "benes-run: $*" >&2
+  exit 2
+}
+
+record() {
+  printf '%s\n' "$2" > "$1/state.json"
+}
+
+pid_alive() {
+  local pid="$1"
+  [ -n "$pid" ] || return 1
+  kill -0 "$pid" 2>/dev/null
+}
+
+read_owner_file() {
+  local file="$1"
+  local pid
+  [ -f "$file" ] || return 1
+  pid="$(cat "$file" 2>/dev/null)" || return 1
+  case "$pid" in
+    [1-9]*) printf '%s\n' "$pid" ;;
+    *) return 1 ;;
+  esac
+}
+
+owner_pid_of() {
+  read_owner_file "$1/held"
+}
+
+child_pid_of() {
+  local pid
+  [ -f "$1/pid" ] || return 1
+  pid="$(cat "$1/pid" 2>/dev/null)" || return 1
+  case "$pid" in
+    [1-9]*) printf '%s\n' "$pid" ;;
+    *) return 1 ;;
+  esac
+}
+
+job_is_occupied() {
+  local owner child
+  owner="$(owner_pid_of "$1" 2>/dev/null || true)"
+  child="$(child_pid_of "$1" 2>/dev/null || true)"
+  pid_alive "$owner" || pid_alive "$child"
+}
+
+print_job() {
+  local name="$1"
+  local dir="$ROOT/$name"
+  if job_is_occupied "$dir"; then
+    local idle="?"
+    local child="-"
+    if [ -f "$dir/pid" ]; then
+      child="$(cat "$dir/pid" 2>/dev/null || echo -)"
+    fi
+    if [ -f "$dir/log" ]; then
+      idle="$(( $(date +%s) - $(stat -c %Y "$dir/log" 2>/dev/null || echo 0) ))s"
+    fi
+    echo "$name running owner=$(owner_pid_of "$dir") child=$child last-log=$idle"
+    return
+  fi
+  if [ -f "$dir/state.json" ]; then
+    echo "$name $(cat "$dir/state.json")"
+    return
+  fi
+  echo "$name unknown"
+}
+
+child_path() {
+  local path="$PATH"
+  local extra
+  for extra in "$HOME/.local/bin" "$HOME/bin"; do
+    [ -d "$extra" ] || continue
+    case ":$path:" in
+      *":$extra:"*) ;;
+      *) path="$extra:$path" ;;
+    esac
+  done
+  printf '%s' "$path"
+}
+
+# Publish a prepared owner file with ln. The canonical name never exists
+# without the pid already on that inode. ln fails if the dest exists.
+publish_owner_file() {
+  local src="$1"
+  local dest="$2"
+  ln "$src" "$dest" 2>/dev/null
+}
+
+try_claim() {
+  local dir="$1"
+  local stamp="$dir/owner.$$"
+  printf '%s\n' "$$" > "$stamp" || return 1
+  if [ -n "${BENES_RUN_PAUSE_BEFORE_PUBLISH:-}" ]; then
+    sleep "$BENES_RUN_PAUSE_BEFORE_PUBLISH"
+  fi
+  if [ -n "${BENES_RUN_FAIL_PUBLISH:-}" ]; then
+    rm -f "$stamp"
+    return 1
+  fi
+  if publish_owner_file "$stamp" "$dir/held"; then
+    rm -f "$stamp"
+    return 0
+  fi
+  rm -f "$stamp"
+  return 1
+}
+
+# Short-lived mutex for inspect → stale-clean → publish. Released
+# before the child starts. Not a lifetime lock. Git Bash has no
+# util-linux flock; a helper perl holds Fcntl LOCK_EX (LockFileEx)
+# and exits on kill or when the parent pid dies.
+GATE_LOCK_PID=
+gate_acquire() {
+  local dir="$1"
+  local ready n
+  GATE_LOCK_PID=
+  if command -v flock >/dev/null 2>&1; then
+    exec 8>>"$dir/gate" || return 1
+    if ! flock 8; then
+      exec 8>&-
+      return 1
+    fi
+    return 0
+  fi
+  command -v perl >/dev/null 2>&1 || return 1
+  ready="$dir/gate.ready.$$"
+  rm -f "$ready"
+  perl -e '
+    use Fcntl qw(:flock);
+    my ($path, $ready, $ppid) = @ARGV;
+    open my $fh, ">>", $path or exit 1;
+    flock($fh, LOCK_EX) or exit 1;
+    open my $out, ">", $ready or exit 1;
+    close $out;
+    while (kill 0, $ppid) {
+      select(undef, undef, undef, 0.05);
+    }
+  ' "$dir/gate" "$ready" "$$" &
+  GATE_LOCK_PID=$!
+  n=0
+  while [ ! -f "$ready" ]; do
+    n=$((n + 1))
+    if [ "$n" -gt 200 ]; then
+      kill "$GATE_LOCK_PID" 2>/dev/null || true
+      wait "$GATE_LOCK_PID" 2>/dev/null || true
+      GATE_LOCK_PID=
+      rm -f "$ready"
+      return 1
+    fi
+    sleep 0.05
+  done
+  rm -f "$ready"
+  return 0
+}
+
+gate_release() {
+  if [ -n "${GATE_LOCK_PID:-}" ]; then
+    kill "$GATE_LOCK_PID" 2>/dev/null || true
+    wait "$GATE_LOCK_PID" 2>/dev/null || true
+    GATE_LOCK_PID=
+    return 0
+  fi
+  if command -v flock >/dev/null 2>&1; then
+    flock -u 8 2>/dev/null || true
+    exec 8>&-
+  fi
+}
+
+claim_job() {
+  local dir="$1"
+  local rc=1
+  gate_acquire "$dir" || return 1
+  if job_is_occupied "$dir"; then
+    gate_release
+    return 1
+  fi
+  rm -f "$dir/held"
+  if [ -n "${BENES_RUN_PAUSE_AFTER_STALE_CLEAR:-}" ]; then
+    : > "$dir/recovering"
+    sleep "$BENES_RUN_PAUSE_AFTER_STALE_CLEAR"
+    rm -f "$dir/recovering"
+  fi
+  rm -f "$dir/pid" "$dir/stop-requested" "$dir/recovering"
+  rm -f "$dir"/owner.[1-9]* "$dir"/gate.ready.[1-9]*
+  rm -rf "$dir/reclaiming"
+  rm -f "$dir"/reclaiming.[1-9]*
+  try_claim "$dir"
+  rc=$?
+  gate_release
+  return "$rc"
+}
+
+release_job() {
+  local dir="$1"
+  local pid
+  pid="$(owner_pid_of "$dir")" || return 0
+  if [ "$pid" = "$$" ]; then
+    rm -f "$dir/held"
+  fi
+}
+
+write_launcher() {
+  local file="$1"
+  local workdir="$2"
+  local limit="$3"
+  shift 3
+  {
+    echo '#!/usr/bin/env bash'
+    echo 'set -uo pipefail'
+    echo 'CDPATH='
+    printf 'cd -- %q || exit 2\n' "$workdir"
+    printf 'PATH=%q\n' "$(child_path)"
+    printf 'export PATH CDPATH\n'
+    printf 'exec timeout --signal=TERM --kill-after=60s %q' "$limit"
+    local arg
+    for arg in "$@"; do
+      printf ' %q' "$arg"
+    done
+    echo
+  } > "$file"
+  chmod +x "$file"
+}
+
+if [ "${1:-}" = "status" ]; then
+  shift
+  want="${1:-}"
+  if [ -n "$want" ]; then
+    [ -d "$ROOT/$want" ] || { echo "no jobs recorded in $ROOT"; exit 0; }
+    print_job "$want"
+    exit 0
+  fi
+  found=0
+  for dir in "$ROOT"/*; do
+    [ -d "$dir" ] || continue
+    found=1
+    print_job "$(basename "$dir")"
+  done
+  [ "$found" = 1 ] || echo "no jobs recorded in $ROOT"
+  exit 0
+fi
+
+if [ "${1:-}" = "log" ] || [ "${1:-}" = "tail" ]; then
+  shift
+  name="${1:?job name required}"
+  lines="${2:-40}"
+  logf="$ROOT/$name/log"
+  [ -f "$logf" ] || fatal "no log for '$name'"
+  tail -n "$lines" "$logf"
+  exit 0
+fi
+
+if [ "${1:-}" = "kill" ] || [ "${1:-}" = "stop" ]; then
+  shift
+  name="${1:?job name required}"
+  dir="$ROOT/$name"
+  pidf="$dir/pid"
+  [ -f "$pidf" ] || fatal "no pid recorded for '$name'"
+  pid="$(cat "$pidf")"
+  : > "$dir/stop-requested"
+  kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null
+  sleep 3
+  kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+  echo "signalled $name (pid $pid); the owning runner releases the name when wait returns"
+  exit 0
+fi
+
+if [ "${1:-}" = "start" ]; then
+  shift
+fi
+
+[ $# -ge 4 ] || fatal "usage: benes-run <job> <workdir> <limit> <command...>"
+name="$1"
+workdir="$2"
+limit="$3"
+shift 3
+[ -d "$workdir" ] || fatal "workdir is not a directory: $workdir"
+
+dir="$ROOT/$name"
+mkdir -p "$dir"
+if ! claim_job "$dir"; then
+  echo "benes-run: '$name' is already running (owner: $(owner_pid_of "$dir" || echo unknown))." >&2
+  echo "  benes-run status $name" >&2
+  echo "  benes-run kill $name" >&2
+  exit 3
+fi
+
+if [ -n "${BENES_RUN_PAUSE_AFTER_CLAIM:-}" ]; then
+  sleep "$BENES_RUN_PAUSE_AFTER_CLAIM"
+fi
+
+: > "$dir/log"
+record "$dir" "started name=$name limit=$limit at=$(date -Is)"
+write_launcher "$dir/launch" "$workdir" "$limit" "$@"
+
+setsid "$dir/launch" >"$dir/log" 2>&1 &
+child=$!
+echo "$child" > "$dir/pid"
+
+wait "$child"
+rc=$?
+
+if [ -n "${BENES_RUN_HOLD_AFTER_WAIT:-}" ]; then
+  sleep "$BENES_RUN_HOLD_AFTER_WAIT"
+fi
+
+if [ -f "$dir/stop-requested" ]; then
+  record "$dir" "stopped pid=$child at=$(date -Is)"
+  rm -f "$dir/stop-requested"
+elif [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
+  record "$dir" "timeout after=$limit rc=$rc at=$(date -Is)"
+elif [ "$rc" = 0 ]; then
+  record "$dir" "ok rc=0 at=$(date -Is)"
+else
+  record "$dir" "fail rc=$rc at=$(date -Is)"
+fi
+rm -f "$dir/pid"
+release_job "$dir"
+cat "$dir/state.json"
+exit "$rc"

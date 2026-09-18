@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Bound through `git config core.hooksPath` (`npm run setup:hooks`).
+# The merge already succeeded, so a failed dashboard rebuild must not fail the hook.
+npm run postmerge || true

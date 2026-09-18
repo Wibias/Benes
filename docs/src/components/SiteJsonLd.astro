@@ -1,0 +1,35 @@
+---
+/**
+ * schema.org graph for the docs site and the published package. The URLs come
+ * from src/navigation.ts, so the structured data cannot advertise an origin
+ * different from the one the site is built for.
+ */
+import { packageUrl, repositoryUrl, siteUrl } from '../navigation';
+
+const graph = [
+  {
+    '@type': 'WebSite',
+    '@id': `${siteUrl}/#site`,
+    url: `${siteUrl}/`,
+    name: 'benes documentation',
+    inLanguage: 'en',
+    publisher: { '@id': `${siteUrl}/#project` },
+  },
+  {
+    '@type': 'SoftwareApplication',
+    '@id': `${siteUrl}/#project`,
+    name: 'benes',
+    applicationCategory: 'DeveloperApplication',
+    operatingSystem: 'Linux, macOS, Windows',
+    isAccessibleForFree: true,
+    license: 'https://opensource.org/license/mit',
+    codeRepository: repositoryUrl,
+    installUrl: packageUrl,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    description:
+      'Local Go proxy. Client tools keep their own interfaces and send OpenAI Responses, Anthropic Messages, or Chat Completions to one listener on 127.0.0.1.',
+  },
+];
+---
+
+<script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', '@graph': graph })} />

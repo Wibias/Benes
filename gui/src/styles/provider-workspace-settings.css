@@ -1,0 +1,580 @@
+/*
+ * Provider workspace - Access tab (settings surface).
+ *
+ * Owns the Access surface: the credential-lane switch, the OAuth / Codex account
+ * table, the API-key table, the OAuth status line, the account and key rows, the
+ * inline add-key form, and the auth load / empty / error / waiting states.
+ *
+ * Every colour, space, radius and type step below is an accepted Benes role
+ * token, resolved per theme by light-dark() under :root[data-theme], so this file
+ * states no theme pair and no raw value that a role already owns.
+ *
+ * Ownership against gui/src/styles-providers.css (the peer sheet that also paints
+ * .providers-access-*): this file is imported first, so a peer declaration of the
+ * same property on the same selector wins on cascade order. Nothing here restates
+ * a declaration the peer already owns; what remains is either a property the peer
+ * never states, or a deliberate out-specified override documented at the rule.
+ *
+ * Rules are scoped to the access surface, so the shared classes used inside it
+ * (.providers-block, .providers-link, .providers-menu, .badge, .input, .muted,
+ * .faint, .sr-only) keep the owner that already styles them.
+ */
+
+.providers-access {
+  /* identity, state/key, quota, reset/API default, order/state, validated, actions */
+  --pw-access-actions: 32px;
+  --pw-access-columns:
+    minmax(0, 1.25fr)
+    minmax(0, 1.05fr)
+    minmax(0, 0.7fr)
+    minmax(0, 1.1fr)
+    minmax(0, 1.15fr)
+    minmax(0, 0.95fr)
+    var(--pw-access-actions);
+
+  min-width: 0;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-body);
+}
+
+/* ---------------------------------------------------------------- lane grid */
+
+/* The Access lane owns its column template: seven tracks that every lane
+   container joins with subgrid, so a column means the same thing in both lanes.
+   Every track can shrink to zero, which is what keeps the lane inside the panel
+   at narrow widths instead of overflowing it. The peer sheet still carries the
+   minmax(max-content, ...) template on .providers-access-tables; this selector
+   adds the ancestor class so it out-specifies that landed declaration, because a
+   max-content floor is exactly what pushed the lane past its panel. */
+.providers-access > .providers-access-tables {
+  grid-template-columns: var(--pw-access-columns);
+}
+
+.providers-access-tables {
+  /* The peer sheet owns the grid itself (display, gutter, min-width). This is the
+     one extra: a lane switch keeps both credential lanes mounted in the same grid
+     row, and starting them at the row's top edge keeps the visible lane's height
+     its own content height instead of the taller hidden lane's. */
+  align-items: start;
+}
+
+/* Nothing in a lane may floor a shared track: a credential row has to shrink into
+   a narrow panel instead of pushing the lane past it. */
+.providers-access-tables > .providers-block,
+.providers-access-tables > .providers-block > :not(.providers-block-head),
+.providers-access-oauth,
+.pwi-auth-body,
+.providers-access-table,
+.providers-access-table-head,
+.providers-access-table-body,
+.providers-access-table-row,
+.providers-access-table-head > *,
+.providers-access-table-row > *,
+.pwi-auth-list,
+.pwi-auth-acct,
+.pwi-auth-status-row,
+.pwi-auth-row,
+.pwi-auth-row-main,
+.pwi-auth-row-copy,
+.pwi-auth-row-label,
+.pwi-auth-row-secondary,
+.pwi-auth-row-remove,
+.pwi-auth-state,
+.pwi-auth-wait,
+.pwi-auth-wait-copy,
+.pwi-auth-add-key {
+  min-width: 0;
+}
+
+.providers-access-tables > .providers-block {
+  padding-block: var(--space-2) var(--space-3);
+}
+
+/* Every direct child of a lane block spans the lane unless it is the head. The
+   peer sheet states the same span for the element kinds a lane has today (a
+   block div, its section); stating it element-agnostically is what keeps a later
+   child - another surface, a list, a card - from being auto-placed into track 1
+   of the seven-track lane. */
+.providers-access-tables > .providers-block > :not(.providers-block-head) {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+}
+
+/* ------------------------------------------------------------ lane switch */
+
+/* The peer sheet owns the switch's paint (inline-flex, 36px box, 2px gutter,
+   border, radius, surface, the [role=tab] control and its hover/active states).
+   What is added here is the geometry the two tab labels need to stay one line
+   inside a narrow panel; the tabs themselves must never be pushed past it. */
+.providers-access-lanes {
+  max-width: 100%;
+}
+
+.providers-access-lanes > button {
+  min-height: 30px;
+  text-align: center;
+  white-space: nowrap;
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
+}
+
+.providers-access-head-actions {
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ table */
+
+/* The lane participants: the table stacks and the row lists each declare the
+   subgrid template, so a column means the same thing at every depth and any
+   surface between them can still take the lane's full width. The table's own
+   grid, gutter and paddings stay with the peer sheet. */
+.pwi-auth-list {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+}
+
+.pwi-auth-list {
+  min-height: 52px;
+  margin-block: 0;
+  margin-inline-end: calc(-1 * var(--space-4));
+  padding: 0 var(--space-4) 0 0;
+  list-style: none;
+  overscroll-behavior: contain;
+}
+
+/* --------------------------------------------------------------- row cells */
+
+.providers-access-account {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* Identity stays full strength; state, recency and quota read as secondary. */
+.providers-access-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.providers-access-quota {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.providers-access-quota-reset {
+  overflow-wrap: anywhere;
+}
+
+.providers-access-validated {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.providers-access-order-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.providers-access-order-info {
+  align-items: center;
+}
+
+/* The peer sheet strips the priority select down to its label text; it may still
+   not floor a shared track, and it keeps the lane's control height. */
+.providers-access-order {
+  min-width: 0;
+  height: var(--control-sm);
+}
+
+.providers-access-row-menu {
+  min-width: var(--pw-access-actions);
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------ status dots */
+
+.pwi-auth-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-round);
+  background: var(--muted);
+}
+
+/* One dot vocabulary: ok is healthy, warn is attention, off is inactive. A row
+   pill dot inside a lane keeps the colours its own owner already gives it. */
+.pwi-auth-dot--ok {
+  background: var(--green);
+}
+
+.pwi-auth-dot--warn {
+  background: var(--amber);
+}
+
+.pwi-auth-dot--off {
+  background: var(--muted);
+}
+
+/* ------------------------------------------------- OAuth body children */
+
+/* Inside the OAuth body the seven tracks belong to the lane participants, which
+   declare subgrid themselves. Every other direct child is a content, status or
+   waiting surface - the provider card, the cockpit import control, the account
+   load states, the login wait - and takes the lane's whole width. Auto-placement
+   would drop such a surface into track 1, a seventh of the lane, which is how a
+   card ends up ~140px wide and taller than the lane it sits in. */
+.pwi-auth-body > * {
+  grid-column: 1 / -1;
+}
+
+/* The row lists are participants, so their children span the tracks the list
+   joins: today that is an account row and a key row. */
+.pwi-auth-list > * {
+  grid-column: 1 / -1;
+}
+
+/* ------------------------------------------------------- OAuth status line */
+
+.pwi-auth-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-md);
+}
+
+.pwi-auth-status-text {
+  color: var(--text);
+  font-size: var(--text-control);
+}
+
+.pwi-auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+/* ---------------------------------------------------------- account rows */
+
+/* One account is one row: the row's primary control - the whole identity line -
+   takes the free width, the text actions and the remove glyph sit at its end.
+   The peer sheet owns the row's padding and paints no hover or active surface,
+   so nothing here re-adds one; the active account reads from its dot, its badge
+   and aria-current. */
+.pwi-auth-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.pwi-auth-acct {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The identity line is a button, and a Benes row must not wear the platform's
+   button: no face, no border, no centred Arial label. Everything the user reads
+   comes from the copy block inside it. */
+.pwi-auth-row-main {
+  flex: 1 1 14rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* A disabled row (re-auth, cooldown, another switch in flight) keeps its colours
+   because its badges carry the state; only the pointer affordance goes away. */
+.pwi-auth-row-main:disabled {
+  cursor: default;
+}
+
+/* Badges keep their own width; the copy absorbs the remaining space. */
+.pwi-auth-row-main > .badge {
+  flex: none;
+}
+
+.pwi-auth-row-copy {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+}
+
+.pwi-auth-row-label {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+/* Secondary lines are the account's address, id, health summary and cooldown
+   hint. They wrap rather than widen the row, and the shared .faint role keeps
+   the summary quieter than the line above it even though this rule sets the
+   muted tone for the plain case. */
+.pwi-auth-row-secondary {
+  color: var(--muted);
+  font-size: var(--text-caption);
+  overflow-wrap: anywhere;
+}
+
+.pwi-auth-row-secondary.faint {
+  color: var(--faint);
+}
+
+/* Remove is the row's destructive control: a trash glyph on the peer sheet's
+   flat ghost treatment, held to a real target size and turning destructive on
+   hover. The peer's row-button rule out-specifies a bare class here, so the
+   selector repeats the row context. */
+.providers-access .pwi-auth-row .pwi-auth-row-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--control-sm);
+  min-height: var(--control-sm);
+}
+
+.providers-access .pwi-auth-row .pwi-auth-row-remove:hover:not(:disabled) {
+  color: var(--red);
+}
+
+.pwi-auth-acct-quota {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-block: var(--space-1) var(--space-2);
+  padding-inline-start: var(--space-5);
+}
+
+.pwi-auth-acct-quota-stale {
+  margin: 0;
+  font-size: var(--text-caption);
+}
+
+/* -------------------------------------------------------- add key / states */
+
+.pwi-auth-add-key {
+  padding-block: var(--space-2);
+}
+
+.pwi-auth-add-key > .input {
+  flex: 1 1 16rem;
+}
+
+.pwi-auth-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-control);
+}
+
+.pwi-auth-state--error {
+  color: var(--red);
+}
+
+.pwi-auth-state--empty {
+  justify-content: center;
+  padding-block: var(--space-4);
+}
+
+.pwi-auth-wait {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.pwi-auth-wait-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.pwi-auth-wait-title {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+.pwi-spin-inline {
+  flex: none;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  margin-block-start: var(--space-0-5);
+  border: 2px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: var(--radius-round);
+  animation: pw-access-spin 700ms linear infinite;
+}
+
+@keyframes pw-access-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pwi-device-code-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+}
+
+.pwi-device-code {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xs);
+  background: var(--raised);
+  color: var(--text);
+  font-family: var(--font-code);
+  letter-spacing: var(--tracking-wide);
+}
+
+/* ------------------------------------------------------- hint / feedback */
+
+/* The peer sheet owns the hint and the feedback line; only the amber tone is
+   stated here, because the peer names the ok and error tones and not this one. */
+.providers-access-feedback.is-warn {
+  color: var(--amber);
+}
+
+/* --------------------------------------------------- credential selection */
+
+.providers-access-selection-edit {
+  display: grid;
+  gap: var(--space-3);
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-top: 1px solid var(--border-soft);
+}
+
+.providers-access-selection-edit > label {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+
+/* ---------------------------------------------------------------- focus */
+
+.providers-access :is(button, select, input, summary, a, [role='tab']):focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 760px) {
+  .providers-access {
+    --pw-access-actions: 28px;
+  }
+
+  .pwi-auth-list {
+    margin-inline-end: 0;
+    padding-inline-end: 0;
+  }
+
+  .providers-access-lanes {
+    overflow-x: auto;
+  }
+}
+
+/* Below the point where seven tracks stop being readable, a lane becomes a single
+   full-width block: every cell takes the lane and the row's own gap rhythm keeps
+   the pairing readable. The header keeps the same placement, so every value stays
+   labelled and the order tooltip stays reachable. */
+@media (max-width: 480px) {
+  .providers-access {
+    --pw-access-columns: minmax(0, 1fr);
+  }
+
+  .providers-access-table-head,
+  .providers-access-table-row {
+    column-gap: var(--space-2);
+    row-gap: var(--space-1);
+  }
+
+  .providers-access-tables .providers-block-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .providers-access-lanes {
+    overflow-x: visible;
+  }
+
+  .providers-access-table-head > :nth-child(1),
+  .providers-access-table-row > :nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .providers-access-table-head > :nth-child(7),
+  .providers-access-table-row > :nth-child(7) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .providers-access-table-head > :nth-child(2),
+  .providers-access-table-row > :nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .providers-access-table-head > :nth-child(3),
+  .providers-access-table-row > :nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .providers-access-table-head > :nth-child(4),
+  .providers-access-table-row > :nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .providers-access-table-head > :nth-child(5),
+  .providers-access-table-row > :nth-child(5) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .providers-access-table-head > :nth-child(6),
+  .providers-access-table-row > :nth-child(6) {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwi-spin-inline {
+    animation: none;
+  }
+}
+

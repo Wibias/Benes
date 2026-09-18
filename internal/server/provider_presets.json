@@ -1,0 +1,864 @@
+{
+  "providers": [
+    {
+      "id": "openai",
+      "label": "OpenAI (Codex login)",
+      "adapter": "openai-responses",
+      "baseUrl": "https://chatgpt.com/backend-api/codex",
+      "auth": "forward",
+      "codexAccountMode": "pool",
+      "provider": {
+        "adapter": "openai-responses",
+        "baseUrl": "https://chatgpt.com/backend-api/codex",
+        "authMode": "forward",
+        "codexAccountMode": "pool"
+      },
+      "note": "Codex login account pool (default) or Direct main-account mode via codexAccountMode"
+    },
+    {
+      "id": "cursor",
+      "label": "Cursor (experimental)",
+      "adapter": "cursor",
+      "baseUrl": "https://api2.cursor.sh",
+      "auth": "oauth",
+      "defaultModel": "auto",
+      "oauthProvider": "cursor",
+      "note": "Experimental Cursor bridge. Live transport and live model discovery are enabled after a standalone PKCE browser login via 'benes login cursor'; native read/write/delete/shell/fetch execution is disabled by default and request text such as Codex sandbox markers never authorizes it. Set \"nativeLocalExec\": \"on\" on providers.cursor in ~/.benes/config.json (dashboard: Providers → Cursor → Edit JSON) only for a trusted local experiment where every data-plane caller is trusted. \"off\" denies all, \"codex-sandbox\" is accepted for backwards compatibility but fails closed, and legacy \"unsafeAllowNativeLocalExec\": true still means explicit operator opt-in."
+    },
+    {
+      "id": "xai",
+      "label": "xAI Grok",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.x.ai/v1",
+      "auth": "oauth",
+      "defaultModel": "grok-4.5",
+      "oauthProvider": "xai",
+      "models": [
+        "grok-4.6",
+        "grok-4.5",
+        "grok-4.3",
+        "grok-4.20-0309-reasoning",
+        "grok-4.20-0309-non-reasoning",
+        "grok-build-0.1",
+        "grok-composer-2.5-fast"
+      ],
+      "note": "Log in with your Grok account"
+    },
+    {
+      "id": "command-code",
+      "label": "Command Code - Auth",
+      "adapter": "command-code",
+      "baseUrl": "https://api.commandcode.ai",
+      "auth": "oauth",
+      "defaultModel": "deepseek/deepseek-v4-flash",
+      "oauthProvider": "command-code",
+      "models": [
+        "deepseek/deepseek-v4-pro",
+        "deepseek/deepseek-v4-flash",
+        "zai-org/glm-5.3",
+        "zai-org/glm-5.2",
+        "meta/muse-spark-1.2",
+        "meta/muse-spark-1.2-contributor",
+        "meta/muse-spark-1.1"
+      ],
+      "note": "Log in with your Command Code account"
+    },
+    {
+      "id": "anthropic",
+      "label": "Anthropic Claude",
+      "adapter": "anthropic",
+      "baseUrl": "https://api.anthropic.com",
+      "auth": "oauth",
+      "defaultModel": "claude-sonnet-5",
+      "oauthProvider": "anthropic",
+      "models": [
+        "claude-fable-5",
+        "claude-sonnet-5",
+        "claude-opus-5",
+        "claude-opus-4-8",
+        "claude-opus-4-7",
+        "claude-opus-4-6",
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5"
+      ],
+      "note": "Log in with your Claude account"
+    },
+    {
+      "id": "anthropic-apikey",
+      "label": "Anthropic (API key)",
+      "adapter": "anthropic",
+      "baseUrl": "https://api.anthropic.com",
+      "auth": "key",
+      "defaultModel": "claude-sonnet-5",
+      "dashboardUrl": "https://console.anthropic.com/settings/keys",
+      "note": "Direct Anthropic API billing — no Claude subscription"
+    },
+    {
+      "id": "kimi",
+      "label": "Kimi",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.kimi.com/coding/v1",
+      "auth": "oauth",
+      "defaultModel": "kimi-k2.7-code",
+      "oauthProvider": "kimi",
+      "models": [
+        "k3",
+        "k3[1m]",
+        "kimi-k2.7-code",
+        "kimi-k2.7-code-highspeed",
+        "kimi-k2.6",
+        "kimi-k2.5",
+        "kimi-for-coding"
+      ],
+      "note": "Log in with your Kimi account"
+    },
+    {
+      "id": "nous",
+      "label": "Nous Portal",
+      "adapter": "openai-chat",
+      "baseUrl": "https://inference-api.nousresearch.com/v1",
+      "auth": "oauth",
+      "defaultModel": "tencent/hy3:free",
+      "oauthProvider": "nous",
+      "dashboardUrl": "https://portal.nousresearch.com",
+      "models": [
+        "tencent/hy3:free",
+        "poolside/laguna-s-2.1:free",
+        "stepfun/step-3.7-flash:free",
+        "poolside/laguna-xs-2.1:free"
+      ],
+      "note": "Nous Research subscription gateway. OAuth device login with your own Portal account; mixed paid + :free models discovered live (fallback seed 2026-08-10: tencent/hy3:free, poolside/laguna-s-2.1:free, stepfun/step-3.7-flash:free, poolside/laguna-xs-2.1:free)."
+    },
+    {
+      "id": "openai-apikey",
+      "label": "OpenAI API",
+      "adapter": "openai-responses",
+      "baseUrl": "https://api.openai.com/v1",
+      "auth": "key",
+      "defaultModel": "gpt-5.5",
+      "dashboardUrl": "https://platform.openai.com/api-keys"
+    },
+    {
+      "id": "umans",
+      "label": "Umans AI Coding Plan",
+      "adapter": "anthropic",
+      "baseUrl": "https://api.code.umans.ai",
+      "auth": "key",
+      "defaultModel": "umans-coder",
+      "dashboardUrl": "https://app.umans.ai/billing",
+      "note": "Coding plan via Anthropic Messages"
+    },
+    {
+      "id": "opencode-go",
+      "label": "opencode go",
+      "adapter": "openai-chat",
+      "baseUrl": "https://opencode.ai/zen/go/v1",
+      "auth": "key",
+      "defaultModel": "kimi-k2.7-code",
+      "dashboardUrl": "https://opencode.ai/auth",
+      "note": "GLM, DeepSeek, Kimi, Qwen, MiMo… Grok 4.5/4.6 use Responses; other Go models stay Chat."
+    },
+    {
+      "id": "neuralwatt",
+      "label": "Neuralwatt Cloud",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.neuralwatt.com/v1",
+      "auth": "key",
+      "defaultModel": "glm-5.3",
+      "dashboardUrl": "https://portal.neuralwatt.com"
+    },
+    {
+      "id": "openrouter",
+      "label": "OpenRouter",
+      "adapter": "openai-chat",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "auth": "key",
+      "dashboardUrl": "https://openrouter.ai/keys"
+    },
+    {
+      "id": "cline-pass",
+      "label": "ClinePass",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.cline.bot/api/v1",
+      "auth": "key",
+      "defaultModel": "cline-pass/kimi-k3",
+      "dashboardUrl": "https://app.cline.bot",
+      "note": "ClinePass subscription API. Uses a Cline API key and the full cline-pass/<model> upstream slug; quota is shared across the account's rolling 5-hour, weekly, and monthly limits."
+    },
+    {
+      "id": "cline",
+      "label": "Cline",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.cline.bot/api/v1",
+      "auth": "key",
+      "defaultModel": "anthropic/claude-sonnet-4-6",
+      "dashboardUrl": "https://app.cline.bot",
+      "note": "Cline usage-billing API: one key, 100+ models, OpenRouter-style ids. Promotional free models are IDE/CLI-only per Cline docs; minimax/minimax-m2.5 is the documented API free experimentation model."
+    },
+    {
+      "id": "orcarouter",
+      "label": "OrcaRouter",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.orcarouter.ai/v1",
+      "auth": "key",
+      "defaultModel": "openai/gpt-5.5",
+      "dashboardUrl": "https://www.orcarouter.ai/console",
+      "note": "OpenAI-compatible adaptive router. Default is a tool-capable model; orcarouter/auto (adaptive routing) is also selectable. Full catalog: https://www.orcarouter.ai/models"
+    },
+    {
+      "id": "bizrouter",
+      "label": "BizRouter",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.bizrouter.ai/v1",
+      "auth": "key",
+      "defaultModel": "openai/gpt-5.6-sol",
+      "dashboardUrl": "https://bizrouter.ai/settings/keys",
+      "note": "Korean enterprise LLM gateway. Per-key allowed models are discovered live from /v1/models. Full catalog: https://bizrouter.ai/models"
+    },
+    {
+      "id": "groq",
+      "label": "Groq",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.groq.com/openai/v1",
+      "auth": "key",
+      "dashboardUrl": "https://console.groq.com/keys"
+    },
+    {
+      "id": "google",
+      "label": "Google Gemini",
+      "adapter": "google",
+      "baseUrl": "https://generativelanguage.googleapis.com",
+      "auth": "key",
+      "defaultModel": "gemini-3.5-flash",
+      "dashboardUrl": "https://aistudio.google.com/apikey"
+    },
+    {
+      "id": "google-vertex",
+      "label": "Google Vertex AI",
+      "adapter": "google",
+      "baseUrl": "https://aiplatform.googleapis.com",
+      "auth": "key",
+      "defaultModel": "gemini-3-pro",
+      "dashboardUrl": "https://console.cloud.google.com/vertex-ai"
+    },
+    {
+      "id": "azure-openai",
+      "label": "Azure OpenAI",
+      "adapter": "azure-openai",
+      "baseUrl": "https://{resource}.openai.azure.com/openai",
+      "auth": "key",
+      "dashboardUrl": "https://portal.azure.com"
+    },
+    {
+      "id": "ollama",
+      "label": "Ollama (local)",
+      "adapter": "openai-chat",
+      "baseUrl": "http://localhost:11434/v1",
+      "auth": "local",
+      "note": "Local — key usually blank"
+    },
+    {
+      "id": "vllm",
+      "label": "vLLM (local)",
+      "adapter": "openai-chat",
+      "baseUrl": "http://localhost:8000/v1",
+      "auth": "local",
+      "note": "Local — key usually blank"
+    },
+    {
+      "id": "lm-studio",
+      "label": "LM Studio (local)",
+      "adapter": "openai-chat",
+      "baseUrl": "http://localhost:1234/v1",
+      "auth": "local",
+      "note": "Local — no key needed"
+    },
+    {
+      "id": "deepseek",
+      "label": "DeepSeek",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.deepseek.com",
+      "responsesPath": "/responses",
+      "auth": "key",
+      "defaultModel": "deepseek-v4-flash",
+      "dashboardUrl": "https://platform.deepseek.com/api_keys"
+    },
+    {
+      "id": "cerebras",
+      "label": "Cerebras",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.cerebras.ai/v1",
+      "auth": "key",
+      "defaultModel": "gpt-oss-120b",
+      "dashboardUrl": "https://cloud.cerebras.ai/platform/apikeys"
+    },
+    {
+      "id": "chutes",
+      "label": "Chutes",
+      "adapter": "openai-chat",
+      "baseUrl": "https://llm.chutes.ai/v1",
+      "auth": "key",
+      "dashboardUrl": "https://chutes.ai/auth/start",
+      "note": "Shared OpenAI-compatible LLM gateway only; live discovery exposes tool-capable rows. User-deployed custom Chute endpoints and non-LLM APIs require a custom provider."
+    },
+    {
+      "id": "deepinfra",
+      "label": "DeepInfra",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.deepinfra.com/v1/openai",
+      "auth": "key",
+      "dashboardUrl": "https://deepinfra.com/dash/api_keys",
+      "note": "OpenAI-compatible chat models only; live discovery excludes non-chat rows from DeepInfra's mixed model catalog."
+    },
+    {
+      "id": "hyperbolic",
+      "label": "Hyperbolic",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.hyperbolic.xyz/v1",
+      "auth": "key",
+      "dashboardUrl": "https://app.hyperbolic.ai",
+      "note": "Serverless text and vision-language chat models only; Hyperbolic's separate image, audio, and GPU endpoints are out of scope."
+    },
+    {
+      "id": "nscale",
+      "label": "Nscale Serverless Inference",
+      "adapter": "openai-chat",
+      "baseUrl": "https://inference.api.nscale.com/v1",
+      "auth": "key",
+      "defaultModel": "meta-llama/Llama-3.1-8B-Instruct",
+      "dashboardUrl": "https://console.nscale.com",
+      "note": "Serverless OpenAI-compatible inference. Live discovery admits only the tool-capable model established by Nscale's official API example; other mixed-catalog rows remain hidden pending equivalent evidence."
+    },
+    {
+      "id": "vultr",
+      "label": "Vultr Serverless Inference",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.vultrinference.com/v1",
+      "auth": "key",
+      "defaultModel": "kimi-k2-instruct",
+      "dashboardUrl": "https://my.vultr.com",
+      "note": "Serverless Inference subscription API. Live discovery exposes only kimi-k2-instruct because Vultr documents it as the sole tool-calling model."
+    },
+    {
+      "id": "baseten",
+      "label": "Baseten Model APIs",
+      "adapter": "openai-chat",
+      "baseUrl": "https://inference.baseten.co/v1",
+      "auth": "key",
+      "dashboardUrl": "https://app.baseten.co/settings/api_keys",
+      "note": "Shared Model APIs only (personal API key, or team key with Call Model APIs access); dedicated Truss predict endpoints are outside this preset."
+    },
+    {
+      "id": "commandcode",
+      "label": "Command Code - API",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.commandcode.ai/provider/v1",
+      "auth": "key",
+      "defaultModel": "deepseek/deepseek-v4-flash",
+      "dashboardUrl": "https://commandcode.ai/studio/",
+      "note": "Command Code Provider API (OpenAI-compatible); API access requires the Provider plan. Use `benes login command-code` for OAuth account login (imports an existing local Command Code CLI credential when present). Docs: https://commandcode.ai/docs/provider."
+    },
+    {
+      "id": "sambanova",
+      "label": "SambaNova Cloud",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.sambanova.ai/v1",
+      "auth": "key",
+      "dashboardUrl": "https://cloud.sambanova.ai/apis",
+      "note": "SambaNova Cloud text-generation models only; private SambaStudio deployment endpoints are outside this preset."
+    },
+    {
+      "id": "nebius",
+      "label": "Nebius Token Factory",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.tokenfactory.nebius.com/v1",
+      "auth": "key",
+      "dashboardUrl": "https://tokenfactory.nebius.com",
+      "note": "Shared Token Factory text-output inference only; live discovery excludes embedding and image-generation rows."
+    },
+    {
+      "id": "digitalocean",
+      "label": "DigitalOcean Serverless Inference",
+      "adapter": "openai-chat",
+      "baseUrl": "https://inference.do-ai.run/v1",
+      "auth": "key",
+      "dashboardUrl": "https://cloud.digitalocean.com/model-studio/manage-keys",
+      "note": "Shared Serverless Inference Chat Completions only; agent-specific, dedicated, Responses-only, embedding, and media-generation models are outside this preset."
+    },
+    {
+      "id": "scaleway",
+      "label": "Scaleway Generative APIs",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.scaleway.ai/v1",
+      "auth": "key",
+      "dashboardUrl": "https://console.scaleway.com/generative-api",
+      "note": "Shared Generative APIs Serverless Chat Completions only; project-qualified and dedicated deployment hosts require a custom provider.",
+      "freeTier": true
+    },
+    {
+      "id": "featherless",
+      "label": "Featherless AI",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.featherless.ai/v1",
+      "auth": "key",
+      "dashboardUrl": "https://featherless.ai/account/api-keys",
+      "note": "Authenticated first page of popular chat models only; live discovery admits at most 100 plan-available, ungated rows whose metadata explicitly reports tool use."
+    },
+    {
+      "id": "novita",
+      "label": "Novita AI",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.novita.ai/openai/v1",
+      "auth": "key",
+      "dashboardUrl": "https://novita.ai/settings/key-management",
+      "note": "Public live catalog filtered to rows that explicitly report chat type and Chat Completions support; key validity remains unknown until an authenticated inference request."
+    },
+    {
+      "id": "together",
+      "label": "Together",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.together.xyz/v1",
+      "auth": "key",
+      "dashboardUrl": "https://api.together.xyz/settings/api-keys"
+    },
+    {
+      "id": "fireworks",
+      "label": "Fireworks",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.fireworks.ai/inference/v1",
+      "auth": "key",
+      "dashboardUrl": "https://fireworks.ai/account/api-keys"
+    },
+    {
+      "id": "firepass",
+      "label": "Fire Pass (Fireworks Kimi)",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.fireworks.ai/inference/v1",
+      "auth": "key",
+      "dashboardUrl": "https://fireworks.ai/account/api-keys",
+      "note": "Model data frozen pending Tier-2 entitlement proof"
+    },
+    {
+      "id": "moonshot",
+      "label": "Moonshot (Kimi API)",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.moonshot.ai/v1",
+      "auth": "key",
+      "defaultModel": "kimi-k2.7-code",
+      "dashboardUrl": "https://platform.moonshot.ai/console/api-keys",
+      "note": "International default (api.moonshot.ai). China accounts: choose China (.cn) or Custom for api.moonshot.cn.",
+      "baseUrlChoices": [
+        {
+          "id": "international",
+          "label": "International (.ai)",
+          "baseUrl": "https://api.moonshot.ai/v1"
+        },
+        {
+          "id": "china",
+          "label": "China (.cn)",
+          "baseUrl": "https://api.moonshot.cn/v1"
+        },
+        {
+          "id": "custom",
+          "label": "Custom"
+        }
+      ]
+    },
+    {
+      "id": "huggingface",
+      "label": "Hugging Face",
+      "adapter": "openai-chat",
+      "baseUrl": "https://router.huggingface.co/v1",
+      "auth": "key",
+      "dashboardUrl": "https://huggingface.co/settings/tokens"
+    },
+    {
+      "id": "nvidia",
+      "label": "NVIDIA NIM",
+      "adapter": "openai-chat",
+      "baseUrl": "https://integrate.api.nvidia.com/v1",
+      "auth": "key",
+      "dashboardUrl": "https://build.nvidia.com",
+      "note": "Free tier on NVIDIA NIM — API key still required (get a free key at build.nvidia.com).",
+      "freeTier": true
+    },
+    {
+      "id": "venice",
+      "label": "Venice",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.venice.ai/api/v1",
+      "auth": "key",
+      "dashboardUrl": "https://venice.ai/settings/api"
+    },
+    {
+      "id": "zai",
+      "label": "Z.AI — GLM Coding Plan",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.z.ai/api/coding/paas/v4",
+      "auth": "key",
+      "defaultModel": "glm-5.3",
+      "dashboardUrl": "https://z.ai/manage-apikey/apikey-list",
+      "note": "GLM-5.3 coding subscription"
+    },
+    {
+      "id": "zhipu-bigmodel",
+      "label": "Zhipu AI — BigModel",
+      "adapter": "openai-chat",
+      "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+      "auth": "key",
+      "defaultModel": "glm-4.6",
+      "dashboardUrl": "https://bigmodel.cn/console/usercenter/apikeys",
+      "note": "Domestic BigModel pay-as-you-go endpoint (open.bigmodel.cn)"
+    },
+    {
+      "id": "zhipu-bigmodel-coding",
+      "label": "Zhipu AI — BigModel Coding Plan",
+      "adapter": "openai-chat",
+      "baseUrl": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "auth": "key",
+      "defaultModel": "glm-5.3",
+      "dashboardUrl": "https://bigmodel.cn/console/usercenter/apikeys",
+      "note": "Domestic BigModel Coding Plan endpoint (open.bigmodel.cn)"
+    },
+    {
+      "id": "nanogpt",
+      "label": "NanoGPT",
+      "adapter": "openai-chat",
+      "baseUrl": "https://nano-gpt.com/api/v1",
+      "auth": "key",
+      "dashboardUrl": "https://nano-gpt.com/api"
+    },
+    {
+      "id": "synthetic",
+      "label": "Synthetic",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.synthetic.new/openai/v1",
+      "auth": "key",
+      "dashboardUrl": "https://synthetic.new"
+    },
+    {
+      "id": "siliconflow",
+      "label": "SiliconFlow",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.siliconflow.cn/v1",
+      "auth": "key",
+      "dashboardUrl": "https://cloud.siliconflow.cn/account/ak",
+      "note": "OpenAI-compatible live model catalog; reasoning controls vary by model."
+    },
+    {
+      "id": "qwen-cloud",
+      "label": "Qwen Cloud",
+      "adapter": "openai-chat",
+      "baseUrl": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+      "auth": "key",
+      "dashboardUrl": "https://docs.qwencloud.com",
+      "note": "Pick token plan, pay as you go, or a custom compatible-mode base URL",
+      "baseUrlChoices": [
+        {
+          "id": "token-plan",
+          "label": "Token plan",
+          "baseUrl": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+        },
+        {
+          "id": "payg",
+          "label": "Pay as you go",
+          "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        },
+        {
+          "id": "custom",
+          "label": "Custom"
+        }
+      ]
+    },
+    {
+      "id": "tencent-coding-plan",
+      "label": "Tencent Cloud Coding Plan",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.lkeap.cloud.tencent.com/coding/v3",
+      "auth": "key",
+      "defaultModel": "tc-code-latest",
+      "dashboardUrl": "https://console.cloud.tencent.com/tokenhub/codingplan",
+      "note": "Coding tools only. Tencent forbids general API automation, custom backends, and non-interactive batch use."
+    },
+    {
+      "id": "volcengine",
+      "label": "Volcengine Ark",
+      "adapter": "openai-chat",
+      "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+      "auth": "key",
+      "defaultModel": "doubao-seed-2-1-pro-260628",
+      "dashboardUrl": "https://console.volcengine.com/ark/region:ark+cn-beijing/apikey",
+      "note": "Pay-as-you-go Ark API with a curated text/agent catalog. Calls on this endpoint do not consume Coding Plan or Agent Plan quota."
+    },
+    {
+      "id": "volcengine-coding-plan",
+      "label": "Volcengine Ark Coding Plan",
+      "adapter": "openai-chat",
+      "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "auth": "key",
+      "defaultModel": "ark-code-latest",
+      "dashboardUrl": "https://console.volcengine.com/ark/region:ark+cn-beijing/overview",
+      "note": "Coding tools only. Volcengine restricts Coding Plan quota to supported AI coding tools and warns that using this key for general API calls may suspend the subscription or ban the account. Use the plan key issued by the Ark console."
+    },
+    {
+      "id": "volcengine-agent-plan",
+      "label": "Volcengine Ark Agent Plan",
+      "adapter": "openai-responses",
+      "baseUrl": "https://ark.cn-beijing.volces.com/api/plan/v3",
+      "responsesPath": "/responses",
+      "auth": "key",
+      "defaultModel": "deepseek-v4-pro",
+      "dashboardUrl": "https://console.volcengine.com/ark/region:ark+cn-beijing/overview",
+      "note": "Coding tools only. Agent Plan is a subscription endpoint over the native Responses API with a static fallback catalog; Ark plan quota is intended for supported AI coding and agent tools, so avoid using this key as a general-purpose API key."
+    },
+    {
+      "id": "qianfan",
+      "label": "Qianfan (Baidu)",
+      "adapter": "openai-chat",
+      "baseUrl": "https://qianfan.baidubce.com/v2",
+      "auth": "key",
+      "dashboardUrl": "https://console.bce.baidu.com/iam/#/iam/apikey/list"
+    },
+    {
+      "id": "alibaba",
+      "label": "Alibaba Coding Plan",
+      "adapter": "openai-chat",
+      "baseUrl": "https://coding-intl.dashscope.aliyuncs.com/v1",
+      "auth": "key",
+      "dashboardUrl": "https://dashscope.console.aliyun.com/apiKey",
+      "baseUrlChoices": [
+        {
+          "id": "intl",
+          "label": "International",
+          "baseUrl": "https://coding-intl.dashscope.aliyuncs.com/v1"
+        },
+        {
+          "id": "china",
+          "label": "China",
+          "baseUrl": "https://coding.dashscope.aliyuncs.com/v1"
+        },
+        {
+          "id": "custom",
+          "label": "Custom"
+        }
+      ]
+    },
+    {
+      "id": "alibaba-token-plan",
+      "label": "Alibaba Token Plan (Beijing)",
+      "adapter": "openai-chat",
+      "baseUrl": "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
+      "auth": "key",
+      "defaultModel": "qwen3.8-max",
+      "dashboardUrl": "https://bailian.console.aliyun.com/cn-beijing?tab=plan",
+      "note": "Token Plan Personal Edition · China (Beijing)"
+    },
+    {
+      "id": "alibaba-token-plan-intl",
+      "label": "Alibaba Token Plan (International)",
+      "adapter": "openai-chat",
+      "baseUrl": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+      "auth": "key",
+      "defaultModel": "qwen3.7-max",
+      "dashboardUrl": "https://modelstudio.console.alibabacloud.com/?tab=api#/api",
+      "note": "Token Plan Team Edition · Singapore (ap-southeast-1)",
+      "baseUrlChoices": [
+        {
+          "id": "token-plan",
+          "label": "Token plan",
+          "baseUrl": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
+        },
+        {
+          "id": "payg",
+          "label": "Pay as you go",
+          "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+        },
+        {
+          "id": "custom",
+          "label": "Custom"
+        }
+      ]
+    },
+    {
+      "id": "parallel",
+      "label": "Parallel",
+      "adapter": "openai-chat",
+      "baseUrl": "https://platform.parallel.ai",
+      "auth": "key",
+      "dashboardUrl": "https://platform.parallel.ai"
+    },
+    {
+      "id": "zenmux",
+      "label": "ZenMux",
+      "adapter": "openai-chat",
+      "baseUrl": "https://zenmux.ai/api/v1",
+      "auth": "key",
+      "dashboardUrl": "https://zenmux.ai"
+    },
+    {
+      "id": "litellm",
+      "label": "LiteLLM (self-hosted)",
+      "adapter": "openai-chat",
+      "baseUrl": "http://localhost:4000/v1",
+      "auth": "key",
+      "dashboardUrl": "https://docs.litellm.ai/docs/proxy/quick_start",
+      "keyOptional": true
+    },
+    {
+      "id": "ollama-cloud",
+      "label": "Ollama Cloud",
+      "adapter": "openai-chat",
+      "baseUrl": "https://ollama.com/v1",
+      "auth": "key",
+      "defaultModel": "glm-5.3",
+      "dashboardUrl": "https://ollama.com/settings/keys"
+    },
+    {
+      "id": "mistral",
+      "label": "Mistral",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.mistral.ai/v1",
+      "auth": "key",
+      "defaultModel": "codestral-latest",
+      "dashboardUrl": "https://console.mistral.ai/api-keys"
+    },
+    {
+      "id": "minimax",
+      "label": "MiniMax — Coding Plan",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.minimax.io/v1",
+      "auth": "key",
+      "defaultModel": "MiniMax-M3",
+      "dashboardUrl": "https://platform.minimax.io",
+      "note": "Subscription Key or API Key"
+    },
+    {
+      "id": "minimax-cn",
+      "label": "MiniMax — Coding Plan (CN)",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.minimaxi.com/v1",
+      "auth": "key",
+      "defaultModel": "MiniMax-M3",
+      "dashboardUrl": "https://platform.minimaxi.com",
+      "note": "中国区 Subscription Key"
+    },
+    {
+      "id": "kimi-code",
+      "label": "Kimi (coding)",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.kimi.com/coding/v1",
+      "auth": "key",
+      "defaultModel": "kimi-k2.7-code",
+      "dashboardUrl": "https://platform.moonshot.cn/console/api-keys"
+    },
+    {
+      "id": "opencode-zen",
+      "label": "opencode zen",
+      "adapter": "openai-chat",
+      "baseUrl": "https://opencode.ai/zen/v1",
+      "auth": "key",
+      "dashboardUrl": "https://opencode.ai/auth",
+      "note": "Keyed OpenCode Zen gateway. Free models on this tier are often short-window rate-limited at roughly 15-20 requests/minute (community-measured; OpenCode does not publish RPM). Zen may return generic 429s without Retry-After / X-RateLimit headers; when Retry-After is omitted, benes adds a synthetic backoff hint (upstream Retry-After still wins). Distinct from the keyless opencode-free desktop quota (~200 Big Pickle/free-model requests per 5 hours). Docs: https://opencode.ai/docs/zen/. Free-model prompts may be retained for training — do not send confidential material."
+    },
+    {
+      "id": "vercel-ai-gateway",
+      "label": "Vercel AI Gateway",
+      "adapter": "openai-chat",
+      "baseUrl": "https://ai-gateway.vercel.sh/v1",
+      "auth": "key",
+      "dashboardUrl": "https://vercel.com/dashboard"
+    },
+    {
+      "id": "opencode-free",
+      "label": "OpenCode Free",
+      "adapter": "openai-chat",
+      "baseUrl": "https://opencode.ai/zen/v1",
+      "auth": "key",
+      "dashboardUrl": "https://opencode.ai",
+      "note": "No key needed — public desktop tier. OpenCode currently advertises about 200 Big Pickle/free-model requests per 5 hours. The same Zen gateway can also short-window rate-limit free models at roughly 15-20 requests/minute, and may return generic 429s without Retry-After (benes synthesizes backoff only when that header is omitted). Free models are discovered live from Zen. Data use: per OpenCode's Zen docs (https://opencode.ai/docs/zen/), prompts sent to free models may be retained and used for training/improvement — do not send confidential material through this provider.",
+      "keyOptional": true
+    },
+    {
+      "id": "xiaomi",
+      "label": "Xiaomi MiMo",
+      "adapter": "anthropic",
+      "baseUrl": "https://api.xiaomimimo.com/anthropic",
+      "auth": "key",
+      "defaultModel": "mimo-v2.5-pro",
+      "dashboardUrl": "https://xiaomimimo.com"
+    },
+    {
+      "id": "xiaomi-mimo",
+      "label": "Xiaomi MiMo (OpenAI Chat)",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.xiaomimimo.com/v1",
+      "auth": "key",
+      "defaultModel": "mimo-v2.5",
+      "dashboardUrl": "https://platform.xiaomimimo.com/console/balance",
+      "note": "Official Xiaomi MiMo OpenAI-compatible Chat endpoint. The upstream validator accepts reasoning_effort none/low/medium/high; higher Codex tiers are clamped to high."
+    },
+    {
+      "id": "kilo",
+      "label": "Kilo",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.kilo.ai/api/gateway",
+      "auth": "key",
+      "dashboardUrl": "https://kilo.ai"
+    },
+    {
+      "id": "mimo-free",
+      "label": "MiMo Free",
+      "adapter": "mimo-free",
+      "baseUrl": "https://api.xiaomimimo.com/api/free-ai/openai/chat",
+      "auth": "key",
+      "defaultModel": "mimo-auto",
+      "dashboardUrl": "https://xiaomimimo.com",
+      "note": "No key needed — uses Xiaomi MiMo's free public tier (limited-time offer). A JWT is bootstrapped automatically with an anonymous random client id stored locally. The endpoint contract mirrors the official MiMoCode client and is not publicly documented — Xiaomi may change or restrict it at any time. Prompts may be processed/retained by Xiaomi; do not send confidential material.",
+      "keyOptional": true
+    },
+    {
+      "id": "mimo",
+      "label": "Xiaomi MiMo (token plan)",
+      "adapter": "openai-chat",
+      "baseUrl": "https://token-plan-cn.xiaomimimo.com/v1",
+      "auth": "key",
+      "defaultModel": "mimo-v2.5-pro",
+      "dashboardUrl": "https://xiaomimimo.com",
+      "note": "Xiaomi MiMo paid token plan. Pinned to the Chat wire: the Responses endpoint rejects freeform (custom) tools such as apply_patch with 400 responses_feature_not_supported, so agentic turns fail there while plain turns succeed. Reasoning tiers above high are clamped."
+    },
+    {
+      "id": "cloudflare-ai-gateway",
+      "label": "Cloudflare AI Gateway",
+      "adapter": "anthropic",
+      "baseUrl": "https://gateway.ai.cloudflare.com/v1/{account-id}/{gateway}/anthropic",
+      "auth": "key",
+      "dashboardUrl": "https://dash.cloudflare.com/?to=/:account/ai/ai-gateway"
+    },
+    {
+      "id": "cloudflare-workers-ai",
+      "label": "Cloudflare Workers AI",
+      "adapter": "openai-chat",
+      "baseUrl": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1",
+      "auth": "key",
+      "defaultModel": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "dashboardUrl": "https://dash.cloudflare.com/?to=/:account/ai/workers-ai",
+      "note": "Workers AI · Free tier included · Account ID required in base URL",
+      "freeTier": true
+    },
+    {
+      "id": "gitlab-duo",
+      "label": "GitLab Duo",
+      "adapter": "openai-chat",
+      "baseUrl": "https://cloud.gitlab.com/ai/v1/proxy/openai/v1",
+      "auth": "key",
+      "dashboardUrl": "https://gitlab.com/-/user_settings/personal_access_tokens"
+    },
+    {
+      "id": "custom",
+      "label": "Custom provider",
+      "adapter": "openai-chat",
+      "baseUrl": "",
+      "auth": "key"
+    }
+  ]
+}
