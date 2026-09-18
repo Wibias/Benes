@@ -43,6 +43,12 @@ describe("Local CI mirrors hosted cross-platform evidence", () => {
   });
 
   it("keeps packaging checks aligned and normalizes npm pack metadata", () => {
+    const packageJson = JSON.parse(read("package.json"));
+    assert.match(
+      packageJson.scripts["build:gui"],
+      /npm ci --dry-run=false/,
+      "publish dry-runs must still install GUI dependencies for a real build",
+    );
     for (const script of [ci, linux, macos, windows]) {
       assert.match(script, /npm pack --json/);
       assert.match(script, /npm-pack-json\.cjs/);
