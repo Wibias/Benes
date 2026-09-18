@@ -68,6 +68,7 @@ func TestComboTransientRetriesShareOnePhysicalSendCeiling(t *testing.T) {
 	_, err = walker.Open(context.Background(), providers.DispatchRequest{
 		Turn: turn,
 		Parsed: protocol.ParsedRequest{
+			Source:          protocol.RequestSourceResponses,
 			ModelID:         "combo/send-budget",
 			UpstreamModelID: "gpt-test",
 			Raw:             []byte(`{"model":"gpt-test","input":"hello","stream":true}`),
@@ -82,7 +83,7 @@ func TestComboTransientRetriesShareOnePhysicalSendCeiling(t *testing.T) {
 		t.Fatal("expected exhausted request to fail")
 	}
 	if got := sends.Load(); got != 8 {
-		t.Fatalf("physical sends=%d want=8; retry layers multiplied past one request ceiling", got)
+		t.Fatalf("physical sends=%d want=8; retry layers multiplied past one request ceiling (err=%v)", got, err)
 	}
 	if !strings.Contains(err.Error(), "physical send budget") {
 		t.Fatalf("err=%q want physical send budget exhaustion", err)
