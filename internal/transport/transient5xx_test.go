@@ -115,3 +115,73 @@ func TestDoTransient5xxForTurnStopsAtPhysicalSendBudget(t *testing.T) {
 	}
 }
 
+func TestDoPhysicalSendCancellationBeforeNetworkRefundsReservation(t *testing.T) {
+	hits := 0
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits++
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(upstream.Close)
+
+	budget := resourcebudget.NewManager(resourcebudget.Limits{MaxPhysicalSends: 1})
+	turn, err := budget.AcquireTurn(context.Background(), "cancel-before-send")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer turn.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, upstream.URL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := DoPhysicalSend(ctx, upstream.Client(), req, turn, "test_provider"); !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancelled err=%v", err)
+	}
+	if hits != 0 || len(turn.PhysicalSends()) != 0 {
+		t.Fatalf("cancelled request consumed send: hits=%d records=%#v", hits, turn.PhysicalSends())
+	}
+
+	req2, err := http.NewRequest(http.MethodGet, upstream.URL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := DoPhysicalSend(context.Background(), upstream.Client(), req2, turn, "test_provider")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if hits != 1 || len(turn.PhysicalSends()) != 1 {
+		t.Fatalf("refunded slot not reusable: hits=%d records=%#v", hits, turn.PhysicalSends())
+	}
+}
+
+func TestDoPhysicalSendNetworkErrorDoesNotRefundCommittedSend(t *testing.T) {
+	calls := 0
+	client := &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+		calls++
+		return nil, context.Canceled
+	})}
+	budget := resourcebudget.NewManager(resourcebudget.Limits{MaxPhysicalSends: 1})
+	turn, err := budget.AcquireTurn(context.Background(), "cancel-after-send")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer turn.Close()
+
+	req, _ := http.NewRequest(http.MethodGet, "https://example.invalid", nil)
+	if _, err := DoPhysicalSend(context.Background(), client, req, turn, "test_provider"); !errors.Is(err, context.Canceled) {
+		t.Fatalf("network err=%v", err)
+	}
+	if calls != 1 || len(turn.PhysicalSends()) != 1 {
+		t.Fatalf("committed send missing: calls=%d records=%#v", calls, turn.PhysicalSends())
+	}
+	if _, err := DoPhysicalSend(context.Background(), client, req, turn, "test_provider"); !errors.Is(err, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+		t.Fatalf("second send err=%v", err)
+	}
+	if calls != 1 {
+		t.Fatalf("budget exhaustion reached network: calls=%d", calls)
+	}
+}
+

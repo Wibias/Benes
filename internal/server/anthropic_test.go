@@ -404,3 +404,29 @@ func TestAnthropicDispatchCarriesForwardAuthorityWithoutLeakingDataPlaneBearer(t
 		t.Fatalf("data-plane bearer leaked into forward authority: %#v", got.ForwardHeaders)
 	}
 }
+
+func TestAnthropicPhysicalSendBudgetExhaustionIsLocal429(t *testing.T) {
+	budget := resourcebudget.NewManager(resourcebudget.Limits{MaxPhysicalSends: 1})
+	h, err := NewHandler(Options{
+		DataPlaneToken: "secret",
+		Providers: map[string]Provider{"p": providerFuncAnthropic(func(context.Context, providercontract.DispatchRequest) (EventStream, error) {
+			return nil, resourcebudget.ErrPhysicalSendBudgetExceeded
+		})},
+		ResourceBudget: budget,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h = attachHandlerClose(t, h)
+	req := httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(`{"model":"p/m","max_tokens":64,"messages":[{"role":"user","content":"hello"}]}`))
+	req.Header.Set("Authorization", "Bearer secret")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTooManyRequests {
+		t.Fatalf("status=%d body=%s", rr.Code, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), `"code":"physical_send_budget_exhausted"`) {
+		t.Fatalf("body=%s", rr.Body.String())
+	}
+}
+
