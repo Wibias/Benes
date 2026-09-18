@@ -44,6 +44,11 @@ describe("Local CI mirrors hosted cross-platform evidence", () => {
 
   it("keeps packaging checks aligned and normalizes npm pack metadata", () => {
     const packageJson = JSON.parse(read("package.json"));
+    assert.equal(
+      packageJson.bin?.benes,
+      "bin/benes.mjs",
+      "npm must preserve the Benes CLI bin entry instead of dropping an invalid manifest path",
+    );
     assert.match(
       packageJson.scripts["build:gui"],
       /npm ci --dry-run=false/,
