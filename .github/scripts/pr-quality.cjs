@@ -11,6 +11,10 @@ const { scoreBody, literalEscapes, dropTemplateChrome } = require("./pr-quality-
 
 const INTEGRATION_BASES = ["dev"];
 const DEFAULT_INTEGRATION = "dev";
+const MAINTAINER_PROMOTION_SOURCES = Object.freeze({
+  preview: "dev",
+  main: "dev",
+});
 const FAR_BEHIND_BASE = 20;
 const LONG_LIVED_AHEAD_OF_MAIN = 5;
 const PUSH_LEVELS = new Set(["admin", "maintain", "write"]);
@@ -42,6 +46,21 @@ function trustedPolicyRef(baseRef) {
   return baseRef === "main" ? "main" : DEFAULT_INTEGRATION;
 }
 
+function isMaintainerPromotion({
+  baseRef,
+  headRef,
+  sameRepository = false,
+  authorPermission,
+  permissionLookupFailed = false,
+}) {
+  return (
+    sameRepository &&
+    !permissionLookupFailed &&
+    hasRepoPush(authorPermission) &&
+    MAINTAINER_PROMOTION_SOURCES[baseRef] === headRef
+  );
+}
+
 function sitsOnReleasedMainTip({
   behindMain,
   behindBase,
@@ -54,6 +73,8 @@ function sitsOnReleasedMainTip({
 
 function branchProblems({
   baseRef,
+  headRef,
+  sameRepository = false,
   allowedBases = INTEGRATION_BASES,
   stackedOnParent = false,
   behindMain,
@@ -64,12 +85,20 @@ function branchProblems({
   ancestryLookupFailed = false,
 }) {
   const problems = [];
-  if (!allowedBases.includes(baseRef) && !stackedOnParent) {
+  const maintainerPromotion = isMaintainerPromotion({
+    baseRef,
+    headRef,
+    sameRepository,
+    authorPermission,
+    permissionLookupFailed,
+  });
+  if (!allowedBases.includes(baseRef) && !stackedOnParent && !maintainerPromotion) {
     problems.push({ code: "wrong_base" });
     return problems;
   }
   const skipAncestry =
     stackedOnParent ||
+    maintainerPromotion ||
     ancestryLookupFailed ||
     (!permissionLookupFailed && hasRepoPush(authorPermission));
   if (!skipAncestry && sitsOnReleasedMainTip({ behindMain, behindBase, aheadMain })) {
@@ -267,6 +296,8 @@ function clearClaimTicks(body, indexes) {
 
 function gatherQualityProblems({
   baseRef,
+  headRef,
+  sameRepository = false,
   allowedBases,
   body,
   behindMain,
@@ -283,6 +314,8 @@ function gatherQualityProblems({
   const problems = [
     ...branchProblems({
       baseRef,
+      headRef,
+      sameRepository,
       allowedBases,
       stackedOnParent,
       behindMain,
@@ -311,6 +344,7 @@ function gatherQualityProblems({
 module.exports = {
   INTEGRATION_BASES,
   DEFAULT_INTEGRATION,
+  MAINTAINER_PROMOTION_SOURCES,
   FAR_BEHIND_BASE,
   LONG_LIVED_AHEAD_OF_MAIN,
   READINESS_BOXES,
@@ -319,6 +353,7 @@ module.exports = {
   CLAIM_BOX,
   sitsOnReleasedMainTip,
   hasRepoPush,
+  isMaintainerPromotion,
   trustedPolicyRef,
   scoreBody,
   guiPathTouched,
