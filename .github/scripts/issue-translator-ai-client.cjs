@@ -19,30 +19,37 @@ function buildPrompt(system, user) {
   ].filter(Boolean).join("\n");
 }
 
+function copilotArgs(prompt) {
+  return [
+    "-p",
+    prompt,
+    "-s",
+    "--no-ask-user",
+    "--deny-tool=shell",
+    "--deny-tool=write",
+    "--deny-tool=url",
+    "--deny-tool=memory",
+    "--deny-tool=github",
+  ];
+}
+
+function copilotEnv(token) {
+  const env = {
+    ...process.env,
+    COPILOT_GITHUB_TOKEN: token,
+  };
+  delete env.GH_TOKEN;
+  delete env.GITHUB_TOKEN;
+  return env;
+}
+
 function defaultRunCopilot({ prompt, token, timeoutMs }) {
   return new Promise((resolve) => {
-    const env = {
-      ...process.env,
-      COPILOT_GITHUB_TOKEN: token,
-    };
-    delete env.GH_TOKEN;
-    delete env.GITHUB_TOKEN;
-
     execFile(
       "copilot",
-      [
-        "-p",
-        prompt,
-        "-s",
-        "--no-ask-user",
-        "--deny-tool=shell",
-        "--deny-tool=write",
-        "--deny-tool=url",
-        "--deny-tool=memory",
-        "--deny-tool=github",
-      ],
+      copilotArgs(prompt),
       {
-        env,
+        env: copilotEnv(token),
         timeout: timeoutMs,
         maxBuffer: 1 << 20,
         windowsHide: true,
@@ -84,6 +91,8 @@ async function requestJsonCompletion({
 
 module.exports = {
   buildPrompt,
+  copilotArgs,
+  copilotEnv,
   defaultRunCopilot,
   requestJsonCompletion,
   completeJson: requestJsonCompletion,
