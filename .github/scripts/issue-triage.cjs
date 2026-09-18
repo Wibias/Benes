@@ -260,17 +260,15 @@ async function runIssueTriage({
   const catalog = Array.isArray(knownIssues) ? knownIssues : loadKnownIssues(cwd);
   const candidates = catalog.filter((candidate) => Number(candidate.number) !== issue_number);
   const knownNumbers = candidates.map((candidate) => String(candidate.number));
-  const token = process.env.BENES_ISSUE_AI_TOKEN || "";
+  const token = process.env.COPILOT_GITHUB_TOKEN || "";
   if (!token) {
-    core.info("BENES_ISSUE_AI_TOKEN is not set; skipping AI duplicate nomination.");
+    core.info("COPILOT_GITHUB_TOKEN is not set; skipping AI duplicate nomination.");
     return;
   }
 
   const nominate = completeJson || defaultNominate;
   const completion = await nominate({
     token,
-    baseUrl: process.env.BENES_ISSUE_AI_BASE_URL,
-    model: process.env.BENES_ISSUE_AI_MODEL,
     system: NOMINATE_SYSTEM,
     user: JSON.stringify({
       current: toIssueCard(issue),
