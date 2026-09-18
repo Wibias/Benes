@@ -157,7 +157,7 @@ describe("scripts/install.sh", { skip: SKIP }, () => {
   test("refuses a missing npm", () => {
     const run = install({ ...READY, npm: null });
     assert.equal(run.status, 1);
-    assert.match(run.stderr, /npm is required to install the published benes package\./);
+    assert.match(run.stderr, /npm is required to install the published @wibias/benes package\./);
     assert.deepEqual(run.trace, []);
   });
 
@@ -177,7 +177,7 @@ describe("scripts/install.sh", { skip: SKIP }, () => {
   test("accepts the floor version itself", () => {
     const run = install({ ...READY, nodeVersion: "18.0.0" });
     assert.equal(run.status, 0, run.stderr);
-    assert.equal(run.trace.includes("npm install -g benes"), true);
+    assert.equal(run.trace.includes("npm install -g @wibias/benes"), true);
   });
 
   test("accepts a current supported major", () => {
@@ -197,7 +197,7 @@ describe("scripts/install.sh", { skip: SKIP }, () => {
     assert.equal(run.status, 1);
     assert.match(
       run.stderr,
-      /benes is installed but not on PATH\. Add the npm global bin directory, then open a new shell: \/fake\/npm\/prefix\/bin/,
+      /@wibias/benes is installed but benes is not on PATH\. Add the npm global bin directory, then open a new shell: \/fake\/npm\/prefix\/bin/,
     );
   });
 
@@ -224,6 +224,6 @@ describe("scripts/install.sh", { skip: SKIP }, () => {
 
   test("passes the package name as its own argv entry, never through a shell string", () => {
     const run = install(READY);
-    assert.deepEqual(run.trace, ["npm install -g benes", "benes help"]);
+    assert.deepEqual(run.trace, ["npm install -g @wibias/benes", "benes help"]);
   });
 });
