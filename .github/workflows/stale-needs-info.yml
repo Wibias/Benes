@@ -1,0 +1,56 @@
+# Close issues that stay on needs-info with no follow-up.
+#
+# GitHub runs schedule from the default branch only. There is no
+# workflow_dispatch: a branch-selected run would still receive issues:write.
+name: Close idle needs-info issues
+
+on:
+  schedule:
+    - cron: "42 5 * * *"
+
+permissions:
+  issues: write
+  # actions/stale calls the pull-request API even when PR timers are disabled.
+  pull-requests: write
+
+concurrency:
+  group: needs-info-idle
+  cancel-in-progress: false
+
+jobs:
+  close-idle:
+    name: Close idle needs-info issues
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Ensure the stale label exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh label create stale
+          --color ffffff
+          --description "needs-info issue with no recent activity; close unless updated"
+          --force
+
+      - name: Warn, then close, idle needs-info issues
+        uses: actions/stale@1e223db275d687790206a7acac4d1a11bd6fe629 # v10.4.0
+        with:
+          only-issue-labels: needs-info
+          days-before-issue-stale: 14
+          days-before-issue-close: 7
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          remove-pr-stale-when-updated: false
+          stale-issue-label: stale
+          close-issue-reason: not_planned
+          remove-stale-when-updated: true
+          ascending: true
+          operations-per-run: 60
+          stale-issue-message: |
+            This issue is still labeled `needs-info` and has been idle for 14 days.
+
+            It closes in 7 days unless someone replies with the missing detail (repro, logs, or a concrete spec). A comment or edit restarts the timer. Maintainers can drop `needs-info` once the report is actionable.
+          close-issue-message: |
+            Closed because it stayed on `needs-info` without a follow-up.
+
+            Open a new issue, or comment here to reopen, when the missing reproduction or specification is available.

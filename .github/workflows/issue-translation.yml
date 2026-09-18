@@ -1,0 +1,55 @@
+name: Issue translation
+
+# Issue events load this file from the default branch, not from `dev`.
+on:
+  issues:
+    types:
+      - opened
+      - edited
+      - reopened
+  issue_comment:
+    types:
+      - created
+      - edited
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number to translate
+        required: true
+        type: number
+
+permissions: {}
+
+concurrency:
+  group: issue-translation-${{ github.event.issue.number || github.event.issue_comment.issue.id || inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    if: >
+      github.event_name == 'issues' ||
+      github.event_name == 'issue_comment' ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout trusted scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Translate non-English issue or comment
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        env:
+          BENES_ISSUE_AI_TOKEN: ${{ secrets.BENES_ISSUE_AI_TOKEN }}
+          BENES_ISSUE_AI_BASE_URL: ${{ secrets.BENES_ISSUE_AI_BASE_URL }}
+          BENES_ISSUE_AI_MODEL: ${{ vars.BENES_ISSUE_AI_MODEL }}
+        with:
+          script: |
+            const { runIssueTranslation } = require("./.github/scripts/issue-translation-run.cjs");
+            await runIssueTranslation({ github, context, core });

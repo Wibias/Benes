@@ -1,0 +1,208 @@
+/* Provider quota meters — semantic <meter> presentation for the current Provider workspace. */
+.pq-meters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pq-meters--inline {
+  min-width: 0;
+}
+
+.pq-meters--inline.pq-meters--wait {
+  block-size: 22px;
+  overflow: clip;
+}
+
+.pq-meters--stack,
+.pq-meters--stack.pq-meters--wait {
+  display: grid;
+  gap: 10px;
+  min-block-size: 64px;
+}
+
+.pq-meter--inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pq-meter--inline .pq-caption {
+  flex: 0 0 34px;
+}
+
+.pq-meter--inline .pq-reset-day {
+  flex: 0 0 34px;
+}
+
+.pq-meter--inline .pq-reset-time {
+  flex: 0 0 38px;
+}
+
+.pq-meter--inline .pq-track {
+  flex: 1 1 58px;
+}
+
+.pq-meter--inline .pq-value {
+  flex: 0 0 30px;
+}
+
+.pq-meter--stack {
+  display: grid;
+  gap: 6px;
+}
+
+.pq-meter-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pq-limit {
+  font-weight: 600;
+}
+
+.pq-partial {
+  justify-self: end;
+  padding: 1px 5px;
+  border: 1px solid color-mix(in srgb, var(--amber) 45%, transparent);
+  border-radius: var(--radius-2xs);
+  color: var(--amber);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.pq-meter-body {
+  display: grid;
+  grid-template-columns: minmax(58px, 1fr) max-content;
+  align-items: center;
+  gap: 8px;
+}
+
+.pq-meter-body .pq-reset {
+  grid-column: 1 / -1;
+}
+
+.pq-caption {
+  font-size: var(--text-caption);
+  color: var(--muted);
+  font-weight: var(--weight-semibold);
+}
+
+.pq-reset-word,
+.pq-reset-day,
+.pq-reset-time,
+.pq-value,
+.pq-used,
+.pq-limit {
+  font-style: normal;
+  font-weight: inherit;
+}
+
+.pq-meter[data-warn] .pq-caption,
+.pq-meter[data-warn] .pq-limit {
+  color: var(--amber);
+}
+
+.pq-value,
+.pq-used {
+  font-size: var(--text-caption);
+  font-family: var(--font-code);
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pq-value--warn,
+.pq-used--warn {
+  color: var(--amber);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.pq-reset-word,
+.pq-reset {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-caption);
+  color: var(--faint);
+}
+
+.pq-reset-day,
+.pq-reset-time {
+  font-size: var(--text-caption);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.pq-reset-time {
+  font-family: var(--font-code);
+}
+
+.pq-track {
+  inline-size: 100%;
+  block-size: 5px;
+  min-inline-size: 0;
+  appearance: none;
+  border: 0;
+  border-radius: var(--radius-2xs);
+  background: var(--raised);
+}
+
+.pq-track::-webkit-meter-bar {
+  block-size: 5px;
+  border-radius: var(--radius-2xs);
+  background: var(--raised);
+}
+
+.pq-track--ok::-webkit-meter-optimum-value,
+.pq-track--ok::-webkit-meter-suboptimum-value,
+.pq-track--ok::-webkit-meter-even-less-good-value {
+  background: var(--green);
+}
+
+.pq-track--warn::-webkit-meter-optimum-value,
+.pq-track--warn::-webkit-meter-suboptimum-value,
+.pq-track--warn::-webkit-meter-even-less-good-value {
+  background: var(--amber);
+}
+
+.pq-track--ok::-moz-meter-bar {
+  background: var(--green);
+}
+
+.pq-track--warn::-moz-meter-bar {
+  background: var(--amber);
+}
+
+.pq-spent {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--amber);
+  font-size: 12px;
+}
+
+.pq-meter--wait-inline,
+.pq-meter--wait-stack {
+  min-block-size: 18px;
+  border-radius: var(--radius-2xs);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--muted) 16%, transparent) 25%,
+    color-mix(in srgb, var(--muted) 28%, transparent) 37%,
+    color-mix(in srgb, var(--muted) 16%, transparent) 63%
+  );
+  background-size: 400px 100%;
+}
+
+.pq-meter--wait-stack {
+  min-block-size: 36px;
+}

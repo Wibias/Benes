@@ -1,0 +1,58 @@
+/* Native <dialog> confirmations for Provider workspace. Visual frost matches dashboard overlays. */
+.provider-confirm {
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 16px 18px;
+  max-width: 28rem;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 12%, transparent);
+}
+.provider-confirm::backdrop {
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(6px);
+}
+.provider-confirm-form {
+  margin: 0;
+}
+.provider-confirm-title {
+  margin: 0 0 8px;
+  font-size: var(--text-body);
+}
+.provider-confirm-body {
+  margin: 0 0 14px;
+}
+.provider-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* OAuth terms dialog. Owner: components/OAuthTosWarningModal.tsx, a provider credential dialog. */
+.oauth-tos-card {
+  width: min(560px, 100%);
+}
+
+.oauth-tos-body {
+  align-items: flex-start;
+}
+
+.oauth-tos-body > p {
+  flex: 1;
+}
+
+.oauth-tos-hint {
+  margin: 0;
+}
+
+.oauth-tos-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.oauth-tos-ack input {
+  margin: 2px 0 0;
+  flex: none;
+}

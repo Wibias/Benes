@@ -1,0 +1,631 @@
+/* Benes dashboard styles. */
+/* ============================================================================
+   combos-workspace — isolated stylesheet (mirrors providers-workspace layout DNA)
+   Namespace: combos-workspace-  |  widgets: cwi-
+   Shared pwi-* chrome reuses current workspace styles; scoped compatibility follows below.
+   Uses only design tokens from styles.css. No gradients.
+   ============================================================================ */
+
+.combos-workspace-root {
+  display: grid;
+  grid-template-columns: minmax(340px, 28vw) 1fr;
+  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.combos-workspace-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.combos-workspace-shell-banner {
+  flex-shrink: 0;
+  padding: 10px 16px 0;
+}
+
+/* Revalidation shell: keeps the workspace body stable while aria-busy and an
+   sr-only status span announce in-flight refreshes to assistive tech. */
+.combos-workspace-shell-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.combos-workspace-rail {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--rail);
+}
+
+.combos-workspace-rail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
+
+.combos-workspace-rail-title {
+  font-size: var(--text-title);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.combos-workspace-rail-count {
+  font-family: var(--mono);
+  font-size: var(--text-caption);
+  color: var(--faint);
+}
+
+.combos-workspace-rail-list {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.combos-workspace-rail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 10px;
+  padding: 10px 14px;
+  min-height: 40px;
+  border: none;
+  border-bottom: 1px solid var(--border-soft);
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-control);
+  color: var(--text);
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s;
+}
+
+.combos-workspace-rail-row:hover {
+  background: var(--hover);
+}
+
+.combos-workspace-rail-row.combos-workspace-rail-row--selected {
+  background: var(--hover);
+}
+
+.combos-workspace-rail-row:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.combos-workspace-rail-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.combos-workspace-rail-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: var(--text-label);
+  font-weight: 600;
+}
+.combos-workspace-rail-sub,
+.combos-workspace-rail-note {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-caption);
+}
+.combos-workspace-rail-empty {
+  padding: 16px;
+}
+.combos-workspace-rail-empty-hint {
+  padding: 16px;
+  margin: 0;
+}
+.combos-workspace-rail-row--draft {
+  cursor: default;
+}
+
+.combos-workspace-rail-meta {
+  font-family: var(--mono);
+  font-size: var(--text-caption);
+  color: var(--faint);
+  text-align: right;
+}
+
+.combos-workspace-main {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.combos-workspace-detail {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 32px;
+}
+
+.combos-workspace-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.combos-workspace-detail-title {
+  font-size: var(--text-title);
+  font-weight: 600;
+  font-family: var(--mono);
+  margin: 0;
+  min-width: 0;
+}
+
+.combos-workspace-detail-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cwi-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
+
+.cwi-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.cwi-search-wrap .cwi-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--faint);
+  pointer-events: none;
+}
+
+.cwi-search-input {
+  width: 100%;
+  padding-left: 32px !important;
+}
+
+/* Keep helper copy on the shared prose measure (line-length bar). */
+.cwi-field > p.muted {
+  max-width: var(--prose-measure);
+  overflow-wrap: anywhere;
+}
+
+
+.cwi-target-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cwi-target-row {
+  display: grid;
+  grid-template-columns: 36px auto minmax(0, 1fr) minmax(0, 1.2fr) 4.5rem auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.cwi-target-row--failover {
+  grid-template-columns: 36px auto minmax(0, 1fr) minmax(0, 1.2fr) auto;
+}
+
+.cwi-target-row--dragging {
+  opacity: 0.55;
+}
+
+.cwi-target-row--drop {
+  box-shadow: inset 0 0 0 1px var(--accent);
+  border-radius: var(--radius);
+}
+
+.cwi-target-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--faint);
+  cursor: grab;
+  touch-action: none;
+}
+
+.cwi-target-grip:hover {
+  color: var(--muted);
+  background: var(--hover);
+}
+
+.cwi-target-grip:active {
+  cursor: grabbing;
+}
+
+.cwi-target-reorder {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.cwi-target-reorder .cwi-target-move {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  width: 22px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  line-height: 1;
+  cursor: pointer;
+}
+.cwi-target-move:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.cwi-target-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cwi-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cwi-field label {
+  display: block;
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.cwi-field .input,
+.cwi-field select.input {
+  width: 100%;
+}
+
+@media (max-width: 939px) {
+  .combos-workspace-root {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(220px, 38vh) 1fr;
+  }
+
+  .combos-workspace-rail {
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cwi-target-row,
+  .cwi-target-row--failover {
+    grid-template-columns: 36px auto 1fr auto;
+  }
+
+  .cwi-target-row > .input:nth-child(3),
+  .cwi-target-row > .input:nth-child(4) {
+    grid-column: 3 / -1;
+  }
+}
+.pwi-json-unsaved-card,
+.pwi-remove-confirm-card { max-width: 420px; width: min(420px, 92vw); padding: 20px 22px 16px; }
+.pwi-json-unsaved-title,
+.pwi-remove-confirm-title { margin: 0 0 8px; font-size: var(--text-subtitle); font-weight: 650; color: var(--text); }
+.pwi-json-unsaved-desc,
+.pwi-remove-confirm-desc { margin: 0 0 18px; font-size: var(--text-control); line-height: 1.45; }
+.pwi-json-unsaved-actions,
+.pwi-remove-confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.pwi-remove-confirm-danger { background: var(--red) !important; color: #fff !important; border-color: transparent !important; }
+.pwi-remove-confirm-danger:hover:not(:disabled) { filter: brightness(1.08); }
+
+
+/* P2 IA: quiet no-selection / zero-state (top-aligned, not landing-page centered) */
+.combos-workspace-quiet {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 48px 24px 32px;
+  max-width: 52ch;
+}
+.combos-workspace-quiet-title {
+  margin: 0 0 8px;
+  font-size: var(--text-subtitle);
+  font-weight: 600;
+}
+.combos-workspace-quiet-body {
+  margin: 0 0 16px;
+  line-height: 1.45;
+}
+.combos-workspace-quiet-footer {
+  margin: 12px 0 0;
+  font-size: var(--text-label);
+  line-height: 1.4;
+}
+
+.combos-workspace-detail-titles {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.combos-workspace-detail-sub {
+  margin: 0;
+  font-size: var(--text-label);
+  overflow-wrap: anywhere;
+}
+
+.combos-overview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 720px;
+}
+.combos-overview-section {
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+.combos-overview-section:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.combos-overview-section-title {
+  margin: 0 0 10px;
+  font-size: var(--text-control);
+  font-weight: var(--weight-semibold, 650);
+  color: var(--text);
+}
+.combos-overview-dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.combos-overview-kv {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+  gap: 8px 16px;
+  align-items: baseline;
+}
+.combos-overview-kv dt {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+.combos-overview-kv dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--text-label);
+  overflow-wrap: anywhere;
+}
+.combos-overview-targets {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-label);
+}
+.combos-overview-targets th,
+.combos-overview-targets td {
+  text-align: left;
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: top;
+}
+.combos-overview-targets th {
+  color: var(--muted);
+  font-weight: 600;
+}
+.combos-overview-targets .mono {
+  font-family: var(--mono);
+}
+.combos-overview-hint,
+.cwi-field-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  max-width: var(--prose-measure);
+  overflow-wrap: anywhere;
+}
+.combos-workspace-danger-zone {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.cwi-target-grip--numbered {
+  flex-direction: row;
+  gap: 2px;
+  width: 36px;
+  height: 32px;
+  min-height: 32px;
+  color: var(--muted);
+}
+.cwi-target-index {
+  font-family: var(--mono);
+  font-size: var(--text-caption);
+  line-height: 1;
+  min-width: 0.9em;
+  text-align: center;
+}
+.cwi-target-move {
+  opacity: 0.45;
+  color: var(--muted);
+}
+.cwi-target-row:hover .cwi-target-reorder,
+.cwi-target-row:focus-within .cwi-target-reorder {
+  opacity: 1;
+}
+.cwi-target-reorder {
+  opacity: 0.55;
+  transition: opacity 0.12s ease;
+}
+.cwi-target-move:hover:not(:disabled),
+.cwi-target-move:focus-visible {
+  opacity: 1;
+  color: var(--text);
+}
+.cwi-add-target,
+.combos-workspace-remove-quiet {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-label);
+  cursor: pointer;
+}
+.cwi-add-target {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+.cwi-add-target:hover:not(:disabled) {
+  color: var(--text);
+  background: transparent;
+}
+.cwi-add-target:focus-visible,
+.combos-workspace-remove-quiet:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+.combos-workspace-remove-quiet:hover:not(:disabled) {
+  color: var(--red);
+  background: transparent;
+}
+.combos-workspace-remove-quiet:disabled,
+.cwi-add-target:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.combos-overview-availability {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+  gap: 8px 16px;
+  align-items: start;
+}
+.combos-overview-availability-label {
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+.combos-overview-availability-status {
+  font-size: var(--text-control);
+  font-weight: 550;
+}
+.combos-overview-availability-support {
+  margin: 4px 0 0;
+  font-size: 12px;
+  max-width: var(--prose-measure);
+  line-height: 1.4;
+}
+.cwi-field-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cwi-field-tip {
+  display: inline-flex;
+  align-items: center;
+  color: var(--faint);
+  cursor: help;
+}
+.cwi-field-tip:hover,
+.cwi-field-tip:focus-visible {
+  color: var(--muted);
+}
+
+
+/* Combos action buttons: 4px corners + brand primary (match Add provider), not pill/white accent */
+.combos-workspace-root .btn,
+.combos-workspace-root .btn-sm,
+.combos-workspace-shell .btn,
+.combos-workspace-shell .btn-sm,
+.modal-overlay.cwi-dialog .btn,
+.modal-overlay.cwi-dialog .btn-sm {
+  border-radius: 4px;
+}
+
+.combos-workspace-root .btn.btn-primary,
+.combos-workspace-shell .btn.btn-primary,
+.modal-overlay.cwi-dialog .btn.btn-primary {
+  background: var(--brand);
+  color: #fff;
+  border-color: transparent;
+}
+
+.combos-workspace-root .btn.btn-primary:hover:not(:disabled),
+.combos-workspace-shell .btn.btn-primary:hover:not(:disabled),
+.modal-overlay.cwi-dialog .btn.btn-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--brand) 88%, white);
+  color: #fff;
+}
+
+.combos-workspace-root .btn.btn-primary:disabled,
+.combos-workspace-shell .btn.btn-primary:disabled,
+.modal-overlay.cwi-dialog .btn.btn-primary:disabled {
+  color: #fff;
+}
+
+
+/* Unsaved / remove dialogs: force 4px on Keep / Discard / Cancel / Remove */
+dialog.modal-overlay.cwi-dialog .btn,
+dialog.modal-overlay.cwi-dialog .btn-sm,
+dialog.modal-overlay.cwi-dialog .pwi-json-unsaved-actions .btn,
+dialog.modal-overlay.cwi-dialog .pwi-remove-confirm-actions .btn {
+  border-radius: 4px !important;
+}
+
+/* Combo overview availability block. Owner: components/combo-workspace-selected-overview.tsx. */
+.combos-overview-availability-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}

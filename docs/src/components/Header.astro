@@ -1,0 +1,322 @@
+---
+/**
+ * Docs header: site title, grouped page menu, search, GitHub icon, theme picker.
+ *
+ * The groups come from src/navigation.ts - the same list the Starlight sidebar
+ * is built from - so a page cannot appear in one navigation and not the other.
+ * Menus are native <details> disclosures: open/close, keyboard focus and the
+ * collapsed state are browser behaviour, and the links stay reachable when the
+ * small script at the bottom only adds outside-click and Escape handling.
+ *
+ * The compact disclosure is the only page menu on the landing page, which is
+ * rendered without the Starlight sidebar.
+ */
+import { Icon } from '@astrojs/starlight/components';
+import Search from '@astrojs/starlight/components/Search.astro';
+import SiteTitle from '@astrojs/starlight/components/SiteTitle.astro';
+import SocialIcons from '@astrojs/starlight/components/SocialIcons.astro';
+import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+
+import { navGroups } from '../navigation';
+
+const isSplash = Astro.locals.starlightRoute.entry.data.template === 'splash';
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const pageHref = (slug: string) => `${base}${slug}/`;
+---
+
+<div class="header">
+	<div class="title-wrapper sl-flex">
+		<SiteTitle />
+	</div>
+
+	<nav class="page-menu print:hidden" aria-label="Documentation">
+		<ul>
+			{navGroups.map((group) => (
+				<li>
+					<details class="menu-group" data-menu-group>
+						<summary>
+							{group.label}
+							<svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true" focusable="false">
+								<path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+						</summary>
+						<ul class="menu-panel">
+							{group.links.map((link) => (
+								<li><a href={pageHref(link.slug)}>{link.label}</a></li>
+							))}
+						</ul>
+					</details>
+				</li>
+			))}
+		</ul>
+	</nav>
+
+	<div class="sl-flex print:hidden">
+		<Search />
+	</div>
+
+	<div class="sl-hidden md:sl-flex print:hidden right-group">
+		<div class="sl-flex social-icons">
+			<SocialIcons />
+		</div>
+		<ThemeSelect />
+	</div>
+
+	{isSplash && (
+		<details class="compact" data-menu-group>
+			<summary aria-label="Documentation menu">
+				<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
+					<path d="M3 5h14M3 10h14M3 15h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+				</svg>
+			</summary>
+			<div class="compact-panel">
+				{navGroups.map((group) => (
+					<section>
+						<h2>{group.label}</h2>
+						<ul>
+							{group.links.map((link) => (
+								<li><a href={pageHref(link.slug)}>{link.label}</a></li>
+							))}
+						</ul>
+					</section>
+				))}
+			</div>
+		</details>
+	)}
+</div>
+
+<style>
+	.header {
+		display: flex;
+		gap: var(--sl-nav-gap);
+		justify-content: space-between;
+		align-items: center;
+		height: 100%;
+		min-width: 0;
+	}
+
+	.title-wrapper {
+		/* Long titles must not push the menu and search buttons off a narrow bar. */
+		overflow: clip;
+		padding: 0.25rem;
+		margin: -0.25rem;
+		min-width: 0;
+	}
+
+	.right-group,
+	.social-icons {
+		gap: 1rem;
+		align-items: center;
+	}
+
+	/* --- grouped page menu ------------------------------------------------ */
+	.page-menu {
+		display: none;
+	}
+
+	.page-menu > ul {
+		display: flex;
+		align-items: center;
+		gap: 0.125rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.menu-group {
+		position: relative;
+	}
+
+	.menu-group > summary,
+	.compact > summary {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.4rem 0.6rem;
+		border-radius: var(--bn-radius-sm);
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+		font-weight: 500;
+		line-height: 1;
+		white-space: nowrap;
+		cursor: pointer;
+		list-style: none;
+		transition: background-color 0.12s ease, color 0.12s ease;
+	}
+
+	.menu-group > summary::-webkit-details-marker,
+	.compact > summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.menu-group > summary:hover,
+	.menu-group > summary:focus-visible,
+	.menu-group[open] > summary {
+		background-color: var(--bn-surface-hover);
+		color: var(--sl-color-white);
+	}
+
+	.menu-group[open] > summary svg {
+		transform: rotate(180deg);
+	}
+
+	.menu-group > summary svg {
+		transition: transform 0.15s ease;
+		opacity: 0.6;
+	}
+
+	.menu-panel {
+		position: absolute;
+		top: calc(100% + 0.5rem);
+		left: 0;
+		z-index: var(--sl-z-index-navbar);
+		min-width: 14rem;
+		margin: 0;
+		padding: 0.35rem;
+		list-style: none;
+		border: 1px solid var(--bn-hairline);
+		border-radius: var(--bn-radius);
+		background-color: var(--sl-color-bg);
+		box-shadow: var(--bn-shadow);
+	}
+
+	.menu-panel a,
+	.compact-panel a {
+		display: block;
+		padding: 0.45rem 0.6rem;
+		border-radius: var(--bn-radius-sm);
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+		text-decoration: none;
+	}
+
+	.menu-panel a:hover,
+	.menu-panel a:focus-visible,
+	.compact-panel a:hover,
+	.compact-panel a:focus-visible {
+		background-color: var(--bn-surface-hover);
+		color: var(--sl-color-white);
+	}
+
+	/* --- compact menu (landing page only) --------------------------------- */
+	.compact {
+		display: none;
+		position: relative;
+	}
+
+	.compact-panel {
+		position: absolute;
+		top: calc(100% + 0.6rem);
+		inset-inline-end: 0;
+		z-index: var(--sl-z-index-navbar);
+		width: min(20rem, calc(100vw - 2rem));
+		max-height: min(70dvh, 32rem);
+		overflow-y: auto;
+		padding: 0.75rem;
+		border: 1px solid var(--bn-hairline);
+		border-radius: var(--bn-radius);
+		background-color: var(--sl-color-bg);
+		box-shadow: var(--bn-shadow);
+	}
+
+	.compact-panel h2 {
+		margin: 0 0 0.25rem;
+		padding-inline: 0.6rem;
+		color: var(--sl-color-gray-3);
+		font-size: var(--sl-text-2xs);
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.compact-panel section + section {
+		margin-top: 0.75rem;
+	}
+
+	.compact-panel ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	@media (max-width: 71.99rem) {
+		.compact {
+			display: block;
+		}
+	}
+
+	@media (min-width: 72rem) {
+		.page-menu {
+			display: block;
+		}
+	}
+
+	@media (min-width: 50rem) {
+		:global(:root[data-has-sidebar]) .header {
+			--__sidebar-pad: calc(2 * var(--sl-nav-pad-x));
+		}
+		:global(:root:not([data-has-toc])) .header {
+			--__toc-width: 0rem;
+		}
+		.header {
+			--__sidebar-width: max(0rem, var(--sl-content-inline-start, 0rem) - var(--sl-nav-pad-x));
+			--__main-column-fr: calc(
+				(
+						100% + var(--__sidebar-pad, 0rem) - var(--__toc-width, var(--sl-sidebar-width)) -
+							(2 * var(--__toc-width, var(--sl-nav-pad-x))) - var(--sl-content-inline-start, 0rem) -
+							var(--sl-content-width)
+					) / 2
+			);
+			/* Title, page menu, search, right-hand controls. The first column keeps
+			   the title aligned with the page column; search takes the free space. */
+			display: grid;
+			grid-template-columns:
+				minmax(
+					calc(var(--__sidebar-width) + max(0rem, var(--__main-column-fr) - var(--sl-nav-gap))),
+					auto
+				)
+				auto
+				1fr
+				auto;
+			align-content: center;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.menu-group > summary,
+		.menu-group > summary svg {
+			transition: none;
+		}
+	}
+</style>
+
+<script>
+	/* Close an open dropdown when another one opens, when the pointer lands
+	   outside the menus, and on Escape (returning focus to its summary). */
+	const groups = Array.from(document.querySelectorAll<HTMLDetailsElement>('[data-menu-group]'));
+
+	const closeOthers = (keep: HTMLDetailsElement) => {
+		for (const group of groups) if (group !== keep) group.open = false;
+	};
+
+	for (const group of groups) {
+		group.addEventListener('toggle', () => {
+			if (group.open) closeOthers(group);
+		});
+	}
+
+	document.addEventListener('pointerdown', (event) => {
+		const target = event.target;
+		if (!(target instanceof Element)) return;
+		for (const group of groups) if (group.open && !group.contains(target)) group.open = false;
+	});
+
+	document.addEventListener('keydown', (event) => {
+		if (event.key !== 'Escape') return;
+		for (const group of groups) {
+			if (!group.open) continue;
+			group.open = false;
+			group.querySelector<HTMLElement>('summary')?.focus();
+		}
+	});
+</script>

@@ -1,0 +1,118 @@
+{
+  "before": {
+    "status": 200,
+    "body": {
+      "backends": [],
+      "vision": {
+        "backend": null,
+        "enabled": true,
+        "maxDescriptionsPerTurn": null,
+        "model": "",
+        "reasoning": null,
+        "timeoutMs": null
+      },
+      "visionModels": [],
+      "webSearch": {
+        "backend": null,
+        "enabled": true,
+        "model": "gpt-5.6-luna",
+        "streamRoutedModelOutput": false
+      }
+    }
+  },
+  "acceptedDescribeClass": {
+    "status": 200,
+    "body": {
+      "backends": [],
+      "ok": true,
+      "vision": {
+        "backend": "vision_describe",
+        "enabled": true,
+        "maxDescriptionsPerTurn": null,
+        "model": "",
+        "reasoning": null,
+        "timeoutMs": null
+      },
+      "visionModels": [],
+      "webSearch": {
+        "backend": null,
+        "enabled": true,
+        "model": "gpt-5.6-luna",
+        "streamRoutedModelOutput": false
+      }
+    }
+  },
+  "afterDescribeClass": {
+    "status": 200,
+    "body": {
+      "backends": [],
+      "vision": {
+        "backend": "vision_describe",
+        "enabled": true,
+        "maxDescriptionsPerTurn": null,
+        "model": "",
+        "reasoning": null,
+        "timeoutMs": null
+      },
+      "visionModels": [],
+      "webSearch": {
+        "backend": null,
+        "enabled": true,
+        "model": "gpt-5.6-luna",
+        "streamRoutedModelOutput": false
+      }
+    }
+  },
+  "rejectedUnknownBackend": {
+    "status": 400,
+    "body": {
+      "error": {
+        "code": "invalid_body",
+        "message": "vision.backend must be vision_describe, openai, anthropic, or null"
+      }
+    }
+  },
+  "storedOnlyFields": {
+    "status": 200,
+    "body": {
+      "backends": [],
+      "ok": true,
+      "vision": {
+        "backend": "vision_describe",
+        "enabled": true,
+        "maxDescriptionsPerTurn": null,
+        "model": "",
+        "reasoning": null,
+        "timeoutMs": null
+      },
+      "visionModels": [],
+      "webSearch": {
+        "backend": null,
+        "enabled": true,
+        "model": "gpt-5.6-luna",
+        "streamRoutedModelOutput": false
+      }
+    }
+  },
+  "afterStoredOnlyFields": {
+    "status": 200,
+    "body": {
+      "backends": [],
+      "vision": {
+        "backend": "vision_describe",
+        "enabled": true,
+        "maxDescriptionsPerTurn": null,
+        "model": "",
+        "reasoning": null,
+        "timeoutMs": null
+      },
+      "visionModels": [],
+      "webSearch": {
+        "backend": null,
+        "enabled": true,
+        "model": "gpt-5.6-luna",
+        "streamRoutedModelOutput": false
+      }
+    }
+  }
+}

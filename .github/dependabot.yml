@@ -1,0 +1,57 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    target-branch: dev
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      go-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directories:
+      - /
+      - /gui
+      - /docs
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:15"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    target-branch: dev
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:30"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 10
+    target-branch: dev
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      github-actions:
+        patterns:
+          - "*"

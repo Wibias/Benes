@@ -1,0 +1,45 @@
+{
+  "schema": "benes/330-dead-css-cleanup-render@1",
+  "base": "97e7f2e6a282b6bc4753971d4fa815b89759e695",
+  "candidate": "4b090ee58b2188cbef18b9eac307ca66b2ca0c12",
+  "removed": {
+    "classes": 31,
+    "rules": 55,
+    "declarations": 168,
+    "file": "gui/src/styles.css",
+    "edgeCases": {
+      "retainedBecauseConstructible": [
+        ".is-err (codex-account-picker-sections.tsx builds \"is-\" + NoticeTone, and NoticeTone includes \"err\")"
+      ],
+      "deletedDespiteRawTokenHits": [
+        ".stat (the only `stat` tokens are node:fs/promises imports and calls in a test)"
+      ]
+    }
+  },
+  "selectorProof": {
+    "selectorsProbed": 55,
+    "fixtureSurfaces": 16,
+    "elementMatchesOnBase": 0,
+    "elementMatchesOnCandidate": 0
+  },
+  "renderProof": {
+    "surfaces": 31,
+    "domClassChanges": 0,
+    "differenceKinds": {
+      "text": 9,
+      "style": 2
+    },
+    "boxGeometryDifferences": 0,
+    "controlRun": {
+      "domClassChanges": 0,
+      "differenceKinds": {
+        "text": 7,
+        "style": 2
+      }
+    }
+  },
+  "tooltipProof": {
+    "hoverStatesCompared": 3,
+    "identical": true
+  }
+}

@@ -1,0 +1,368 @@
+/* Sessions workspace — master/detail durable history. */
+
+.main-inner.main-inner--sessions {
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 10px 28px 8px;
+  overflow: hidden;
+}
+
+.sessions-board {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sessions-board > .page-head {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  padding-top: 15px;
+}
+
+.sessions-board > .page-head h2 {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+}
+
+.sessions-board > .notice {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+
+.sessions-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.9fr);
+  min-height: 0;
+  flex: 1;
+  align-items: stretch;
+}
+
+.sessions-master,
+.sessions-detail {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sessions-master {
+  border-right: 1px solid var(--border);
+  padding-right: 16px;
+}
+
+.sessions-detail {
+  padding-left: 24px;
+  overflow: auto;
+}
+
+.sessions-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.sessions-search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.sessions-search svg {
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.sessions-search .input {
+  padding-left: 32px;
+  border-radius: 4px;
+}
+
+.sessions-filter {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.sessions-filter-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-control);
+  cursor: pointer;
+}
+
+.sessions-filter-btn svg {
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+}
+
+.sessions-filter-btn.is-open {
+  border-color: var(--blue);
+}
+
+.sessions-filter-pop {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 8;
+  width: 240px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sessions-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+
+.sessions-filter-field .input {
+  border-radius: 4px;
+}
+
+.sessions-filter-clear {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 4px 0 0;
+  color: var(--blue);
+  font: inherit;
+  font-size: var(--text-control);
+  cursor: pointer;
+  text-align: left;
+}
+
+.sessions-routing-filter,
+.logs-session-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+
+.sessions-list-wrap {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+}
+
+.sessions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-control);
+}
+
+.sessions-table thead th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--muted);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.sessions-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.sessions-table tbody tr {
+  cursor: pointer;
+}
+
+.sessions-table tbody tr:hover {
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.sessions-table tbody tr.is-selected {
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  box-shadow: inset 2px 0 0 var(--blue);
+}
+
+.sessions-table tbody tr:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+.sessions-id-primary,
+.sessions-id-secondary {
+  display: block;
+}
+
+.sessions-id-primary {
+  color: var(--text);
+}
+
+.sessions-id-secondary {
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+
+.sessions-started {
+  white-space: nowrap;
+}
+
+.sessions-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.sessions-row-chevron {
+  width: 16px;
+  color: var(--muted);
+  padding-right: 4px;
+}
+
+.sessions-row-chevron svg {
+  width: 14px;
+  height: 14px;
+}
+
+.sessions-load-older {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 12px 0 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--blue);
+  font: inherit;
+  font-size: var(--text-control);
+  cursor: pointer;
+}
+
+.sessions-load-older svg {
+  width: 12px;
+  height: 12px;
+}
+
+.sessions-load-older:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sessions-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+}
+
+.sessions-detail-head h3,
+.sessions-block h4 {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+}
+
+.sessions-detail-empty {
+  color: var(--muted);
+  font-size: var(--text-control);
+}
+
+.sessions-facts {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.sessions-fact {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.42fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.sessions-fact dt {
+  color: var(--muted);
+  font-size: var(--text-control);
+}
+
+.sessions-fact dd {
+  margin: 0;
+  text-align: right;
+  font-size: var(--text-control);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.sessions-coverage {
+  color: var(--muted);
+  font-size: var(--text-label);
+}
+
+.sessions-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.sessions-block h4 {
+  margin-bottom: 12px;
+}
+
+@media (max-width: 960px) {
+  .sessions-split {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+  .sessions-master {
+    border-right: 0;
+    padding-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    max-height: 50%;
+  }
+  .sessions-detail {
+    padding-left: 0;
+    padding-top: 12px;
+  }
+}
+
+/* The master search field fills its row: the label is the flex container, the input is its
+   only growing child. */
+.sessions-search input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}

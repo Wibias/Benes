@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Bound through `git config core.hooksPath` (`npm run setup:hooks`).
+# Fail closed: a broken local gate must block the push.
+set -e
+exec npm run prepush

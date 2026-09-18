@@ -1,0 +1,34 @@
+name: PR hygiene
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+
+permissions: {}
+
+concurrency:
+  group: pr-gate-comment-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout trusted hygiene script
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.event.pull_request.base.ref == 'main' && 'main' || 'dev' }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Enforce deterministic PR hygiene
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const { runPrHygieneGate } = require("./.github/scripts/pr-hygiene-run.cjs");
+            await runPrHygieneGate({ github, context, core });

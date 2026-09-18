@@ -1,0 +1,81 @@
+/* Provider hardening overrides: keep Fleet/zero states flat and divider-led. */
+
+.providers-overview-board-title {
+  margin: 0;
+  padding: 8px 0 18px;
+  font-size: var(--text-title);
+  line-height: var(--leading-tight);
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+}
+
+.providers-overview-board > .providers-block:first-of-type {
+  border-top: 1px solid var(--border);
+}
+
+.pws-empty-root--quiet {
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.pws-empty-hero--quiet {
+  width: 100%;
+  max-width: none;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+}
+
+.pws-empty-hero--quiet h2 {
+  margin: 0;
+  font-size: var(--text-subtitle);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-semibold);
+}
+
+.pws-empty-steps {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: provider-onboarding;
+  border-top: 1px solid var(--border);
+}
+
+.pws-empty-steps li {
+  counter-increment: provider-onboarding;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 2px;
+  padding: 12px 0;
+}
+
+.pws-empty-steps li + li {
+  border-top: 1px solid var(--border);
+}
+
+.pws-empty-steps li::before {
+  content: counter(provider-onboarding);
+  grid-row: 1 / span 2;
+  color: var(--muted);
+  font-size: var(--text-control);
+  font-variant-numeric: tabular-nums;
+}
+
+.pws-empty-steps strong,
+.pws-empty-steps span {
+  grid-column: 2;
+}
+
+.pws-empty-steps strong {
+  color: var(--text);
+  font-size: var(--text-control);
+  font-weight: var(--weight-medium);
+}
+
+.pws-empty-steps span {
+  font-size: var(--text-control);
+  line-height: 1.35;
+}

@@ -1,0 +1,70 @@
+name: Feature request
+description: A workflow the current Benes CLI, listener, or dashboard cannot perform.
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the job you need done. Combos are failover only. Compatibility Lab is not on this runtime.
+
+  - type: textarea
+    id: job
+    attributes:
+      label: Job you need done
+      description: The user-facing workflow. Not an implementation sketch.
+      placeholder: When the first combo target is down, Codex on loopback should try the next target without changing the model id.
+    validations:
+      required: true
+
+  - type: textarea
+    id: blocked-by
+    attributes:
+      label: Why current Benes cannot do this
+      description: The limitation, or the workaround that is not good enough.
+      placeholder: combo_projection.go skips any strategy other than failover as unsupported_strategy.
+    validations:
+      required: true
+
+  - type: textarea
+    id: ship-shape
+    attributes:
+      label: Desired result and interface
+      description: Observable behaviour after it ships.
+      placeholder: A 5xx from the first combo target continues to the next before any model-visible output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: concrete-interaction
+    attributes:
+      label: One concrete interaction
+      description: One CLI command, config snippet, HTTP exchange, or dashboard path.
+      placeholder: benes combo show cheap
+    validations:
+      required: true
+
+  - type: dropdown
+    id: landing
+    attributes:
+      label: Likely landing place
+      options:
+        - CLI
+        - Loopback proxy
+        - Dashboard
+        - Provider adapter
+        - Credentials and OAuth
+        - Model catalog
+        - Install and packaging
+        - Docs
+        - Unsure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: secret-screen
+    attributes:
+      label: Redaction
+      options:
+        - label: This request contains no tokens, API keys, cookies, Authorization headers, or personal data.
+          required: true

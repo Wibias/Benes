@@ -1,0 +1,75 @@
+name: Enforce issue quality
+
+# Issue events load this file from the default branch, not from `dev`.
+on:
+  issues:
+    types:
+      - opened
+      - edited
+      - reopened
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number to validate and enforce (omit when backfilling open area labels)
+        required: false
+        type: number
+      backfill_open_areas:
+        description: Apply orthogonal area labels to all open issues (area pass only; no quality closure)
+        required: false
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: issue-quality-${{ github.event.issue.number || inputs.issue_number || (inputs.backfill_open_areas && 'backfill-open-areas') || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: >
+      github.event_name == 'issues' ||
+      (github.event_name == 'workflow_dispatch' &&
+       inputs.backfill_open_areas != true &&
+       inputs.issue_number != '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout trusted intake scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Enforce issue intake
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const { runIssueQualityGate } = require("./.github/scripts/issue-quality-run.cjs");
+            await runIssueQualityGate({ github, context, core });
+
+  backfill:
+    if: github.event_name == 'workflow_dispatch' && inputs.backfill_open_areas == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout trusted intake scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Apply area labels to open issues
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        with:
+          script: |
+            const { backfillOpenIssueAreaLabels } = require("./.github/scripts/issue-quality-backfill.cjs");
+            await backfillOpenIssueAreaLabels({ github, context, core });

@@ -1,0 +1,76 @@
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+# Source of truth for CodeRabbit on Wibias/Benes. Do not overwrite from the dashboard.
+
+language: en-US
+tone_instructions: >-
+  Review in English. Name the file and line, the concrete failure, and a
+  patch. Skip style-only nits. A hosted Actions job that never starts
+  because of billing is not a passing check.
+
+reviews:
+  profile: assertive
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: true
+    base_branches:
+      - "^dev$"
+  path_instructions:
+    - path: "cmd/**"
+      instructions: >-
+        Go CLI only. Do not spawn a non-Go production child. `benes lab`
+        stays unwired and exits 2. Combos are failover. Never log tokens,
+        request bodies, or account ids.
+    - path: "internal/**"
+      instructions: >-
+        Go data plane. Behaviour changes need a nearby *_test.go.
+        Streaming is HTTP/SSE; there is no WebSocket upgrade.
+        Binding 0.0.0.0 requires BENES_API_AUTH_TOKEN. POST /api/github/star
+        without a dashboard session is 403 consent_required.
+    - path: "scripts/release.ts"
+      instructions: >-
+        Sole publish driver. npm-first, exact 40-character SHA, OIDC trusted
+        publishing, no NPM_TOKEN. Dry-run must not mutate npm, git tags, or
+        GitHub Releases. Hosted push ci.yml on that SHA remains the release
+        gate; local ci:pr is not a substitute.
+    - path: "scripts/lib/release/**"
+      instructions: >-
+        Release domain. Preserve fresh/recover/complete/conflict, gitHead
+        proof before GitHub mutation, and GitHub Release tag/draft/prerelease
+        state. Do not reintroduce release-notes.ts or build-release-changelog.ts.
+    - path: "scripts/**"
+      instructions: >-
+        Tooling around the Go CLI. In Node/TypeScript, reuse node-runtime.ts
+        and win-exec.ts where they cover the required platform behavior.
+        Shell scripts, installers, runners, and hooks must preserve safe
+        quoting and process ownership directly. Do not print secrets.
+        prepare-package.ts owns the npm payload; do not hand-edit gui/dist.
+    - path: "gui/**"
+      instructions: >-
+        Vite dashboard packaged as gui/dist. Visible strings go through i18n.
+        gui/public/provider-icons/opencode.svg is the third-party OpenCode
+        mark. Dev proxy target is 127.0.0.1:23100.
+    - path: "docs/**"
+      instructions: >-
+        English Starlight site, Pages URL https://wibias.github.io/Benes/.
+        Check every command against cmd/benes. Combos are failover. No
+        locale trees. Root-absolute /use/... links 404 on Pages.
+    - path: ".github/**"
+      instructions: >-
+        Security boundary. Workflows declare explicit least privilege.
+        Read-only CI may use contents: read. Privileged mutation workflows
+        start from permissions {} and grant write only on the mutation job.
+        pull_request_target must never execute PR-controlled code. Pin
+        third-party actions to 40-character SHAs. Do not rename
+        ISSUE_TEMPLATE ### headings without the issue-quality scripts.
+        Billing-blocked runners are not green CI.
+
+issue_enrichment:
+  auto_enrich:
+    enabled: true
+  planning:
+    enabled: false
+
+chat:
+  auto_reply: true

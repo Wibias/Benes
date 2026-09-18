@@ -1,0 +1,72 @@
+[
+  {
+    "path": "src/components/AddProviderModal.tsx",
+    "directive": "eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only open hook",
+    "count": 1
+  },
+  {
+    "path": "src/components/AddProviderModal.tsx",
+    "directive": "oxlint-disable-next-line react/exhaustive-deps",
+    "count": 1
+  },
+  {
+    "path": "src/components/AddProviderModal.tsx",
+    "directive": "oxlint-disable-next-line react/react-compiler -- existing exhaustive-deps exception is intentional",
+    "count": 1
+  },
+  {
+    "path": "src/codex-pool-rotation-machine.ts",
+    "directive": "eslint-disable-next-line react-hooks/set-state-in-effect, react/react-compiler",
+    "count": 1
+  },
+  {
+    "path": "src/components/provider-catalog/ProviderCatalog.tsx",
+    "directive": "eslint-disable-next-line react-hooks/incompatible-library -- known useVirtualizer limitation",
+    "count": 1
+  },
+  {
+    "path": "src/components/provider-workspace/auth-panel-oauth.tsx",
+    "directive": "eslint-disable-next-line react-hooks/set-state-in-effect, react/react-compiler",
+    "count": 1
+  },
+  {
+    "path": "src/components/storage-workspace/StorageWorkspace.tsx",
+    "directive": "eslint-disable react-refresh/only-export-components -- bucket label helper co-locates with the rail rows",
+    "count": 1
+  },
+  {
+    "path": "src/hooks/useCodexAccountPool.ts",
+    "directive": "oxlint-disable-next-line react/react-compiler -- preserve existing callback dependency semantics during Oxlint migration",
+    "count": 1
+  },
+  {
+    "path": "src/pages/Debug.tsx",
+    "directive": "eslint-disable-next-line react-hooks/exhaustive-deps -- stream identity only",
+    "count": 1
+  },
+  {
+    "path": "src/pages/Debug.tsx",
+    "directive": "eslint-disable-next-line react-hooks/incompatible-library -- known useVirtualizer limitation",
+    "count": 1
+  },
+  {
+    "path": "src/pages/Debug.tsx",
+    "directive": "oxlint-disable-next-line react/react-compiler -- existing exhaustive-deps exception is intentional",
+    "count": 1
+  },
+  {
+    "path": "src/pages/Models.tsx",
+    "directive": "eslint-disable-next-line react-hooks/set-state-in-effect, react/react-compiler",
+    "count": 1
+  },
+  {
+    "path": "src/pages/models-shared.ts",
+    "directive": "eslint-disable-next-line local-i18n/no-hardcoded-ui-strings -- unit suffix, not prose",
+    "count": 1
+  },
+  {
+    "path": "src/use-app-route-state.ts",
+    "directive": "eslint-disable-next-line react-hooks/set-state-in-effect, react/react-compiler -- reconciles a hash changed before the listener was bound; an unchanged page re-renders as a no-op",
+    "count": 1
+  }
+]

@@ -1,0 +1,30 @@
+# Review requests only. Branch protection is not configured; see MAINTAINERS.md.
+
+# Catch-all so every path still requests the project owner.
+* @Wibias
+
+# Credentials, OAuth, and stored-account surfaces
+/internal/oauth/ @Wibias
+/internal/credentials/ @Wibias
+/internal/credentialpool/ @Wibias
+/internal/codexauth/ @Wibias
+
+# Listener endpoints that mint sessions, mutate providers, or return account state
+/internal/server/ @Wibias
+
+# Provider presets are credential destinations
+/internal/providers/ @Wibias
+/internal/providerregistry/ @Wibias
+
+# GitHub automation, release, and dependency install
+/.github/ @Wibias
+/scripts/release.ts @Wibias
+/scripts/lib/release/ @Wibias
+/scripts/prepare-package.ts @Wibias
+/package.json @Wibias
+/package-lock.json @Wibias
+
+# Policy files
+/AGENTS.md @Wibias
+/MAINTAINERS.md @Wibias
+/SECURITY.md @Wibias

@@ -1,0 +1,101 @@
+{
+  "name": "benes",
+  "version": "2.18.0",
+  "description": "Local Go proxy: Codex, Claude Code, and other clients reach configured providers on 127.0.0.1:23100",
+  "type": "module",
+  "main": "./bin/package-main.mjs",
+  "exports": {
+    ".": "./bin/package-main.mjs",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "benes": "./bin/benes.mjs"
+  },
+  "files": [
+    "bin",
+    "cmd",
+    "internal",
+    "go.mod",
+    "go.sum",
+    "gui/dist",
+    "assets/banner.png",
+    "assets/architecture.png",
+    "assets/dashboard.png",
+    "assets/demo.gif",
+    "assets/harnesses-board.png",
+    "assets/providers-board.png",
+    "assets/routing-board.png",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "node ./bin/benes.mjs start",
+    "dev:gui": "cd gui && npm run dev",
+    "start": "node ./bin/benes.mjs start",
+    "start:go": "go run ./cmd/benes serve",
+    "test": "go test ./...",
+    "audit:high": "npm audit --audit-level=high && cd gui && npm audit --audit-level=high",
+    "privacy:scan": "node --experimental-strip-types scripts/privacy-scan.ts",
+    "test:evidence-safety": "node --experimental-strip-types --test scripts/evidence-scratch.test.ts scripts/cdp-request-registry.test.ts scripts/evidence-process.test.ts scripts/evidence-browser-runtime.test.ts scripts/evidence-browser-failclosed.test.ts scripts/evidence-browser-prestart-failclosed.test.ts scripts/evidence-browser-profile-path.test.ts scripts/evidence-browser-runner.test.ts scripts/evidence-browser-devtools.test.ts scripts/evidence-browser-websocket.test.ts scripts/evidence-browser-default-runner.test.ts scripts/evidence-source-policy.test.ts",
+    "test:automation": "node .github/scripts/run-automation-tests.cjs && npm run test:evidence-safety",
+    "build:gui": "cd gui && npm ci && npm run build && cd .. && npm run prepare:package",
+    "prepare:package": "node --experimental-strip-types scripts/prepare-package.ts",
+    "prepack": "npm run prepare:package",
+    "prepublishOnly": "npm run audit:high && npm run build:gui",
+    "release": "node --experimental-strip-types scripts/release.ts",
+    "release:watch": "node --experimental-strip-types scripts/release.ts watch",
+    "prepush": "npm run lint:gui:if-changed && npm test && npm run privacy:scan",
+    "ci:pr": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/local-pr.ps1",
+    "lint:gui": "cd gui && npm run lint",
+    "lint:gui:if-changed": "node --experimental-strip-types scripts/gui-if-changed.ts lint",
+    "postmerge": "node --experimental-strip-types scripts/gui-if-changed.ts build",
+    "setup:hooks": "node --experimental-strip-types scripts/setup-hooks.ts"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.14.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@napi-rs/keyring": "1.3.0",
+    "zod": "4.4.3"
+  },
+  "overrides": {
+    "@hono/node-server": "2.1.0",
+    "fast-uri": "^3.1.7",
+    "hono": "4.13.1",
+    "ip-address": "^10.4.0"
+  },
+  "keywords": [
+    "codex",
+    "openai",
+    "proxy",
+    "llm",
+    "ollama",
+    "anthropic",
+    "responses-api",
+    "claude-code",
+    "claude",
+    "codex-cli",
+    "gemini",
+    "grok",
+    "deepseek",
+    "chatgpt",
+    "llm-proxy",
+    "ai-gateway",
+    "openrouter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wibias/Benes.git"
+  },
+  "homepage": "https://github.com/Wibias/Benes/",
+  "bugs": {
+    "url": "https://github.com/Wibias/Benes/issues"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "postcss": "8.5.26",
+    "ws": "8.21.3"
+  }
+}

@@ -1,0 +1,911 @@
+/* ============================================================================
+   apikeys-workspace — isolated stylesheet (mirrors providers-workspace layout DNA)
+   Namespace: apikeys-workspace-  |  widgets: awi-
+   Uses only design tokens from styles.css. No gradients.
+
+   The API board is viewport-locked like Control / Harnesses. Split panes and
+   the model catalog scroll internally; examples scroll in the active tabpanel.
+   Endpoints stays divider-only and fits the viewport without scrolling.
+   ============================================================================ */
+
+.main-inner.main-inner--api {
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: 10px 28px 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Cap corners on this board at 4px. Leave 0–3px and circular 50% tokens alone.
+   The create-key dialog is portaled, so it does not inherit from
+   `.main-inner--api` and needs the same token remap. Copy tips are also portaled. */
+.main-inner.main-inner--api,
+.api-create-dialog {
+  --radius: 4px;
+  --radius-sm: 4px;
+  --radius-xs: 4px;
+  --radius-lg: 4px;
+  --radius-pill: 4px;
+}
+
+.benes-tooltip-bubble.api-copy-tip-fixed {
+  border-radius: 4px;
+}
+
+.main-inner.main-inner--api > .api-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.api-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0;
+}
+
+.api-page .page-head-actions .btn,
+.api-create-dialog .btn,
+.api-create-dialog .input {
+  border-radius: var(--radius-2xs);
+}
+
+.api-page .page-head {
+  margin-bottom: 2px;
+  padding-top: 15px;
+  flex-shrink: 0;
+}
+
+.api-page .page-head h2 {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+}
+
+.api-page .api-create-key {
+  background: var(--blue);
+  color: #fff;
+  border-color: transparent;
+}
+
+.api-page .api-create-key:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+.api-page .page-sub {
+  /* Keep air under the auth blurb before Active keys / Generate. */
+  margin: 0 0 1.15rem;
+}
+
+.api-page > .notice {
+  margin-bottom: 0.85rem;
+}
+
+.api-page .apikeys-workspace-shell {
+  margin-top: 0.15rem;
+}
+
+.apikeys-workspace-shell {
+  width: 100%;
+  min-width: 0;
+  container-type: inline-size;
+  container-name: apikeys-workspace;
+}
+
+/* The rail's styles lived here. It was replaced by the pinned `SectionTabs`
+   strip (shared with Usage / Logs / Subagents) plus a key table in the Keys
+   section, so nothing below renders `.apikeys-workspace-rail*` any more. */
+
+.awi-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+/* Failure and its repair sit together, above whatever rows survived. */
+.api-models-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.api-models-error p {
+  margin: 0;
+  min-width: 0;
+}
+
+.api-models-empty {
+  margin-top: 0.75rem;
+}
+
+/* Unscoped on purpose: every copyable code block on this tab gets the same
+   behavior, including the client-config panel that 260731_client_config_export
+   mounts into this same workspace. Scoping these to .awi-usage-panel would let
+   that panel's JSON block fall back to trapping the wheel. */
+.api-example-copy-btn.benes-tooltip,
+.api-example-copy-btn {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* No vertical clip — the page scrolls when the pointer is over an example. */
+.api-example-pre {
+  min-height: 0;
+  max-height: none;
+  overflow-y: visible;
+  overscroll-behavior: auto;
+  scrollbar-gutter: stable;
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+/* Auth matrix: open by default. It replaced a <details> whose contents were the
+   one thing a user needs before their first request succeeds. */
+.api-auth-matrix-block {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.api-auth-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-label);
+}
+
+/* The header cells carry literal header names, which do not shorten. In the
+   narrow left column they were clipped mid-word at 1280x720, so the table gets
+   its own horizontal scroller rather than truncating what it is documenting. */
+.api-auth-matrix-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
+  scrollbar-gutter: stable;
+}
+
+.api-auth-matrix th,
+.api-auth-matrix td {
+  text-align: left;
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.api-auth-matrix th:last-child,
+.api-auth-matrix td:last-child {
+  padding-right: 12px;
+}
+
+.api-auth-matrix th {
+  font-weight: 600;
+}
+
+.api-auth-matrix code {
+  font-size: inherit;
+}
+
+.awi-delete-error {
+  color: var(--danger, #c44);
+  font-size: var(--text-label);
+  margin: 0;
+  flex-basis: 100%;
+}
+
+/* One test chip per protocol: the result belongs to the chip that produced it,
+   not to the row. */
+.api-model-test-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Was `flex-wrap: wrap`, which existed because three protocol chips plus Copy ID
+   could not fit across a ~300px panel interior. The single-column collapse above
+   more than doubles that, so the chips fit on one line and the wrap is no longer
+   needed. `nowrap` is deliberate rather than merely default: it makes a future
+   narrowing fail visibly in the catalog's own scroller instead of silently
+   re-stacking every row to four lines. */
+.api-model-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.api-model-actions .btn {
+  white-space: nowrap;
+}
+
+/* The examples are ordinary document content now. They were the answer to
+   "how do I call this?" behind a closed disclosure, which meant the page
+   answered that question only if you already suspected it was there. */
+.awi-usage-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.awi-usage-example {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.awi-usage-example + .awi-usage-example {
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft, var(--border));
+}
+
+.awi-usage-example-title {
+  margin: 0;
+  font-size: var(--text-control);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-ui);
+  color: var(--text);
+}
+
+.awi-section {
+  margin-bottom: 20px;
+}
+
+.awi-detail .awi-section {
+  margin-bottom: 0;
+}
+
+.awi-detail .awi-section + .awi-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.awi-section-title {
+  font-size: var(--text-subtitle);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+  color: var(--text);
+  margin: 0 0 8px 0;
+}
+
+.awi-kv {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.awi-section > .muted,
+.awi-section > .muted.small {
+  margin: 8px 0 0;
+  font-size: var(--text-control);
+}
+
+.awi-kv-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  font-size: var(--text-control);
+  line-height: var(--leading-ui);
+}
+
+.awi-kv-row dt {
+  flex: 0 1 auto;
+  color: var(--muted);
+  font-weight: var(--weight-regular);
+}
+
+.awi-kv-row dd {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+  color: var(--text);
+  font-weight: var(--weight-regular);
+}
+
+.awi-kv-row dd code {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.awi-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.awi-detail-title {
+  font-size: var(--text-title);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+  margin: 0;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.awi-detail-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+/* Keep @container and @media stacking rules in sync when changing breakpoints. */
+
+.main-inner.main-inner--api > .api-page > .page-head,
+.main-inner.main-inner--api > .api-page > .page-tabs,
+.main-inner.main-inner--api > .api-page > .notice {
+  flex-shrink: 0;
+}
+
+.api-page .apikeys-workspace-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.apikeys-workspace-shell > [role="tabpanel"]:not([hidden]) {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.awi-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+/* Client list is name + count only; give Overview the leftover. */
+.awi-split--clients {
+  grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.3fr);
+}
+
+.awi-master,
+.awi-detail-col {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  /* Same reserved track as the Models catalog: the bar must not sit on cells. */
+  scrollbar-gutter: stable;
+}
+
+.awi-master {
+  padding-right: 24px;
+  border-right: 1px solid var(--border);
+}
+
+.awi-detail-col {
+  padding-left: 24px;
+  /* Air left of the pane bar — gutter is only the 10px track. */
+  padding-right: 20px;
+}
+
+.awi-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xs);
+  background: var(--raised);
+  min-width: 0;
+}
+
+.awi-search svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.awi-search input,
+.awi-search-field {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 0;
+  border-radius: var(--radius-2xs);
+}
+
+.awi-search-field {
+  border: 1px solid var(--border);
+  background: var(--raised);
+  padding: 8px 10px;
+  margin: 8px 0;
+}
+
+.awi-search input:focus,
+.awi-search-field:focus {
+  outline: none;
+}
+
+.awi-search:focus-within,
+.awi-search-field:focus {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 1px;
+}
+
+.awi-table-wrap {
+  min-width: 0;
+  overflow: auto;
+}
+
+.awi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-label);
+}
+
+.awi-table th,
+.awi-table td {
+  text-align: left;
+  padding: 8px 12px 8px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.awi-table th {
+  color: var(--muted);
+  font-weight: var(--weight-semibold);
+}
+
+.awi-table td:first-child,
+.awi-table th:first-child {
+  padding-left: 8px;
+}
+
+.awi-split--clients .awi-master {
+  padding-right: 8px;
+}
+
+.awi-clients-table th:nth-child(2),
+.awi-clients-table td:nth-child(2) {
+  width: 99%;
+  text-align: right;
+  padding-right: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.awi-table tbody tr.is-selected {
+  background: light-dark(#f3f4f5, #1a1e22);
+  box-shadow: inset 4px 0 0 var(--brand);
+}
+
+.awi-row-select {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.awi-row-select:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-2xs);
+}
+
+.awi-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.awi-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.awi-board-title {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+}
+
+.api-page .awi-endpoints .awi-board-title,
+.api-page .awi-models > .api-panel-head .awi-board-title,
+.api-page .awi-usage-panel .awi-board-title {
+  font-size: var(--text-title);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+}
+
+.awi-usage-panel > .api-panel-head {
+  margin-bottom: 8px;
+}
+
+.awi-endpoints,
+.awi-models,
+.awi-usage-panel {
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-bottom: 0;
+}
+
+.awi-endpoints {
+  overflow: hidden;
+  padding-right: 0;
+}
+
+.awi-usage-panel {
+  overflow: auto;
+  scrollbar-gutter: stable;
+  /* Air left of the pane bar — gutter is only the 10px track. */
+  padding-right: 20px;
+}
+
+.awi-models {
+  overflow: hidden;
+}
+
+.awi-endpoints > .awi-section,
+.awi-models {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+/* Last available-endpoint row (Models) should sit on the section divider
+   the same way inter-row borders sit under Responses / Chat / Messages. */
+.awi-endpoints > .awi-section:has(.awi-endpoint-list) {
+  padding-bottom: 0;
+}
+
+.awi-endpoints > .awi-section:last-child,
+.awi-models {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.awi-endpoints > .awi-section > .awi-board-title,
+.awi-models > .api-panel-head {
+  margin-bottom: 6px;
+}
+
+.awi-models > .api-panel-head .awi-board-title {
+  margin: 0;
+}
+
+.awi-models > .api-panel-head .muted.small {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.awi-endpoint-base {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 40%;
+  max-width: 40%;
+  min-width: 0;
+}
+
+.awi-endpoint-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.awi-endpoint-list > li {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+.awi-endpoint-list > li:first-child {
+  border-top: 0;
+}
+
+.awi-endpoint-line {
+  display: grid;
+  grid-template-columns: 9.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 6px 0;
+}
+
+.awi-endpoint-line--framed {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--raised);
+  min-height: 32px;
+}
+
+.awi-endpoint-line-label {
+  font-size: var(--text-control);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.awi-endpoint-line-url {
+  min-width: 0;
+  font-family: var(--font-code);
+  font-size: var(--text-label);
+  color: var(--muted);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.awi-endpoint-copy,
+.benes-tooltip.awi-endpoint-copy {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.awi-endpoint-copy:hover,
+.benes-tooltip.awi-endpoint-copy:hover,
+.awi-endpoint-copy:focus-visible,
+.benes-tooltip.awi-endpoint-copy:focus-visible {
+  color: var(--text);
+  background: var(--raised-hover);
+}
+
+.awi-endpoint-copy svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.awi-endpoint-matrix-foot {
+  margin: 6px 0 0;
+  line-height: 1.35;
+}
+
+.awi-endpoints .api-auth-matrix-block {
+  margin-top: 0;
+  gap: 6px;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.awi-endpoints .api-auth-matrix-block > .awi-section-head {
+  margin-bottom: 0;
+}
+
+.awi-endpoints .api-auth-matrix-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-gutter: auto;
+}
+
+.awi-generated {
+  max-height: none;
+  /* Horizontal clip-scroll only. Visible + overflow-x:auto computes to
+     overflow-y:auto and paints a second bar on the JSON. The detail pane
+     owns vertical scrolling. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xs);
+  padding: 10px 12px;
+  margin: 0;
+}
+
+.awi-models > .awi-search-field.input {
+  width: 30%;
+  max-width: 30%;
+}
+
+.awi-models .api-models-scroll {
+  margin-top: 6px;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  max-height: none;
+  overflow: auto;
+  overscroll-behavior: auto;
+  scrollbar-gutter: stable;
+}
+
+.awi-models .api-models-scroll thead th {
+  background: var(--bg);
+}
+
+.modal-card.api-create-dialog {
+  max-width: 420px;
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-radius: var(--radius-2xs);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-head.api-create-head {
+  margin: 0;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.api-create-head h3 {
+  margin: 0;
+}
+
+.api-create-head > .btn-icon {
+  border-color: transparent;
+  background: transparent;
+}
+
+.api-create-body {
+  padding: 16px 20px;
+}
+
+.api-create-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px 16px;
+  align-items: center;
+}
+
+.api-create-field .field-label {
+  margin: 0;
+}
+
+.api-create-dialog .add-provider-foot {
+  margin-top: 0;
+}
+
+.api-create-dialog .add-provider-foot .btn {
+  flex: 0 0 auto;
+}
+
+.api-create-secret {
+  display: block;
+  word-break: break-all;
+  margin: 8px 0 0;
+}
+
+@media (max-width: 900px) {
+  .awi-split,
+  .awi-split--clients {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: auto;
+  }
+
+  .awi-master {
+    border-right: 0;
+    padding-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+
+  .awi-detail-col {
+    padding-left: 0;
+    padding-top: 16px;
+  }
+}
+
+/* API key workspace extras. Owner: components/apikeys-workspace/* and pages/ApiKeys.tsx. */
+.api-code {
+  margin: 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--leading-body);
+  white-space: pre;
+}
+
+.api-models-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  overflow: auto;
+}
+
+.api-model-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* One model probe's result, beside the button that started it. `api-access/model-catalog-view.ts`
+   names the tone: a probe in flight, one that answered, one that failed. */
+.api-test-note {
+  font-size: var(--text-caption);
+  line-height: var(--leading-ui);
+}
+
+.api-test-note--testing {
+  color: var(--amber);
+}
+
+.api-test-note--ok {
+  color: var(--green);
+}
+
+.api-test-note--error {
+  color: var(--red);
+}
+
+.awi-detail--keys {
+  gap: var(--space-3);
+}
+
+.awi-delete-hint {
+  margin: 0;
+  font-size: var(--text-label);
+}

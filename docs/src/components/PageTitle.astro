@@ -1,0 +1,19 @@
+---
+/**
+ * Splash pages render their own `h1#_top` inside the landing component, so the
+ * stock Starlight title is skipped there: two `h1`s on one page would also
+ * break the skip link, which targets the first one.
+ */
+import StarlightPageTitle from '@astrojs/starlight/components/PageTitle.astro';
+
+const { entry } = Astro.locals.starlightRoute;
+const pageRendersItsOwnTitle = entry.data.template === 'splash';
+---
+
+{
+  pageRendersItsOwnTitle ? null : (
+    <StarlightPageTitle>
+      <slot />
+    </StarlightPageTitle>
+  )
+}

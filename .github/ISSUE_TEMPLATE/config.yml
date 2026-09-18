@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability privately
+    url: https://github.com/Wibias/Benes/security/advisories/new
+    about: Do not file undisclosed security issues on the public tracker.
+  - name: Security policy
+    url: https://github.com/Wibias/Benes/blob/main/SECURITY.md
+    about: Supported release lines and what a useful private report contains.
+  - name: Contributor guide
+    url: https://github.com/Wibias/Benes/blob/main/CONTRIBUTING.md
+    about: Branch target, local checks, and the review bar.

@@ -1,0 +1,209 @@
+---
+/**
+ * Landing page for the docs site (Starlight `splash` template).
+ *
+ * Every claim here is taken from the shipped Go data plane: the listener table
+ * mirrors the routes in reference/http.md, the preset count comes from
+ * internal/server/provider_presets.json, and the commands match `benes help`.
+ * The page renders its own `h1#_top`, so PageTitle stands down for it.
+ */
+import { Image } from 'astro:assets';
+
+import demo from '../assets/demo.gif';
+import dashboardShot from '../assets/dashboard-overview.png';
+import harnessesBoard from '../assets/harnesses-board.png';
+import { navGroups, packageUrl, repositoryUrl } from '../navigation';
+import SiteJsonLd from './SiteJsonLd.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+
+const surfaces = [
+	{ path: 'POST /v1/responses', who: 'Codex and OpenAI-Responses clients' },
+	{ path: 'POST /v1/messages', who: 'Claude Code, Claude Desktop' },
+	{ path: 'POST /v1/chat/completions', who: 'OpenAI-compatible clients' },
+];
+
+const quickstart = [
+	{ command: 'npm install -g benes', note: 'launcher plus bundled dashboard' },
+	{ command: 'benes start', note: 'listener on 127.0.0.1:23100' },
+	{ command: 'benes init', note: 'durable config, optional Codex routing' },
+	{ command: 'codex -m "anthropic/claude-sonnet-4-6"', note: 'the client keeps its UI' },
+];
+
+const capabilities = [
+	{
+		title: 'Presets and adapters',
+		body: 'internal/server/provider_presets.json ships 81 ids. The adapters in internal/providers cover OpenAI Responses, Anthropic Messages, Gemini, and OpenAI-compatible Chat Completions, and a preset can point at a custom base URL.',
+	},
+	{
+		title: 'OAuth or a pasted key',
+		body: 'benes login runs the interactive flows that need a browser. Key presets take a pasted secret. Config writes are transactional, and the mutation log keeps its rows redacted.',
+	},
+	{
+		title: 'Account pool for ChatGPT',
+		body: 'The openai preset can hold several ChatGPT accounts. A new session takes a healthy one and normally keeps it; quota and 401/403/429 responses rebind. openai-apikey never joins the pool.',
+	},
+	{
+		title: 'Combos are failover only',
+		body: 'A combo id expands to an ordered target list, and the projector walks it until one target succeeds. An empty strategy means failover; anything else is rejected as unsupported_strategy.',
+	},
+	{
+		title: 'Codex routing and restore',
+		body: 'benes init and benes sync write routing into the resolved Codex home. benes stop restores the native file from the injection journal, and benes restore does the same without a running proxy.',
+	},
+	{
+		title: 'Clients keep their own UI',
+		body: 'benes claude, grok, opencode, mcode, and zcode launch against the same port, as do pi, prime, omp, hermes, openclaw, kimi, gajae, and dsh.',
+	},
+	{
+		title: 'Optional sidecars',
+		body: 'Web search and vision live under internal/sidecar and stay off the core path until a configuration enables them. Nothing there is required to route an ordinary completion.',
+	},
+	{
+		title: 'Dashboard on loopback',
+		body: 'The React dashboard reads the same state as the CLI over /api/*. Loopback is the default; a non-loopback hostname refuses to boot unless BENES_API_AUTH_TOKEN is set.',
+	},
+];
+
+const presetSample = [
+	'openai',
+	'anthropic',
+	'cursor',
+	'xai',
+	'kimi',
+	'azure-openai',
+	'nous',
+	'umans',
+];
+---
+
+<SiteJsonLd />
+
+<div class="bl not-content">
+	<section class="bl-hero">
+		<div class="bl-hero-copy">
+			<p class="bl-eyebrow">Local proxy · Go · MIT</p>
+			<h1 id="_top">One loopback port in front of the models you already pay for.</h1>
+			<p class="bl-lede">
+				benes is a single Go process on your machine. Codex, Claude Code, Claude Desktop, and Grok
+				Build keep their own interfaces; the listener accepts the request shape they send and selects
+				the provider you configured for it.
+			</p>
+			<div class="bl-actions">
+				<a class="bl-button" href={`${base}start/install/`}>Install benes</a>
+				<a class="bl-button-quiet" href={repositoryUrl}>Source on GitHub</a>
+			</div>
+		</div>
+		<aside class="bl-listener" aria-label="Listener surfaces">
+			<p class="bl-listener-head"><span class="bl-dot" aria-hidden="true"></span>127.0.0.1:23100</p>
+			<ul>
+				{surfaces.map((surface) => (
+					<li>
+						<code>{surface.path}</code>
+						<span>{surface.who}</span>
+					</li>
+				))}
+			</ul>
+			<p class="bl-listener-foot">Provider selection and credentials come from <code>~/.benes</code>, or <code>$BENES_HOME</code> when you move it.</p>
+		</aside>
+	</section>
+
+	<section class="bl-block">
+		<h2>Four commands to a routed request</h2>
+		<div class="bl-terminal">
+			<div class="bl-terminal-bar" aria-hidden="true">sh</div>
+			<ol>
+				{quickstart.map((step) => (
+					<li>
+						<code><span class="bl-prompt" aria-hidden="true">$ </span>{step.command}</code>
+						<span class="bl-step-note">{step.note}</span>
+					</li>
+				))}
+			</ol>
+		</div>
+		<p class="bl-follow">
+			New here? <a href={`${base}start/first-run/`}>First run</a> walks the same path with the checks
+			that tell a live listener from a stale pid file.
+		</p>
+	</section>
+
+	<figure class="bl-figure">
+		<Image
+			src={dashboardShot}
+			alt="benes dashboard home: fleet status, provider mix, and recent activity for the local listener"
+			loading="eager"
+		/>
+		<figcaption>
+			The dashboard is served from <code>gui/dist</code> by the same process that routes requests.
+			It reads <code>/api/*</code> on loopback, so nothing is exposed to the network by default.
+		</figcaption>
+	</figure>
+
+	<section class="bl-block">
+		<h2>What the process does</h2>
+		<ul class="bl-caps">
+			{capabilities.map((item) => (
+				<li>
+					<h3>{item.title}</h3>
+					<p>{item.body}</p>
+				</li>
+			))}
+		</ul>
+		<figure class="bl-inline-figure">
+			<Image
+				src={harnessesBoard}
+				alt="Harnesses board listing connected, available, and not-installed client integrations with the selected harness detail open"
+				loading="lazy"
+			/>
+			<figcaption>
+				Harnesses board: which client integrations are applied, available, or not installed on this
+				machine, and what the selected one still needs.
+			</figcaption>
+		</figure>
+	</section>
+
+	<section class="bl-block">
+		<h2>81 presets, and room for your own</h2>
+		<ul class="bl-chips">
+			{presetSample.map((id) => (
+				<li>{id}</li>
+			))}
+			<li class="bl-chip-rest">and 73 more</li>
+		</ul>
+		<p class="bl-follow">
+			<a href={`${base}use/providers/`}>Providers</a> covers keys, OAuth, discovery, and what each
+			adapter sends upstream.
+		</p>
+	</section>
+
+	<section class="bl-block">
+		<h2>The dashboard, moving</h2>
+		<figure class="bl-figure">
+			<img class="bl-anim" src={demo.src} alt="benes dashboard boards switching between the overview, the harness matrix, and the provider fleet" loading="lazy" />
+			<figcaption>Boards render from the listener's own state, so a fresh install looks like this once a provider is configured.</figcaption>
+		</figure>
+	</section>
+
+	<section class="bl-block">
+		<h2>Pages</h2>
+		<div class="bl-map">
+			{navGroups.map((group) => (
+				<div>
+					<h3>{group.label}</h3>
+					<ul>
+						{group.links.map((link) => (
+							<li><a href={`${base}${link.slug}/`}>{link.label}</a></li>
+						))}
+					</ul>
+				</div>
+			))}
+		</div>
+	</section>
+
+	<p class="bl-note">
+		benes is an independent project and is not affiliated with the vendors it can route to. Some
+		vendors restrict routing their APIs through another process: read the terms that apply to your
+		account before you connect one. The package is on
+		<a href={packageUrl}>npm</a>.
+	</p>
+</div>
