@@ -93,7 +93,7 @@ func (b *Bridge) snapshot(status string, responseUsage map[string]any, endTurn *
 }
 
 func (b *Bridge) emit(name string, fields map[string]any) Frame {
-	data := make(map[string]any, len(fields)+2)
+	data := make(map[string]any)
 	data["type"] = name
 	data["sequence_number"] = b.sequence
 	b.sequence++
