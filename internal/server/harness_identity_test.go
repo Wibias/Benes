@@ -70,6 +70,7 @@ func TestInvalidHarnessIdentityDoesNotRejectDataPlaneRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	h = attachHandlerClose(t, h)
 	req := httptest.NewRequest(http.MethodGet, "/v1/models", nil)
 	req.Host = "127.0.0.1"
 	req.Header.Set("Authorization", "Bearer local-secret")
