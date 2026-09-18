@@ -1,5 +1,8 @@
 "use strict";
 
-const { requestJsonCompletion } = require("./issue-translator-ai-client.cjs");
+const client = require("./issue-translator-ai-client.cjs");
 
-module.exports = { completeJson: requestJsonCompletion };
+module.exports = {
+  ...client,
+  completeJson: client.requestJsonCompletion,
+};
