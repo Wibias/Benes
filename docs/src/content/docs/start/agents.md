@@ -8,7 +8,7 @@ If you are an agent installing or operating Benes on a user’s machine, this pa
 ## Sequence
 
 ```bash
-npm install -g benes
+npm install -g @wibias/benes
 benes start          # or: benes service
 benes init           # writes ~/.benes/config.json; may inject Codex
 benes ready --wait
