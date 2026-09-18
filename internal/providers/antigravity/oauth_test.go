@@ -53,6 +53,12 @@ func TestRefreshAccessTokenReadsGrant(t *testing.T) {
 		if values.Get("grant_type") != "refresh_token" || values.Get("refresh_token") != "rt" {
 			t.Fatalf("form=%v", values)
 		}
+		if values.Get("client_id") != oauthClientID {
+			t.Fatalf("client_id=%q", values.Get("client_id"))
+		}
+		if _, ok := values["client_secret"]; ok {
+			t.Fatalf("refresh request must not send client_secret: %v", values)
+		}
 		io.WriteString(w, `{"access_token":"new-access","expires_in":3600}`)
 	}))
 	defer upstream.Close()

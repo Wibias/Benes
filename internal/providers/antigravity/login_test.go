@@ -95,6 +95,12 @@ func TestCompleteExchangesCodeAndDiscoversProject(t *testing.T) {
 	if completed.Account.Token != "access" || completed.Account.ProjectID != "proj-live" || completed.Refresh != "refresh" || grant.Get("code") != "auth-code" || grant.Get("code_verifier") != pending.Verifier {
 		t.Fatalf("completed=%#v grant=%v", completed, grant)
 	}
+	if grant.Get("client_id") != oauthClientID {
+		t.Fatalf("client_id=%q", grant.Get("client_id"))
+	}
+	if _, ok := grant["client_secret"]; ok {
+		t.Fatalf("authorization code exchange must not send client_secret: %v", grant)
+	}
 	if _, err := os.Stat(store.Path); !os.IsNotExist(err) {
 		t.Fatal("pending state must be consumed")
 	}
