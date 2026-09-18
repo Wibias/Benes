@@ -177,6 +177,10 @@ module.exports = {
 
     let failures = gatherQualityProblems({
       baseRef: pr.base.ref,
+      headRef: pr.head.ref,
+      sameRepository:
+        Boolean(pr.head.repo?.full_name) &&
+        pr.head.repo.full_name === pr.base.repo?.full_name,
       allowedBases: INTEGRATION_BASES,
       body: pr.body,
       behindMain,
