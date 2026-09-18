@@ -100,8 +100,8 @@ function fakeWorld(calls: string[], patch: Partial<ReleaseWorld> = {}): ReleaseW
     packDryRun: async () => {
       calls.push("pack");
     },
-    publishNpm: async () => {
-      calls.push("publish-npm");
+    stageNpm: async () => {
+      calls.push("stage-npm");
     },
     createTag: async () => {
       calls.push("create-tag");
@@ -120,9 +120,9 @@ describe("executePlan", () => {
   test("dry-run prepares the package and never mutates public metadata", async () => {
     const calls: string[] = [];
     const world = fakeWorld(calls, {
-      publishNpm: async () => {
-        calls.push("publish-npm");
-        throw new Error("publishNpm must not run in dry-run");
+      stageNpm: async () => {
+        calls.push("stage-npm");
+        throw new Error("stageNpm must not run in dry-run");
       },
       createTag: async () => {
         throw new Error("createTag must not run in dry-run");
@@ -134,7 +134,7 @@ describe("executePlan", () => {
     const result = await executePlan(
       plan({
         kind: "fresh",
-        mutations: ["publish-npm", "create-tag", "create-github-release"],
+        mutations: ["stage-npm", "create-tag", "create-github-release"],
       }),
       world,
       true,
@@ -143,93 +143,40 @@ describe("executePlan", () => {
     assert.deepEqual(calls, ["prepare", "pack"]);
   });
 
-  test("a successful publish sequence is npm, then tag, then GitHub Release", async () => {
+  test("a successful stage stops before Git tag and GitHub Release", async () => {
     const calls: string[] = [];
     const result = await executePlan(
       plan({
         kind: "fresh",
-        mutations: ["publish-npm", "create-tag", "create-github-release"],
+        mutations: ["stage-npm", "create-tag", "create-github-release"],
       }),
       fakeWorld(calls),
       false,
     );
-    assert.equal(result.outcome, "fresh");
-    assert.deepEqual(calls, [
-      "publish-npm",
-      "wait-npm-identity",
-      "create-tag",
-      "create-github-release",
-    ]);
+    assert.equal(result.outcome, "staged-awaiting-approval");
+    assert.deepEqual(calls, ["stage-npm"]);
   });
 
-  test("a duplicate npm publish is retryable only when gitHead matches the audited SHA", async () => {
-    const calls: string[] = [];
-    const result = await executePlan(
-      plan({
-        kind: "fresh",
-        mutations: ["publish-npm", "create-tag", "create-github-release"],
-      }),
-      fakeWorld(calls, {
-        publishNpm: async () => {
-          calls.push("publish-npm");
-        },
-        waitUntilPublishedIdentity: async () => {
-          calls.push("wait-npm-identity");
-        },
-      }),
-      false,
-    );
-    assert.equal(result.outcome, "fresh");
-    assert.ok(calls.includes("create-tag"));
-    assert.ok(calls.includes("create-github-release"));
-  });
-
-  test("a duplicate npm publish with a foreign gitHead aborts before GitHub mutation", async () => {
+  test("stage failure never creates GitHub metadata", async () => {
     const calls: string[] = [];
     await assert.rejects(
       () =>
         executePlan(
           plan({
             kind: "fresh",
-            mutations: ["publish-npm", "create-tag", "create-github-release"],
+            mutations: ["stage-npm", "create-tag", "create-github-release"],
           }),
           fakeWorld(calls, {
-            publishNpm: async () => {
-              calls.push("publish-npm");
-            },
-            waitUntilPublishedIdentity: async () => {
-              calls.push("wait-npm-identity");
-              throw new ReleaseError("npm_githead_mismatch", "foreign gitHead");
+            stageNpm: async () => {
+              calls.push("stage-npm");
+              throw new Error("registry down");
             },
           }),
           false,
         ),
-      (error: unknown) => error instanceof ReleaseError && error.code === "npm_githead_mismatch",
+      /registry down/,
     );
-    assert.deepEqual(calls, ["publish-npm", "wait-npm-identity"]);
-  });
-
-  test("publish success followed by a foreign gitHead aborts before GitHub mutation", async () => {
-    const calls: string[] = [];
-    await assert.rejects(
-      () =>
-        executePlan(
-          plan({
-            kind: "fresh",
-            mutations: ["publish-npm", "create-tag", "create-github-release"],
-          }),
-          fakeWorld(calls, {
-            waitUntilPublishedIdentity: async () => {
-              calls.push("wait-npm-identity");
-              throw new ReleaseError("npm_githead_mismatch", "foreign gitHead");
-            },
-          }),
-          false,
-        ),
-      /foreign gitHead/,
-    );
-    assert.ok(!calls.includes("create-tag"));
-    assert.ok(!calls.includes("create-github-release"));
+    assert.deepEqual(calls, ["stage-npm"]);
   });
 
   test("an already-existing matching GitHub Release after create is success", async () => {
@@ -308,35 +255,13 @@ describe("ancestorFromExitCode", () => {
 });
 
 describe("executePlan recovery", () => {
-  test("npm failure never creates a tag or GitHub Release", async () => {
-    const calls: string[] = [];
-    await assert.rejects(
-      () =>
-        executePlan(
-          plan({
-            kind: "fresh",
-            mutations: ["publish-npm", "create-tag", "create-github-release"],
-          }),
-          fakeWorld(calls, {
-            publishNpm: async () => {
-              calls.push("publish-npm");
-              throw new Error("registry down");
-            },
-          }),
-          false,
-        ),
-      /registry down/,
-    );
-    assert.deepEqual(calls, ["publish-npm"]);
-  });
-
-  test("retry after npm success only creates remaining GitHub metadata", async () => {
+  test("rerun after staged npm approval creates only remaining GitHub metadata", async () => {
     const calls: string[] = [];
     const result = await executePlan(
       plan({ kind: "recover", mutations: ["create-tag", "create-github-release"] }),
       fakeWorld(calls, {
-        publishNpm: async () => {
-          throw new Error("publishNpm must not rerun after npm success");
+        stageNpm: async () => {
+          throw new Error("stageNpm must not rerun after approval");
         },
       }),
       false,
@@ -359,7 +284,7 @@ describe("runPublish", () => {
     assert.equal(result.plan.intent.kind, "fresh");
     assert.ok(calls.includes("prepare"));
     assert.ok(calls.includes("pack"));
-    assert.ok(!calls.includes("publish-npm"));
+    assert.ok(!calls.includes("stage-npm"));
   });
 
   test("an unexpected HEAD SHA is refused before any mutation", async () => {
@@ -390,7 +315,7 @@ describe("runPublish", () => {
       dryRun: false,
     });
     assert.equal(result.outcome, "already-complete");
-    assert.ok(!calls.includes("publish-npm"));
+    assert.ok(!calls.includes("stage-npm"));
     assert.ok(!calls.includes("create-tag"));
   });
 
@@ -472,7 +397,27 @@ describe("runCut", () => {
       publish: true,
       planOnly: false,
     });
-    assert.equal(result.outcome, "dispatched-publish");
+    assert.equal(result.outcome, "dispatched-stage-or-finalize");
+    assert.ok(!calls.includes("bump"));
+    assert.ok(!calls.includes("commit-push"));
+    assert.ok(calls.includes("dispatch:dryRun=false"));
+  });
+
+  test("cut can finalize an approved staged version on the same branch version", async () => {
+    const calls: string[] = [];
+    const result = await runCut({
+      world: fakeWorld(calls, {
+        packageVersion: async () => "4.2.0",
+        npmHasVersion: async () => true,
+        npmGitHead: async () => SHA,
+        npmDistTags: async () => ({ latest: "4.2.0" }),
+      }),
+      version: "4.2.0",
+      distTag: null,
+      publish: true,
+      planOnly: false,
+    });
+    assert.equal(result.outcome, "dispatched-stage-or-finalize");
     assert.ok(!calls.includes("bump"));
     assert.ok(!calls.includes("commit-push"));
     assert.ok(calls.includes("dispatch:dryRun=false"));
@@ -482,7 +427,7 @@ describe("runCut", () => {
     await assert.rejects(
       () =>
         runCut({
-          world: fakeWorld([], { npmHasVersion: async () => true }),
+          world: fakeWorld([], { npmHasVersion: async () => true, remoteTagSha: async () => SHA }),
           version: "4.2.0",
           distTag: null,
           publish: true,

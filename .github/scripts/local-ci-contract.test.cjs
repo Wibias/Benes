@@ -43,6 +43,17 @@ describe("Local CI mirrors hosted cross-platform evidence", () => {
   });
 
   it("keeps packaging checks aligned and normalizes npm pack metadata", () => {
+    const packageJson = JSON.parse(read("package.json"));
+    assert.equal(
+      packageJson.bin?.benes,
+      "bin/benes.mjs",
+      "npm must preserve the Benes CLI bin entry instead of dropping an invalid manifest path",
+    );
+    assert.match(
+      packageJson.scripts["build:gui"],
+      /npm ci --dry-run=false/,
+      "publish dry-runs must still install GUI dependencies for a real build",
+    );
     for (const script of [ci, linux, macos, windows]) {
       assert.match(script, /npm pack --json/);
       assert.match(script, /npm-pack-json\.cjs/);
@@ -185,8 +196,9 @@ describe("Local CI mirrors hosted cross-platform evidence", () => {
   }, () => {
     const helper = windows.match(/function Enable-Utf8Console \{[\s\S]*?\n\}/)?.[0];
     assert.ok(helper, "Enable-Utf8Console must exist in ci-local.ps1");
-    const probe = path.join(os.tmpdir(), `benes-utf8-probe-${process.pid}.js`);
-    fs.writeFileSync(probe, "process.stdout.write(String.fromCharCode(0x251c, 0x2500, 0x25b6, 0x2713));\n");
+    const probeDir = fs.mkdtempSync(path.join(os.tmpdir(), "benes-utf8-probe-"));
+    const probe = path.join(probeDir, "probe.js");
+    fs.writeFileSync(probe, "process.stdout.write(String.fromCharCode(0x251c, 0x2500, 0x25b6, 0x2713));\n", { flag: "wx" });
     try {
       const command = [helper, "Enable-Utf8Console", `& node -- ${probe}`].join("\r\n");
       const out = execFileSync("powershell", ["-NoProfile", "-Command", command], {
@@ -195,7 +207,7 @@ describe("Local CI mirrors hosted cross-platform evidence", () => {
       });
       assert.equal(out.replace(/\r\n/g, "\n").trim(), "├─▶✓");
     } finally {
-      fs.rmSync(probe, { force: true });
+      fs.rmSync(probeDir, { recursive: true, force: true });
     }
   });
 

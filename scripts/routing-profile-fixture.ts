@@ -371,7 +371,7 @@ async function resolveRoot(): Promise<string> {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const root = path.resolve(here, "..");
   const pkg = JSON.parse(await readFile(path.join(root, "package.json"), "utf8")) as { name?: string };
-  if (pkg.name !== "benes") fail("run from the Benes checkout root");
+  if (pkg.name !== "@wibias/benes") fail("run from the Benes checkout root");
   return root;
 }
 
@@ -427,6 +427,14 @@ async function httpJson(
   pathname: string,
   options: { method?: string; body?: unknown } = {},
 ): Promise<{ status: number; json: unknown; text: string }> {
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("fixture port is invalid");
+  }
+  if (!pathname.startsWith("/") || pathname.includes("://")) {
+    throw new Error("fixture path must stay on loopback");
+  }
+  // Current-state data is used only to address the local Benes fixture and seed its own API.
+  // codeql[js/file-access-to-http]
   const response = await fetch(`http://127.0.0.1:${port}${pathname}`, {
     method: options.method ?? "GET",
     headers: {

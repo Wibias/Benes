@@ -17,7 +17,7 @@
 benes is a **Go proxy on loopback**. Codex, Claude Code, Claude Desktop, Grok Build, and other clients keep their own interfaces; the listener on `127.0.0.1:23100` accepts OpenAI Responses, Anthropic Messages, and Chat Completions, and `internal/router` decides which provider answers.
 
 ```bash
-npm install -g benes
+npm install -g @wibias/benes
 benes start        # data plane plus dashboard on 127.0.0.1:23100
 ```
 
@@ -68,7 +68,7 @@ Default bind is `127.0.0.1:23100`; state lives under `~/.benes` unless `BENES_HO
 ### Humans
 
 ```bash
-npm install -g benes   # Node 18+ and Go 1.27.0; the launcher execs the Go CLI
+npm install -g @wibias/benes   # Node 18+ and Go 1.27.0; the launcher execs the Go CLI
 benes start            # or `benes service` to keep it running in the background
 ```
 
@@ -90,7 +90,7 @@ The same commands work on Windows in PowerShell. A source checkout runs the curr
 ### Agents
 
 ```bash
-npm install -g benes
+npm install -g @wibias/benes
 benes start     # or `benes service`
 benes init      # writes ~/.benes/config.json, may inject Codex, never starts the listener
 ```

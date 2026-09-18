@@ -12,7 +12,8 @@
 # -> handoff. The toolchain table is the single source of truth for preflight.
 $ErrorActionPreference = "Stop"
 
-$PackageName = "benes"
+$PackageName = "@wibias/benes"
+$CliCommand = "benes"
 $NodeFloor = 18
 $NodeOrigin = "https://nodejs.org/"
 $GoOrigin = "https://go.dev/dl/"
@@ -80,10 +81,10 @@ function Invoke-PackageInstall {
 
 function Resolve-BenesLauncher {
     param([Parameter(Mandatory)]$Npm)
-    $launcher = Resolve-Launcher -Candidate @("benes.cmd", "benes")
+    $launcher = Resolve-Launcher -Candidate @("$CliCommand.cmd", $CliCommand)
     if (-not $launcher) {
         $prefix = & $Npm.Source prefix -g
-        Stop-Install "$PackageName is installed but not on PATH. Add the npm global bin directory, then reopen PowerShell: $prefix"
+        Stop-Install "$PackageName is installed but $CliCommand is not on PATH. Add the npm global bin directory, then reopen PowerShell: $prefix"
     }
     return $launcher
 }
@@ -92,7 +93,7 @@ function Assert-BenesHealth {
     param([Parameter(Mandatory)]$Launcher)
     & $Launcher.Source help *> $null
     if ($LASTEXITCODE -ne 0) {
-        Stop-Install "$PackageName is on PATH but help failed with exit code $LASTEXITCODE." $LASTEXITCODE
+        Stop-Install "$CliCommand is on PATH but help failed with exit code $LASTEXITCODE." $LASTEXITCODE
     }
 }
 
@@ -109,7 +110,7 @@ function Invoke-Install {
     $launcher = Resolve-BenesLauncher -Npm $npm
     Assert-BenesHealth -Launcher $launcher
     Write-Stage ""
-    Write-Stage "$PackageName is installed. Next: $PackageName init"
+    Write-Stage "$PackageName is installed. Next: $CliCommand init"
 }
 
 Invoke-Install

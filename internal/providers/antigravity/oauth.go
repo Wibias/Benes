@@ -17,7 +17,6 @@ const (
 	onboardAttempts   = 5
 	onboardPoll       = 2 * time.Second
 	oauthClientID     = "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com"
-	oauthClientSecret = "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"
 )
 
 var HTTPClient *http.Client
@@ -88,7 +87,6 @@ func RefreshAccessToken(ctx context.Context, client *http.Client, refreshToken s
 	form := url.Values{
 		"grant_type":    {"refresh_token"},
 		"client_id":     {oauthClientID},
-		"client_secret": {oauthClientSecret},
 		"refresh_token": {refreshToken},
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenEndpoint, strings.NewReader(form.Encode()))

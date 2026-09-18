@@ -36,15 +36,20 @@ async function persistLedger(github, owner, repo, issue_number, comments, decisi
   });
 }
 
-async function runIssueTranslation({ github, context, core }) {
-  const token = process.env.BENES_ISSUE_AI_TOKEN || "";
+async function runIssueTranslation({
+  github,
+  context,
+  core,
+  completeJson = requestJsonCompletion,
+}) {
+  const token = process.env.COPILOT_GITHUB_TOKEN || "";
   if (!token) {
-    core.info("BENES_ISSUE_AI_TOKEN is not set; skipping translation.");
+    core.info("COPILOT_GITHUB_TOKEN is not set; skipping translation.");
     return;
   }
 
   if (context.eventName === "issue_comment") {
-    await translateComment({ github, context, core, token });
+    await translateComment({ github, context, core, token, completeJson });
     return;
   }
 
@@ -84,10 +89,8 @@ async function runIssueTranslation({ github, context, core }) {
     return;
   }
 
-  const completion = await requestJsonCompletion({
+  const completion = await completeJson({
     token,
-    baseUrl: process.env.BENES_ISSUE_AI_BASE_URL,
-    model: process.env.BENES_ISSUE_AI_MODEL,
     system:
       "Return JSON only with requires_translation (boolean), detected_language, translated_title, translated_body. If the issue is already English, set requires_translation to false.",
     user: JSON.stringify({ title: sourceTitle, body: sourceBody }),
@@ -164,7 +167,7 @@ async function runIssueTranslation({ github, context, core }) {
   });
 }
 
-async function translateComment({ github, context, core, token }) {
+async function translateComment({ github, context, core, token, completeJson }) {
   const { owner, repo } = context.repo;
   const comment = context.payload.comment;
   const issue = context.payload.issue;
@@ -186,10 +189,8 @@ async function translateComment({ github, context, core, token }) {
     return;
   }
 
-  const completion = await requestJsonCompletion({
+  const completion = await completeJson({
     token,
-    baseUrl: process.env.BENES_ISSUE_AI_BASE_URL,
-    model: process.env.BENES_ISSUE_AI_MODEL,
     system:
       "Return JSON only with requires_translation (boolean), detected_language, translated_body. If the comment is already English, set requires_translation to false.",
     user: JSON.stringify({ body: decision.sourceBody }),

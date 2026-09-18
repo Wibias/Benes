@@ -49,14 +49,6 @@ export function npmInvocation(
   options: NpmInvocationOptions = {},
 ): { command: string; args: string[] } {
   const env = options.env ?? process.env;
-  const npmExecPath = env.npm_execpath?.trim();
-  if (npmExecPath) {
-    return {
-      command: options.execPath ?? process.execPath,
-      args: [npmExecPath, ...args],
-    };
-  }
-
   if ((options.platform ?? process.platform) === "win32") {
     return {
       command: env.ComSpec?.trim() || env.COMSPEC?.trim() || "cmd.exe",

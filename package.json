@@ -1,5 +1,5 @@
 {
-  "name": "benes",
+  "name": "@wibias/benes",
   "version": "0.1.0-preview.0",
   "description": "Local Go proxy: Codex, Claude Code, and other clients reach configured providers on 127.0.0.1:23100",
   "type": "module",
@@ -9,7 +9,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "benes": "./bin/benes.mjs"
+    "benes": "bin/benes.mjs"
   },
   "files": [
     "bin",
@@ -41,7 +41,7 @@
     "privacy:scan": "node --experimental-strip-types scripts/privacy-scan.ts",
     "test:evidence-safety": "node --experimental-strip-types --test scripts/evidence-scratch.test.ts scripts/cdp-request-registry.test.ts scripts/evidence-process.test.ts scripts/evidence-browser-runtime.test.ts scripts/evidence-browser-failclosed.test.ts scripts/evidence-browser-prestart-failclosed.test.ts scripts/evidence-browser-profile-path.test.ts scripts/evidence-browser-runner.test.ts scripts/evidence-browser-devtools.test.ts scripts/evidence-browser-websocket.test.ts scripts/evidence-browser-default-runner.test.ts scripts/evidence-source-policy.test.ts",
     "test:automation": "node .github/scripts/run-automation-tests.cjs && npm run test:evidence-safety",
-    "build:gui": "cd gui && npm ci && npm run build && cd .. && npm run prepare:package",
+    "build:gui": "cd gui && npm ci --dry-run=false && npm run build && cd .. && npm run prepare:package",
     "prepare:package": "node --experimental-strip-types scripts/prepare-package.ts",
     "prepack": "npm run prepare:package",
     "prepublishOnly": "npm run audit:high && npm run build:gui",
@@ -63,7 +63,7 @@
   "overrides": {
     "@hono/node-server": "2.1.0",
     "fast-uri": "^3.1.7",
-    "hono": "4.13.1",
+    "hono": "4.13.8",
     "ip-address": "^10.4.0"
   },
   "keywords": [
@@ -94,6 +94,9 @@
     "url": "https://github.com/Wibias/Benes/issues"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "postcss": "8.5.26",
     "ws": "8.21.3"

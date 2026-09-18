@@ -5,11 +5,11 @@ const assert = require("node:assert/strict");
 const { runIssueTranslation } = require("./issue-translation-run.cjs");
 const { MARKER } = require("./issue-translation.cjs");
 
-const originalToken = process.env.BENES_ISSUE_AI_TOKEN;
+const originalToken = process.env.COPILOT_GITHUB_TOKEN;
 
 afterEach(() => {
-  if (originalToken === undefined) delete process.env.BENES_ISSUE_AI_TOKEN;
-  else process.env.BENES_ISSUE_AI_TOKEN = originalToken;
+  if (originalToken === undefined) delete process.env.COPILOT_GITHUB_TOKEN;
+  else process.env.COPILOT_GITHUB_TOKEN = originalToken;
 });
 
 function mockCore() {
@@ -24,8 +24,8 @@ function mockCore() {
 }
 
 describe("runIssueTranslation admission", () => {
-  it("returns before any GitHub call when the model token is unset", async () => {
-    delete process.env.BENES_ISSUE_AI_TOKEN;
+  it("returns before any GitHub call when the Copilot token is unset", async () => {
+    delete process.env.COPILOT_GITHUB_TOKEN;
     const calls = [];
     await runIssueTranslation({
       github: { rest: { issues: { get: async () => { calls.push("get"); } } } },
@@ -36,7 +36,7 @@ describe("runIssueTranslation admission", () => {
   });
 
   it("fails dispatch when the issue number is not a positive safe integer", async () => {
-    process.env.BENES_ISSUE_AI_TOKEN = "token";
+    process.env.COPILOT_GITHUB_TOKEN = "token";
     const core = mockCore();
     await runIssueTranslation({
       github: { rest: { issues: {} } },
@@ -53,7 +53,7 @@ describe("runIssueTranslation admission", () => {
 
 describe("runIssueTranslation apply policy", () => {
   it("rewrites the issue body only after a successful translation, never the title", async () => {
-    process.env.BENES_ISSUE_AI_TOKEN = "token";
+    process.env.COPILOT_GITHUB_TOKEN = "token";
     const calls = [];
     const issue = {
       number: 8,
@@ -79,35 +79,24 @@ describe("runIssueTranslation apply policy", () => {
         },
       },
     };
-    const originalFetch = globalThis.fetch;
-    globalThis.fetch = async () => ({
-      ok: true,
-      json: async () => ({
-        choices: [{
-          message: {
-            content: JSON.stringify({
-              requires_translation: true,
-              detected_language: "German",
-              translated_title: "should not be applied",
-              translated_body: "When the first combo target is gone, Codex should hop before visible output.",
-            }),
-          },
-        }],
+    await runIssueTranslation({
+      github,
+      context: {
+        eventName: "issues",
+        repo: { owner: "Wibias", repo: "Benes" },
+        payload: { issue: { number: 8 } },
+      },
+      core: mockCore(),
+      completeJson: async () => ({
+        ok: true,
+        text: JSON.stringify({
+          requires_translation: true,
+          detected_language: "German",
+          translated_title: "should not be applied",
+          translated_body: "When the first combo target is gone, Codex should hop before visible output.",
+        }),
       }),
     });
-    try {
-      await runIssueTranslation({
-        github,
-        context: {
-          eventName: "issues",
-          repo: { owner: "Wibias", repo: "Benes" },
-          payload: { issue: { number: 8 } },
-        },
-        core: mockCore(),
-      });
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
     const update = calls.find((entry) => Array.isArray(entry) && entry[0] === "update");
     assert.ok(update);
     assert.equal(update[1].title, undefined);
@@ -116,7 +105,7 @@ describe("runIssueTranslation apply policy", () => {
   });
 
   it("does not write when a historical translation marker is unclosed", async () => {
-    process.env.BENES_ISSUE_AI_TOKEN = "token";
+    process.env.COPILOT_GITHUB_TOKEN = "token";
     const before = "Author text before the marker.";
     const after = "Author text after the unclosed marker.";
     const body = `${before}\n${MARKER}\nunclosed historical content\n${after}`;
@@ -141,27 +130,22 @@ describe("runIssueTranslation apply policy", () => {
         },
       },
     };
-    const originalFetch = globalThis.fetch;
-    let fetched = 0;
-    globalThis.fetch = async () => {
-      fetched += 1;
-      return { ok: true, json: async () => ({ choices: [{ message: { content: "{}" } }] }) };
-    };
+    let completions = 0;
     const core = mockCore();
-    try {
-      await runIssueTranslation({
-        github,
-        context: {
-          eventName: "issues",
-          repo: { owner: "Wibias", repo: "Benes" },
-          payload: { issue: { number: 8 } },
-        },
-        core,
-      });
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
-    assert.equal(fetched, 0);
+    await runIssueTranslation({
+      github,
+      context: {
+        eventName: "issues",
+        repo: { owner: "Wibias", repo: "Benes" },
+        payload: { issue: { number: 8 } },
+      },
+      core,
+      completeJson: async () => {
+        completions += 1;
+        return { ok: true, text: "{}" };
+      },
+    });
+    assert.equal(completions, 0);
     assert.equal(calls.includes("get"), true);
     assert.equal(calls.some((entry) => Array.isArray(entry) && entry[0] === "update"), false);
     assert.equal(calls.some((entry) => Array.isArray(entry) && entry[0] === "createComment"), false);

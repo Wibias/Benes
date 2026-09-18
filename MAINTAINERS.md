@@ -18,8 +18,8 @@ Everything lands on `dev` first; nothing else integrates.
 
 **Targets**
 
-- Every pull request is opened against `dev`. `preview` carries prereleases, and `main` moves only when a maintainer promotes `dev` to it.
-- `enforce-target` accepts `dev`, or a stacked child whose base is another open pull request.
+- Every ordinary pull request is opened against `dev`. `preview` carries prereleases, and `main` moves only through maintainer-controlled promotion.
+- `enforce-target` accepts ordinary PRs to `dev`, stacked children whose base is another open pull request, and exact same-repository maintainer promotions from `dev` to `preview` or `main`. Feature branches may not target `preview` or `main` directly.
 - It also refuses a branch whose head still sits on `main`'s tip with `dev` far ahead of it, plus descriptions that are empty, thin, or malformed.
 - A title or description that mentions `gui` has to carry a screenshot of the change, unless a maintainer waives it with `gui-screenshot-waived`.
 
@@ -44,7 +44,7 @@ Everything lands on `dev` first; nothing else integrates.
 **Direct pushes and promotion**
 
 - Direct pushes are reserved for maintainer-owned integration work, urgent repairs, and incident recovery. Test and documentation requirements do not relax for them.
-- Promotion from `dev` to `main`, and npm releases, remain maintainer-controlled.
+- Promotion from `dev` to `preview` or `main`, and npm releases, remain maintainer-controlled. CI may only stage npm versions through OIDC; a maintainer must approve each staged package with 2FA before it becomes public, then rerun the release to finalize the Git tag and GitHub Release.
 
 ## Maintainer changes
 

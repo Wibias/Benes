@@ -3,7 +3,7 @@ import { describe, test } from "node:test";
 import { classifyPrCiPaths, needsCiLocal, scopeEnvValue } from "./ci-pr-scope.ts";
 
 describe("classifyPrCiPaths", () => {
-  test("docs-only skips Go, WSL, packaging, and GUI", () => {
+  test("docs-only skips Go, native runners, packaging, and GUI", () => {
     const buckets = classifyPrCiPaths(["docs/src/content/docs/start/install.md"]);
     assert.deepEqual(buckets, {
       docs: true,
@@ -15,6 +15,7 @@ describe("classifyPrCiPaths", () => {
       packaging: false,
       linux: false,
       darwin: false,
+      windows: false,
       full: false,
     });
     assert.equal(needsCiLocal(buckets), false);
@@ -28,19 +29,61 @@ describe("classifyPrCiPaths", () => {
     assert.equal(buckets.go, false);
     assert.equal(buckets.packaging, false);
     assert.equal(buckets.linux, false);
+    assert.equal(buckets.darwin, false);
+    assert.equal(buckets.windows, false);
     assert.equal(needsCiLocal(buckets), false);
   });
 
-  test("Go source runs full Go tests plus Linux and Darwin compile", () => {
+  test("generic Go source keeps native full-suite runners off", () => {
     const buckets = classifyPrCiPaths(["internal/router/router.go"]);
     assert.equal(buckets.go, true);
     assert.equal(buckets.linux, true);
-    assert.equal(buckets.darwin, true);
+    assert.equal(buckets.darwin, false);
+    assert.equal(buckets.windows, false);
     assert.equal(buckets.packaging, false);
     assert.equal(buckets.docs, false);
     assert.equal(buckets.gui, false);
     assert.equal(needsCiLocal(buckets), true);
     assert.equal(scopeEnvValue(buckets), "go,privacy");
+  });
+
+  test("shared filesystem and credential Go changes run both native suites", () => {
+    for (const file of [
+      "internal/storage/confine.go",
+      "internal/credentials/store.go",
+      "internal/managedfs/root.go",
+      "internal/store/atomicfile/atomic.go",
+    ]) {
+      const buckets = classifyPrCiPaths([file]);
+      assert.equal(buckets.go, true, file);
+      assert.equal(buckets.windows, true, file);
+      assert.equal(buckets.darwin, true, file);
+    }
+  });
+
+  test("Windows-only integrations do not force a macOS Go suite", () => {
+    const buckets = classifyPrCiPaths(["internal/winsw/winsw.go"]);
+    assert.equal(buckets.go, true);
+    assert.equal(buckets.windows, true);
+    assert.equal(buckets.darwin, false);
+  });
+
+  test("platform file suffixes select their native runner", () => {
+    const windows = classifyPrCiPaths(["internal/example/value_windows.go"]);
+    assert.equal(windows.windows, true);
+    assert.equal(windows.darwin, false);
+
+    const darwin = classifyPrCiPaths(["internal/example/value_darwin.go"]);
+    assert.equal(darwin.windows, false);
+    assert.equal(darwin.darwin, true);
+  });
+
+  test("CLI and dependency graph changes run both native Go suites", () => {
+    for (const file of ["cmd/benes/root.go", "go.mod", "go.sum"]) {
+      const buckets = classifyPrCiPaths([file]);
+      assert.equal(buckets.windows, true, file);
+      assert.equal(buckets.darwin, true, file);
+    }
   });
 
   test("package.json is packaging, not a Go suite", () => {
@@ -49,14 +92,16 @@ describe("classifyPrCiPaths", () => {
     assert.equal(buckets.go, false);
     assert.equal(buckets.linux, true);
     assert.equal(buckets.darwin, false);
+    assert.equal(buckets.windows, false);
   });
 
-  test("local CI script changes prove Go/WSL/Darwin, not GUI or keyring", () => {
+  test("local CI script changes prove all native Go lanes, not GUI or keyring", () => {
     const buckets = classifyPrCiPaths(["scripts/local-pr.ps1"]);
     assert.equal(buckets.full, false);
     assert.equal(buckets.go, true);
     assert.equal(buckets.linux, true);
     assert.equal(buckets.darwin, true);
+    assert.equal(buckets.windows, true);
     assert.equal(buckets.automation, true);
     assert.equal(buckets.privacy, true);
     assert.equal(buckets.gui, false);
@@ -79,6 +124,8 @@ describe("classifyPrCiPaths", () => {
   test("unknown paths force a full run", () => {
     const buckets = classifyPrCiPaths(["unexpected/tool.py"]);
     assert.equal(buckets.full, true);
+    assert.equal(buckets.windows, true);
+    assert.equal(buckets.darwin, true);
   });
 
   test("root agent docs are ignored", () => {
@@ -92,5 +139,7 @@ describe("classifyPrCiPaths", () => {
     const buckets = classifyPrCiPaths(["docs/x.md"], true);
     assert.equal(buckets.full, true);
     assert.equal(buckets.go, true);
+    assert.equal(buckets.windows, true);
+    assert.equal(buckets.darwin, true);
   });
 });

@@ -9,9 +9,11 @@
  * `cut` (default) bumps package.json on main/preview, waits for hosted push CI,
  * and dispatches `.github/workflows/release.yml`. `publish` is what that
  * workflow runs: it inspects public state, writes a plan, then either packs
- * (dry-run) or mutates npm/tag/GitHub Release.
+ * (dry-run), stages npm for maintainer approval, or finalizes Git tag/GitHub
+ * Release after the staged npm package has been approved with 2FA.
  *
- * npm publish is OIDC trusted publishing. There is no npm token path.
+ * npm staging uses OIDC trusted publishing with stage-only permission. There
+ * is no direct CI npm publish path and no npm token path.
  */
 
 import { isMainModule } from "./node-runtime.ts";
@@ -58,8 +60,8 @@ export async function main(argv: string[], env: NodeJS.ProcessEnv = process.env)
     }
     console.log(
       command.publish
-        ? "\nPublished dispatch complete. Try:  npm install -g benes"
-        : "\nDry-run dispatch complete. Re-run with --publish to publish for real.",
+        ? "\nRelease dispatch complete. If npm was staged, review and approve it with 2FA, then rerun this same release command to finalize GitHub metadata."
+        : "\nDry-run dispatch complete. Re-run with --publish to stage the package for maintainer approval.",
     );
     return;
   }
