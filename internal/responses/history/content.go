@@ -102,27 +102,21 @@ func decodeInputContent(raw json.RawMessage) []protocol.ContentPart {
 			imageURL, hasURL := nonEmptyString(block["image_url"])
 			fileID, hasFile := nonEmptyString(block["file_id"])
 			detail, hasDetail := nonEmptyString(block["detail"])
-			if hasURL {
-				part := protocol.ContentPart{Type: protocol.ContentImage, ImageURL: imageURL}
+			if hasURL || hasFile {
+				part := protocol.ContentPart{Type: protocol.ContentImage, ImageURL: imageURL, FileID: fileID}
 				if hasDetail {
 					part.Detail = normalizeImageDetail(detail)
 				}
 				parts = append(parts, part)
-			} else if hasFile {
-				parts = append(parts, protocol.ContentPart{Type: protocol.ContentText, Text: "[image: " + fileID + "]"})
 			}
 		case "input_file":
 			fileID, hasFile := nonEmptyString(block["file_id"])
-			_, hasData := nonEmptyString(block["file_data"])
+			fileData, hasData := nonEmptyString(block["file_data"])
 			filename, hasName := nonEmptyString(block["filename"])
-			if hasFile {
-				parts = append(parts, protocol.ContentPart{Type: protocol.ContentText, Text: "[file: " + fileID + "]"})
-			} else if hasData {
-				if hasName {
-					parts = append(parts, protocol.ContentPart{Type: protocol.ContentText, Text: "[file: " + filename + "]"})
-				} else {
-					parts = append(parts, protocol.ContentPart{Type: protocol.ContentText, Text: "[file: inline data]"})
-				}
+			if hasFile || hasData || hasName {
+				parts = append(parts, protocol.ContentPart{
+					Type: protocol.ContentFile, FileID: fileID, FileData: fileData, Filename: filename,
+				})
 			}
 		}
 	}
