@@ -683,6 +683,15 @@ func (rt *fabricRuntime) runSingleChildHandoff(ctx context.Context, repo *fabric
 		}
 	}
 	contOut, contErr := rt.h.runModelTurn(ctx, contIn)
+	// Release the resume Turn before persisting the terminal state, so a run that is
+	// observable as completed never still holds a resource-budget slot. The non-handoff
+	// path above already releases its turn before finishPrimaryDrive; the handoff path
+	// otherwise left this to the deferred cleanup in driveWithOptionalHandoff, which runs
+	// only after the terminal state has been persisted.
+	if live.turn != nil {
+		_ = live.turn.Close()
+		live.turn = nil
+	}
 	rt.finishPrimaryDrive(ctx, repo, live, contOut, contErr)
 }
 
