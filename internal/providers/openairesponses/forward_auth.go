@@ -223,6 +223,11 @@ func (c *ForwardClient) openAttempt(
 					if attempt.Observer != nil {
 						attempt.Observer.Observe(outcome)
 					}
+					if !canReplayForwardAccountBoundFiles(dispatch.Parsed, credential, retryAttempt.Credential) {
+						abandonForwardObserver(retryAttempt.Observer)
+						bound.Release()
+						return nil, continuation.Bound{}, statusErr
+					}
 					bound.Release()
 					return c.openAttempt(ctx, dispatch, retryAttempt, false)
 				}
@@ -246,6 +251,11 @@ func (c *ForwardClient) openAttempt(
 				attempt.Observer.Observe(outcome)
 			}
 			if retry {
+				if !canReplayForwardAccountBoundFiles(dispatch.Parsed, credential, retryAttempt.Credential) {
+					abandonForwardObserver(retryAttempt.Observer)
+					bound.Release()
+					return nil, continuation.Bound{}, statusErr
+				}
 				bound.Release()
 				return c.openAttempt(ctx, dispatch, retryAttempt, false)
 			}
@@ -265,6 +275,11 @@ func (c *ForwardClient) openAttempt(
 				attempt.Observer.Observe(outcome)
 			}
 			if retry {
+				if !canReplayForwardAccountBoundFiles(dispatch.Parsed, credential, retryAttempt.Credential) {
+					abandonForwardObserver(retryAttempt.Observer)
+					bound.Release()
+					return nil, continuation.Bound{}, statusErr
+				}
 				if retryAttempt.CommitQuotaRetry != nil {
 					retryAttempt.CommitQuotaRetry()
 				}
