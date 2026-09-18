@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,8 +17,17 @@ func TestNpmBenesLauncherExecsGoCLI(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(pkg), `"./bin/benes.mjs"`) {
-		t.Fatal("package.json bin does not register benes")
+	var manifest struct {
+		Bin map[string]string `json:"bin"`
+	}
+	if err := json.Unmarshal(pkg, &manifest); err != nil {
+		t.Fatalf("package.json is not valid JSON: %v", err)
+	}
+	// The publishable form is "bin/benes.mjs"; a leading "./" is equivalent and was
+	// the earlier spelling, so normalize it before comparing the registered target.
+	binBenes := strings.TrimPrefix(manifest.Bin["benes"], "./")
+	if binBenes != "bin/benes.mjs" {
+		t.Fatalf("package.json bin.benes = %q, want bin/benes.mjs", manifest.Bin["benes"])
 	}
 	if !strings.Contains(string(pkg), `"start:go": "go run ./cmd/benes serve"`) {
 		t.Fatal("package.json start:go does not run the Go CLI")
