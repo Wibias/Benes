@@ -11,6 +11,13 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\function read(rel) {
+  return fs.readFileSync(path.join(ROOT, rel), "utf8");
+}
+");
+}
+
 describe("CODEOWNERS", () => {
   const owners = read(".github/CODEOWNERS");
 
@@ -26,7 +33,7 @@ describe("CODEOWNERS", () => {
       "/scripts/release.ts",
       "/package.json",
     ]) {
-      assert.match(owners, new RegExp(`^${pattern.replace(/[/.]/g, "\\$&")}\\s+@Wibias`, "m"));
+      assert.match(owners, new RegExp(`^${escapeRegExp(pattern)}\\s+@Wibias`, "m"));
     }
   });
 });
