@@ -35,12 +35,21 @@ function copilotArgs(prompt) {
 }
 
 function copilotEnv(token) {
-  const env = {
-    ...process.env,
-    COPILOT_GITHUB_TOKEN: token,
-  };
-  delete env.GH_TOKEN;
-  delete env.GITHUB_TOKEN;
+  const env = { COPILOT_GITHUB_TOKEN: token };
+  for (const name of [
+    "PATH",
+    "HOME",
+    "USERPROFILE",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    "RUNNER_TEMP",
+    "LANG",
+    "LC_ALL",
+    "CI",
+  ]) {
+    if (process.env[name]) env[name] = process.env[name];
+  }
   return env;
 }
 
