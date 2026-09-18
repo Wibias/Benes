@@ -22,7 +22,7 @@ export type ReleaseIdentity = {
 };
 
 const FULL_SHA = /^[0-9a-f]{40}$/;
-const PACKAGE_NAME = /^[a-z0-9][a-z0-9._-]*$/;
+const PACKAGE_NAME = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
 const REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 
 export function parseFullSha(value: string): string {
