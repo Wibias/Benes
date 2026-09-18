@@ -371,7 +371,7 @@ async function resolveRoot(): Promise<string> {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const root = path.resolve(here, "..");
   const pkg = JSON.parse(await readFile(path.join(root, "package.json"), "utf8")) as { name?: string };
-  if (pkg.name !== "benes") fail("run from the Benes checkout root");
+  if (pkg.name !== "@wibias/benes") fail("run from the Benes checkout root");
   return root;
 }
 
