@@ -39,7 +39,7 @@ describe("Copilot issue AI client", () => {
   it("invokes Copilot non-interactively with mutating/network tools denied", () => {
     const args = copilotArgs("prompt");
     assert.deepEqual(args.slice(0, 4), ["-p", "prompt", "-s", "--no-ask-user"]);
-    for (const denied of ["shell", "write", "url", "memory", "github"]) {
+    for (const denied of ["shell", "write", "read", "url", "memory", "github"]) {
       assert.ok(args.includes(`--deny-tool=${denied}`), denied);
     }
     assert.equal(args.some((arg) => arg === "--allow-all" || arg === "--allow-all-tools"), false);
