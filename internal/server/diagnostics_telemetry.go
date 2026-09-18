@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Wibias/Benes/internal/protocol"
+	"github.com/Wibias/Benes/internal/resourcebudget"
 	"github.com/Wibias/Benes/internal/sessions"
 	"github.com/Wibias/Benes/internal/timeline"
 	"github.com/Wibias/Benes/internal/usage"
@@ -24,6 +25,7 @@ const (
 	diagnosticsStringMax        = 256
 	diagnosticsCauseMax         = 64
 	diagnosticsAttemptMax       = 16
+	diagnosticsPhysicalSendMax  = 64
 	diagnosticsTimelineEventMax = 16
 )
 
@@ -50,6 +52,7 @@ type requestTelemetryRecord struct {
 	ResponseBytes *int64
 	Routing       diagnosticsRouting
 	Attempts      []diagnosticsAttempt
+	PhysicalSends []diagnosticsPhysicalSend
 	Timing        diagnosticsTiming
 	Timeline      []diagnosticsTimelineEvent
 	Failure       *diagnosticsFailure
@@ -85,6 +88,11 @@ type diagnosticsAttempt struct {
 	Status   int    `json:"status,omitempty"`
 	Code     string `json:"code,omitempty"`
 	Decision string `json:"decision,omitempty"`
+}
+
+type diagnosticsPhysicalSend struct {
+	Ordinal int    `json:"ordinal"`
+	Reason  string `json:"reason,omitempty"`
 }
 
 type diagnosticsTiming struct {
@@ -171,6 +179,7 @@ type diagnosticsRequestDetail struct {
 	ErrorCode     string                     `json:"errorCode,omitempty"`
 	Routing       *diagnosticsRouting        `json:"routing,omitempty"`
 	Attempts      []diagnosticsAttempt       `json:"attempts,omitempty"`
+	PhysicalSends []diagnosticsPhysicalSend  `json:"physicalSends,omitempty"`
 	Timing        diagnosticsTiming          `json:"timing"`
 	Timeline      []diagnosticsTimelineEvent `json:"timeline,omitempty"`
 	Failure       *diagnosticsFailure        `json:"failure,omitempty"`
@@ -453,6 +462,7 @@ func (record requestTelemetryRecord) detail() diagnosticsRequestDetail {
 		ResponseBytes: record.ResponseBytes,
 		ErrorCode:     record.ErrorCode,
 		Attempts:      record.Attempts,
+		PhysicalSends: record.PhysicalSends,
 		Timing:        record.Timing,
 		Timeline:      record.Timeline,
 		Failure:       record.Failure,
@@ -568,6 +578,44 @@ func copyTelemetryAttempts(values []sessions.Attempt) []diagnosticsAttempt {
 		})
 	}
 	return out
+}
+
+func projectDiagnosticsPhysicalSends(values []resourcebudget.PhysicalSend) []diagnosticsPhysicalSend {
+	if len(values) == 0 {
+		return nil
+	}
+	if len(values) > diagnosticsPhysicalSendMax {
+		values = values[:diagnosticsPhysicalSendMax]
+	}
+	out := make([]diagnosticsPhysicalSend, 0, len(values))
+	for _, value := range values {
+		out = append(out, diagnosticsPhysicalSend{
+			Ordinal: value.Ordinal,
+			Reason:  sanitizePhysicalSendReason(value.Reason),
+		})
+	}
+	return out
+}
+
+func sanitizePhysicalSendReason(raw string) string {
+	value := strings.ToLower(strings.TrimSpace(raw))
+	value = strings.ReplaceAll(value, "-", "_")
+	if value == "" || len(value) > diagnosticsCauseMax {
+		return ""
+	}
+	for i, r := range value {
+		if i == 0 {
+			if !(unicode.IsLetter(r) && unicode.IsLower(r)) {
+				return ""
+			}
+			continue
+		}
+		if unicode.IsLower(r) || unicode.IsDigit(r) || r == '_' {
+			continue
+		}
+		return ""
+	}
+	return value
 }
 
 func copyTelemetryTimeline(events []timeline.Event) ([]diagnosticsTimelineEvent, diagnosticsTiming, *diagnosticsFailure, string) {

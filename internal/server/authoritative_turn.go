@@ -368,6 +368,14 @@ func (h *handler) runModelTurnImpl(ctx context.Context, in modelTurnInput) (mode
 		stream = h.watchSession(ctx, provider, stream, openErr)
 	}
 	if openErr != nil {
+		if errors.Is(openErr, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+			httpStatus = http.StatusTooManyRequests
+			trace.Mark(timeline.StageUpstreamWaitHeaders, timeline.SideLocal, timeline.MilestoneDispatch, false, physicalSendBudgetErrorCode)
+			return modelTurnResult{
+				Status: "failed", Reason: physicalSendBudgetErrorCode, RequestID: requestID,
+				RequestedModel: model, Provider: route.Provider, ResolvedModel: route.Model, HTTPStatus: httpStatus,
+			}, openErr
+		}
 		httpStatus = 502
 		trace.Mark(timeline.StageUpstreamWaitHeaders, timeline.SideUpstream, timeline.MilestoneDispatch, false, "provider_open_failed")
 		if errors.Is(ctx.Err(), context.Canceled) {

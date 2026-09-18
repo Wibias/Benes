@@ -99,6 +99,11 @@ func (h *handler) handleAnthropicMessages(w http.ResponseWriter, r *http.Request
 	if searchClient != nil { stream, err = websearch.OpenLoop(r.Context(), provider.Open, dispatch, searchClient) } else { stream, err = provider.Open(r.Context(), dispatch) }
 	stream = h.watchSession(r.Context(), provider, stream, err)
 	if err != nil {
+		if errors.Is(err, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+			trace.Mark(timeline.StageUpstreamWaitHeaders, timeline.SideLocal, timeline.MilestoneDispatch, false, physicalSendBudgetErrorCode)
+			writeAnthropicError(w, http.StatusTooManyRequests, physicalSendBudgetErrorMessage, "api_error", physicalSendBudgetErrorCode)
+			return
+		}
 		trace.Mark(timeline.StageUpstreamWaitHeaders, timeline.SideUpstream, timeline.MilestoneDispatch, false, "provider_open_failed")
 		writeAnthropicError(w, http.StatusBadGateway, publicProviderOpenMessage(err), "api_error", "")
 		return
