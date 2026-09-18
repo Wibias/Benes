@@ -10,6 +10,7 @@ export type PrCiBuckets = {
   packaging: boolean;
   linux: boolean;
   darwin: boolean;
+  windows: boolean;
   full: boolean;
 };
 
@@ -31,6 +32,19 @@ const FULL_SELF = [
   "scripts/ci-scope.sh",
   ".github/workflows/ci.yml",
   ".github/workflows/go-core.yml",
+];
+
+const SHARED_NATIVE_GO_ROOTS = [
+  "cmd/benes",
+  "internal/bootstrap",
+  "internal/config",
+  "internal/credentials",
+  "internal/managedfs",
+  "internal/nativemain",
+  "internal/platform",
+  "internal/servicectl",
+  "internal/storage",
+  "internal/store",
 ];
 
 function under(file: string, dir: string): boolean {
@@ -78,6 +92,7 @@ function emptyBuckets(): PrCiBuckets {
     packaging: false,
     linux: false,
     darwin: false,
+    windows: false,
     full: false,
   };
 }
@@ -93,8 +108,25 @@ function allBuckets(): PrCiBuckets {
     packaging: true,
     linux: true,
     darwin: true,
+    windows: true,
     full: true,
   };
+}
+
+function sharedNativeGoPath(file: string): boolean {
+  if (file === "go.mod" || file === "go.sum") return true;
+  return SHARED_NATIVE_GO_ROOTS.some((root) => under(file, root));
+}
+
+function needsWindowsGo(file: string): boolean {
+  if (sharedNativeGoPath(file)) return true;
+  if (under(file, "internal/winsw") || under(file, "internal/wintray")) return true;
+  return /_windows\.go$/i.test(file);
+}
+
+function needsDarwinGo(file: string): boolean {
+  if (sharedNativeGoPath(file)) return true;
+  return /_(?:darwin|unix)\.go$/i.test(file);
 }
 
 export function classifyPrCiPaths(files: string[], forceFull = false): PrCiBuckets {
@@ -115,6 +147,8 @@ export function classifyPrCiPaths(files: string[], forceFull = false): PrCiBucke
     if (under(file, "gui")) buckets.gui = true;
     if (under(file, "cmd") || under(file, "internal") || file === "go.mod" || file === "go.sum") {
       buckets.go = true;
+      if (needsWindowsGo(file)) buckets.windows = true;
+      if (needsDarwinGo(file)) buckets.darwin = true;
     }
     if (under(file, ".github")) buckets.automation = true;
     if (file.endsWith(".test.ts") && under(file, "scripts")) buckets.automation = true;
@@ -145,7 +179,6 @@ export function classifyPrCiPaths(files: string[], forceFull = false): PrCiBucke
   }
   if (buckets.go) {
     buckets.linux = true;
-    buckets.darwin = true;
   }
   if (buckets.packaging) {
     buckets.linux = true;
@@ -158,6 +191,7 @@ export function classifyPrCiPaths(files: string[], forceFull = false): PrCiBucke
     buckets.go = true;
     buckets.linux = true;
     buckets.darwin = true;
+    buckets.windows = true;
     buckets.automation = true;
     buckets.privacy = true;
   }
@@ -175,7 +209,7 @@ export function scopeEnvValue(buckets: PrCiBuckets): string {
 
 export function needsCiLocal(buckets: PrCiBuckets): boolean {
   if (buckets.full) return true;
-  return buckets.go || buckets.packaging || buckets.keyring || buckets.linux || buckets.darwin;
+  return buckets.go || buckets.packaging || buckets.keyring || buckets.linux || buckets.darwin || buckets.windows;
 }
 
 if (isMainModule(import.meta.url)) {
