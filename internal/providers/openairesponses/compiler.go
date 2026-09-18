@@ -130,6 +130,10 @@ func validateCanonicalRequest(req protocol.ParsedRequest, catalog *tools.Catalog
 		for pi, part := range message.Content {
 			switch part.Type {
 			case protocol.ContentText, protocol.ContentImage:
+			case protocol.ContentFile:
+				if message.Role != protocol.RoleUser && message.Role != protocol.RoleDeveloper {
+					return fmt.Errorf("%w: messages[%d].content[%d] file input on non-user role", ErrUnsupportedRequestShape, mi, pi)
+				}
 			case protocol.ContentThinking:
 				return fmt.Errorf("%w: messages[%d].content[%d] reasoning replay", ErrUnsupportedRequestShape, mi, pi)
 			case protocol.ContentToolCall:
@@ -229,14 +233,34 @@ func compileInputContent(parts []protocol.ContentPart) ([]any, error) {
 		case protocol.ContentText:
 			out = append(out, map[string]any{"type": "input_text", "text": part.Text})
 		case protocol.ContentImage:
-			if strings.TrimSpace(part.ImageURL) == "" {
-				return nil, fmt.Errorf("%w: input image is missing image_url", ErrUnsupportedRequestShape)
+			imageURL := strings.TrimSpace(part.ImageURL)
+			fileID := strings.TrimSpace(part.FileID)
+			if imageURL == "" && fileID == "" {
+				return nil, fmt.Errorf("%w: input image is missing image_url or file_id", ErrUnsupportedRequestShape)
 			}
-			image := map[string]any{"type": "input_image", "image_url": part.ImageURL}
+			image := map[string]any{"type": "input_image"}
+			if imageURL != "" {
+				image["image_url"] = part.ImageURL
+			}
+			if fileID != "" {
+				image["file_id"] = part.FileID
+			}
 			if part.Detail != "" {
 				image["detail"] = part.Detail
 			}
 			out = append(out, image)
+		case protocol.ContentFile:
+			file := map[string]any{"type": "input_file"}
+			if strings.TrimSpace(part.FileID) != "" {
+				file["file_id"] = part.FileID
+			}
+			if strings.TrimSpace(part.FileData) != "" {
+				file["file_data"] = part.FileData
+			}
+			if strings.TrimSpace(part.Filename) != "" {
+				file["filename"] = part.Filename
+			}
+			out = append(out, file)
 		default:
 			return nil, fmt.Errorf("%w: unsupported human content %q", ErrUnsupportedRequestShape, part.Type)
 		}
