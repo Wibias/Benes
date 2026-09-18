@@ -426,15 +426,13 @@ export function createLiveWorld(options: LiveWorldOptions): ReleaseWorld {
     async packDryRun() {
       await attach(npmArgv(["pack", "--dry-run"]), registryEnv());
     },
-    async publishNpm(distTag: DistTag) {
-      const result = await exec(npmArgv(["publish", "--tag", distTag, "--access", "public"]), registryEnv());
+    async stageNpm(distTag: DistTag) {
+      const result = await exec(
+        npmArgv(["stage", "publish", "--tag", distTag, "--access", "public"]),
+        registryEnv(),
+      );
       if (result.exitCode === 0) return;
-      const output = `${result.stdout}\n${result.stderr}`;
-      if (npmVersionAlreadyOnRegistry(output)) {
-        log(`npm already has this version; continuing with remaining publication steps`);
-        return;
-      }
-      throw new ReleaseError("npm_publish_failed", "npm publish failed");
+      throw new ReleaseError("npm_stage_failed", "npm stage publish failed");
     },
     async createTag(tag, sha) {
       const result = await exec([
