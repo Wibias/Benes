@@ -1,6 +1,7 @@
 package capability
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -77,19 +78,21 @@ func TestStructuredOutputOptOutIsExactModelID(t *testing.T) {
 	}
 }
 
-func TestApplyStripsStructuredOutputAndKeepsXAIPriorityFailClosed(t *testing.T) {
+func TestApplyRejectsStructuredOutputOptOutAndKeepsXAIPriorityFailClosed(t *testing.T) {
+	format := &protocol.TextFormat{Type: "json_schema", Name: "answer"}
 	req := &protocol.ParsedRequest{
 		UpstreamModelID: "gpt-oss",
 		Options: protocol.RequestOptions{
-			TextFormat:  &protocol.TextFormat{Type: "json_schema", Name: "answer"},
+			TextFormat:  format,
 			ServiceTier: stringPtr("priority"),
 		},
+		StructuredOutput: true,
 	}
-	if err := Apply(req, Policy{NoStructuredOutputModels: []string{"gpt-oss"}, Protocol: "openai-chat", ChatServiceTier: true}, ""); err != nil {
-		t.Fatal(err)
+	if err := Apply(req, Policy{NoStructuredOutputModels: []string{"gpt-oss"}, Protocol: "openai-chat", ChatServiceTier: true}, ""); !errors.Is(err, ErrStructuredOutputUnsupported) {
+		t.Fatalf("err=%v", err)
 	}
-	if req.Options.TextFormat != nil {
-		t.Fatalf("text format survived: %#v", req.Options.TextFormat)
+	if req.Options.TextFormat != format {
+		t.Fatalf("text format mutated: %#v", req.Options.TextFormat)
 	}
 	xai := &protocol.ParsedRequest{UpstreamModelID: "grok-4.6", Options: protocol.RequestOptions{ServiceTier: stringPtr("priority")}}
 	if err := Apply(xai, Policy{Protocol: "openai-chat", AuthClass: "api-key", Endpoint: "https://api.x.ai.example/v1", ChatServiceTier: true}, ""); err == nil {

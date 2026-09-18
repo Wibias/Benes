@@ -2052,6 +2052,14 @@
         "baseUrl": "https://generativelanguage.googleapis.com",
         "authMode": "key",
         "defaultModel": "gemini-3.5-flash",
+        "supportsStructuredOutput": false,
+        "modelSupportsStructuredOutput": {
+          "gemini-3.6-flash": true,
+          "gemini-3.5-flash": true,
+          "gemini-3.5-flash-lite": true,
+          "gemini-3.1-pro-preview": true,
+          "gemini-3.7-flash": true
+        },
         "models": [
           "gemini-3.6-flash",
           "gemini-3.5-flash",
@@ -2119,6 +2127,7 @@
         "baseUrl": "https://aiplatform.googleapis.com",
         "authMode": "key",
         "defaultModel": "gemini-3-pro",
+        "supportsStructuredOutput": false,
         "googleMode": "vertex"
       }
     },
@@ -2135,6 +2144,7 @@
         "baseUrl": "https://daily-cloudcode-pa.googleapis.com",
         "authMode": "oauth",
         "defaultModel": "gemini-3.7-flash",
+        "supportsStructuredOutput": false,
         "models": [
           "gemini-3.7-flash",
           "gemini-3.1-pro",
