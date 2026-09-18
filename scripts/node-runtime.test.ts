@@ -2,20 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { npmInvocation, runCommand } from "./node-runtime.ts";
 
-test("npmInvocation runs the parent npm CLI through the current Node executable", () => {
+test("npmInvocation ignores npm_execpath from the environment", () => {
   const invocation = npmInvocation(["run", "lint"], {
-    env: { npm_execpath: "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" },
-    execPath: "C:\\Program Files\\nodejs\\node.exe",
-    platform: "win32",
+    env: { npm_execpath: "/tmp/untrusted-npm-cli.js" },
+    execPath: "/usr/bin/node",
+    platform: "linux",
   });
 
   assert.deepEqual(invocation, {
-    command: "C:\\Program Files\\nodejs\\node.exe",
-    args: [
-      "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js",
-      "run",
-      "lint",
-    ],
+    command: "npm",
+    args: ["run", "lint"],
   });
 });
 
