@@ -4,7 +4,7 @@ const { describe, it, afterEach } = require("node:test");
 const assert = require("node:assert/strict");
 const { runIssueTriage } = require("./issue-triage-run.cjs");
 
-const originalToken = process.env.BENES_ISSUE_AI_TOKEN;
+const originalToken = process.env.COPILOT_GITHUB_TOKEN;
 const SECRET = "triage-secret-token-do-not-log";
 const SHARED_LINE =
   "POST /v1/responses returned HTTP 410 after the first combo target and before any output.";
@@ -12,8 +12,8 @@ const RELATED_REASON =
   "Both reports return HTTP 410 from POST /v1/responses during combo failover.";
 
 afterEach(() => {
-  if (originalToken === undefined) delete process.env.BENES_ISSUE_AI_TOKEN;
-  else process.env.BENES_ISSUE_AI_TOKEN = originalToken;
+  if (originalToken === undefined) delete process.env.COPILOT_GITHUB_TOKEN;
+  else process.env.COPILOT_GITHUB_TOKEN = originalToken;
 });
 
 function mockCore() {
@@ -86,8 +86,8 @@ describe("triage session skip paths", () => {
     assert.match(core.infoMessages.join("\n"), /pull request/);
   });
 
-  it("skips nomination when the dedicated AI token is unset", async () => {
-    delete process.env.BENES_ISSUE_AI_TOKEN;
+  it("skips nomination when the Copilot token is unset", async () => {
+    delete process.env.COPILOT_GITHUB_TOKEN;
     const github = mockGithub({ number: 22, title: "Listener bind failed", body: "EADDRINUSE" });
     const core = mockCore();
     await runIssueTriage({
@@ -96,11 +96,11 @@ describe("triage session skip paths", () => {
       core,
     });
     assert.deepEqual(github.calls.map((entry) => entry[0]), ["get"]);
-    assert.match(core.infoMessages.join("\n"), /BENES_ISSUE_AI_TOKEN is not set/);
+    assert.match(core.infoMessages.join("\n"), /COPILOT_GITHUB_TOKEN is not set/);
   });
 
-  it("skips a model HTTP failure with a coarse reason and never echoes the token", async () => {
-    process.env.BENES_ISSUE_AI_TOKEN = SECRET;
+  it("skips a Copilot failure with a coarse reason and never echoes the token", async () => {
+    process.env.COPILOT_GITHUB_TOKEN = SECRET;
     const github = mockGithub({ number: 22, title: "bind failed", body: "EADDRINUSE on the listener" });
     const core = mockCore();
     await runIssueTriage({
@@ -108,16 +108,16 @@ describe("triage session skip paths", () => {
       context: issueContext(22),
       core,
       knownIssues: [],
-      completeJson: async () => ({ ok: false, reason: "http_401" }),
+      completeJson: async () => ({ ok: false, reason: "copilot_failed" }),
     });
     assert.deepEqual(github.calls.map((entry) => entry[0]), ["get"]);
     const logs = core.infoMessages.join("\n");
-    assert.match(logs, /http_401/);
+    assert.match(logs, /copilot_failed/);
     assert.equal(logs.includes(SECRET), false);
   });
 
   it("writes nothing when duplicate proof is missing", async () => {
-    process.env.BENES_ISSUE_AI_TOKEN = SECRET;
+    process.env.COPILOT_GITHUB_TOKEN = SECRET;
     const github = mockGithub({
       number: 22,
       title: "combo hop",
@@ -140,7 +140,7 @@ describe("triage session skip paths", () => {
 
 describe("triage session GitHub effects", () => {
   it("comments then closes with duplicate as the only state reason", async () => {
-    process.env.BENES_ISSUE_AI_TOKEN = SECRET;
+    process.env.COPILOT_GITHUB_TOKEN = SECRET;
     const github = mockGithub({
       number: 22,
       title: "combo hop",
@@ -178,7 +178,7 @@ describe("triage session GitHub effects", () => {
   });
 
   it("posts a related-only comment and leaves the issue open", async () => {
-    process.env.BENES_ISSUE_AI_TOKEN = SECRET;
+    process.env.COPILOT_GITHUB_TOKEN = SECRET;
     const github = mockGithub({
       number: 22,
       title: "combo hop wording",
