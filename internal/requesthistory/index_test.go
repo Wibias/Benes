@@ -3,6 +3,7 @@ package requesthistory
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -213,5 +214,12 @@ func TestRebuildSurfacesSealedSequenceGap(t *testing.T) {
 	}
 	if meta.IndexedRows != 0 {
 		t.Fatalf("indexed incomplete history: %#v", meta)
+	}
+}
+
+func TestParseNonNegIntRejectsPlatformOverflow(t *testing.T) {
+	tooLarge := strconv.FormatUint(uint64(^uint(0)>>1)+1, 10)
+	if _, err := parseNonNegInt(tooLarge, "rows"); err == nil {
+		t.Fatalf("expected overflow for %s", tooLarge)
 	}
 }
