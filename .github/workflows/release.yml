@@ -1,6 +1,6 @@
 name: Release
 
-# Maintainer-only publish. scripts/release.ts is the authority.
+# Maintainer-controlled staged release. scripts/release.ts is the authority.
 # package.json on the audited commit must already equal the requested version.
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ on:
           - preview
         default: latest
       dry-run:
-        description: "Pack and verify only; leave this on unless you intend to publish"
+        description: "Pack and verify only; turn this off to stage or finalize a release"
         required: false
         type: boolean
         default: true
@@ -74,10 +74,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
-      contents: write # Git tag + GitHub Release after npm succeeds
+      contents: write # Used only on the post-approval rerun to create tag + GitHub Release
       actions: read # Look up push CI evidence for this SHA
       pull-requests: read # Associated PRs / generate-notes enrichment
-      id-token: write # npm trusted publishing (OIDC). No npm token.
+      id-token: write # npm trusted staging (OIDC). No npm token.
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -90,11 +90,11 @@ jobs:
           EXPECTED_SHA: ${{ inputs.expected-sha }}
         run: |
           if [ -z "$EXPECTED_SHA" ]; then
-            echo "::error::expected-sha is required; refusing to publish without an audited commit"
+            echo "::error::expected-sha is required; refusing to release without an audited commit"
             exit 1
           fi
           if [ "$GITHUB_SHA" != "$EXPECTED_SHA" ]; then
-            echo "::error::branch moved after the release audit (expected ${EXPECTED_SHA}, got ${GITHUB_SHA}) — refusing to publish an unaudited commit"
+            echo "::error::branch moved after the release audit (expected ${EXPECTED_SHA}, got ${GITHUB_SHA}) — refusing to release an unaudited commit"
             exit 1
           fi
 
@@ -104,23 +104,19 @@ jobs:
           node-version: 24
           registry-url: "https://registry.npmjs.org"
 
-      # Trusted Publishing needs npm >= 11.5.1. Node 24 already ships a
-      # compatible npm. Do not replace the bundled npm globally: a self-update
-      # can drop publish-time dependencies such as sigstore.
-      - name: Require npm for trusted publishing
+      # Staged publishing requires npm >= 11.15.0. Pin an exact npm that
+      # contains the staged-publishing CLI and the bundled sigstore fix.
+      - name: Pin npm for staged trusted publishing
         run: |
+          npm install --global npm@12.0.2
           npm_version="$(npm --version)"
           echo "npm=${npm_version}"
-          # shellcheck disable=SC2016 # the node script deliberately avoids shell expansion
-          node -e '
-            const [major, minor] = process.argv[1].split(".").map(Number);
-            if (major < 11 || (major === 11 && minor < 5)) {
-              console.error(`npm ${process.argv[1]} is too old for trusted publishing; need >= 11.5.1`);
-              process.exit(1);
-            }
-          ' "$npm_version"
+          if [ "$npm_version" != "12.0.2" ]; then
+            echo "::error::expected pinned npm 12.0.2, got ${npm_version}"
+            exit 1
+          fi
 
-      - name: Drop dummy npm token so publish uses OIDC
+      - name: Drop dummy npm token so staging uses OIDC
         run: |
           unset NODE_AUTH_TOKEN || true
           node -e '
@@ -134,7 +130,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Benes release
+      - name: Stage or finalize Benes release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ inputs.version }}

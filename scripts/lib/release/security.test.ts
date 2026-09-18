@@ -52,8 +52,11 @@ describe("release security surfaces", () => {
     assert.match(workflow, /cancel-in-progress:\s*false/);
     assert.match(workflow, /id-token:\s*write/);
     assert.match(workflow, /scripts\/release\.ts publish/);
-    assert.match(workflow, /need >= 11\.5\.1/);
+    assert.match(workflow, /npm install --global npm@12\.0\.2/);
+    assert.doesNotMatch(workflow, /npm install --global npm@(latest|\^)/);
     assert.match(workflow, /^\s{6}dry-run:\s*$/m);
     assert.match(workflow, /default:\s*true/);
+    assert.doesNotMatch(read("scripts/lib/release/live.ts"), /npmArgv\(\["publish"/);
+    assert.match(read("scripts/lib/release/live.ts"), /npmArgv\(\["stage", "publish"/);
   });
 });

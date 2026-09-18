@@ -34,17 +34,17 @@ function snapshot(patch: Partial<PublicSnapshot> = {}): PublicSnapshot {
 }
 
 describe("classifyPublic", () => {
-  test("vacant public state is a fresh publish", () => {
+  test("vacant public state is a fresh stage", () => {
     const intent = classifyPublic(identity, snapshot());
     assert.equal(intent.kind, "fresh");
     assert.deepEqual(intent.kind === "fresh" ? intent.mutations : [], [
-      "publish-npm",
+      "stage-npm",
       "create-tag",
       "create-github-release",
     ]);
   });
 
-  test("npm success without GitHub metadata is recoverable", () => {
+  test("approved npm stage without GitHub metadata is recoverable", () => {
     const intent = classifyPublic(identity, snapshot({ npmHasVersion: true, npmGitHead: SHA }));
     assert.equal(intent.kind, "recover");
     assert.deepEqual(intent.kind === "recover" ? intent.mutations : [], [
@@ -172,7 +172,7 @@ describe("githubReleaseMismatch", () => {
 });
 
 describe("assemblePublicationPlan", () => {
-  test("refuses a dist-tag regression on a fresh npm publish", () => {
+  test("refuses a dist-tag regression on a fresh npm stage", () => {
     assert.throws(
       () =>
         assemblePublicationPlan({
