@@ -39,3 +39,31 @@ func TestCloneParsedRequestDeepCopiesMiniMaxReasoningDetails(t *testing.T) {
 		t.Fatalf("original index mutated: %#v", got.Index)
 	}
 }
+
+func TestCloneParsedRequestPreservesFileCarrierFields(t *testing.T) {
+	original := ParsedRequest{
+		Context: Context{Messages: []Message{{
+			Role: RoleUser,
+			Content: []ContentPart{
+				{Type: ContentImage, FileID: "file-img", Detail: "high"},
+				{Type: ContentFile, FileID: "file-doc", Filename: "doc.pdf"},
+				{Type: ContentFile, FileData: "ZGF0YQ==", Filename: "inline.txt"},
+			},
+		}}},
+	}
+
+	cloned := CloneParsedRequest(original)
+	parts := cloned.Context.Messages[0].Content
+	if len(parts) != 3 {
+		t.Fatalf("parts=%#v", parts)
+	}
+	if parts[0].Type != ContentImage || parts[0].FileID != "file-img" || parts[0].Detail != "high" {
+		t.Fatalf("image=%#v", parts[0])
+	}
+	if parts[1].Type != ContentFile || parts[1].FileID != "file-doc" || parts[1].Filename != "doc.pdf" {
+		t.Fatalf("file=%#v", parts[1])
+	}
+	if parts[2].Type != ContentFile || parts[2].FileData != "ZGF0YQ==" || parts[2].Filename != "inline.txt" {
+		t.Fatalf("inline=%#v", parts[2])
+	}
+}
