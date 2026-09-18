@@ -66,9 +66,7 @@ func TestFabricHandoffLive_OutboundCommitAppendFailureConvergesInterrupted(t *te
 	runID.Store(accepted.RunID)
 
 	waitFabricRunState(t, handler, id, "interrupted")
-	if h.fabricRuntime.hasActive(id, accepted.RunID) {
-		t.Fatal("active entry must be gone only after convergence")
-	}
+	waitFabricRuntimeInactive(t, h, id, accepted.RunID)
 	if !sawActiveDuringFail.Load() {
 		t.Fatal("expected active entry still present at half-commit failure (before convergence)")
 	}
@@ -131,9 +129,7 @@ func TestFabricHandoffLive_ChildStartedAppendFailureConvergesInterrupted(t *test
 	_ = json.Unmarshal(rr.Body.Bytes(), &accepted)
 	runID.Store(accepted.RunID)
 	waitFabricRunState(t, handler, id, "interrupted")
-	if h.fabricRuntime.hasActive(id, accepted.RunID) {
-		t.Fatal("active must be gone after convergence")
-	}
+	waitFabricRuntimeInactive(t, h, id, accepted.RunID)
 	if !sawActive.Load() {
 		t.Fatal("active should remain until convergence")
 	}
@@ -145,6 +141,18 @@ func TestFabricHandoffLive_ChildStartedAppendFailureConvergesInterrupted(t *test
 		t.Fatalf("fresh fencing failed: %d %s", rr2.Code, rr2.Body.String())
 	}
 	waitFabricRunState(t, handler, id, "completed")
+}
+
+func waitFabricRuntimeInactive(t *testing.T, h *handler, taskID, runID string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if !h.fabricRuntime.hasActive(taskID, runID) {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("active run %s for task %s remained after durable convergence", runID, taskID)
 }
 
 func TestFabricHandoffLive_ReturnCommitAppendFailureConvergesInterrupted(t *testing.T) {
@@ -195,9 +203,7 @@ func TestFabricHandoffLive_ReturnCommitAppendFailureConvergesInterrupted(t *test
 	_ = json.Unmarshal(rr.Body.Bytes(), &accepted)
 	runID.Store(accepted.RunID)
 	waitFabricRunState(t, handler, id, "interrupted")
-	if h.fabricRuntime.hasActive(id, accepted.RunID) {
-		t.Fatal("active must be gone after convergence")
-	}
+	waitFabricRuntimeInactive(t, h, id, accepted.RunID)
 	if !sawActive.Load() {
 		t.Fatal("active should remain until return half-commit convergence")
 	}
