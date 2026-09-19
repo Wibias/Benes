@@ -605,3 +605,25 @@ func TestProjectProviderSpecsProjectsBoundedOpenAICompatibleUserAgent(t *testing
 	}
 }
 
+func TestProjectProviderSpecsKeepsProxyDNSDeferralOffForCredentialedProviders(t *testing.T) {
+	projection := ProjectProviderSpecs(DiskConfig{Providers: map[string]json.RawMessage{
+		"keyed": providerJSON(t, `{
+			"adapter":"openai-chat",
+			"baseUrl":"https://provider.example/v1",
+			"apiKey":"test-key"
+		}`),
+		"kiro": providerJSON(t, `{
+			"adapter":"kiro",
+			"baseUrl":"https://runtime.us-east-1.kiro.dev",
+			"authMode":"oauth"
+		}`),
+	}})
+	if len(projection.Skipped) != 0 || len(projection.Specs) != 2 {
+		t.Fatalf("projection=%#v", projection)
+	}
+	for _, spec := range projection.Specs {
+		if spec.DestinationPolicy.AllowProxyResolution {
+			t.Fatalf("%s enabled deferred proxy DNS resolution", spec.ID)
+		}
+	}
+}
