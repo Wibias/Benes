@@ -1,10 +1,10 @@
-// Code generated from models.dev metadata revision dff014f67f04d7f17b6a7024510c77dd4a5b47e5.
+// Code generated from models.dev metadata revision 6303a062a3782391f3147e9db1100ee93139abbb.
 // Source repository: anomalyco/models.dev. DO NOT EDIT MANUALLY.
 package catalog
 
 import "strings"
 
-const curatedContextMetadataRevision = "dff014f67f04d7f17b6a7024510c77dd4a5b47e5"
+const curatedContextMetadataRevision = "6303a062a3782391f3147e9db1100ee93139abbb"
 
 type curatedContextRow struct {
 	Context   int
