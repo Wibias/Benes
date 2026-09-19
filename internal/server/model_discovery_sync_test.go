@@ -566,9 +566,10 @@ func TestReplaceProviderCatalogUsesCuratedContextOnlyWhenDiscoveryOmitsIt(t *tes
 
 	h.replaceProviderCatalog("other", []modeldiscovery.CatalogEntry{{ID: "qwen3.8-max"}})
 	other := requireCatalogModel(t, h.catalogModels, "other/qwen3.8-max")
-	if other.Context.Tokens != catalog.ConservativeContextWindow || other.Context.Source != catalog.ContextConservativeDefault {
-		t.Fatalf("curated metadata crossed provider boundary: %#v", other.Context)
+	if other.Context.Tokens != 0 || other.Context.Source != "" {
+		t.Fatalf("OpenCode Go fallback crossed provider boundary: %#v", other.Context)
 	}
+	requireDiscoveryNoContextEvidence(t, other.Context)
 }
 
 func requireCatalogModel(t *testing.T, models []catalog.Model, id string) catalog.Model {

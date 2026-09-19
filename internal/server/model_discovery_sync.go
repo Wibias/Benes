@@ -172,7 +172,7 @@ func (h *handler) replaceProviderCatalog(provider string, entries []modeldiscove
 			model.Context = catalog.ContextWindow{Tokens: entry.ContextWindow, Source: catalog.ContextDiscovered}
 		} else if curated, _, ok := catalog.CuratedContextFor(provider, entry.ID); ok {
 			model.Context = curated
-		} else {
+		} else if strings.EqualFold(strings.TrimSpace(provider), "opencode-go") {
 			model.Context = catalog.EffectiveContextWindow(catalog.ContextInput{})
 		}
 		if entry.MaxInput > 0 {
