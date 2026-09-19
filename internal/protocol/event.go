@@ -95,12 +95,18 @@ func (e Event) Validate() error {
 		EventThinkingDelta,
 		EventThinkingSignature,
 		EventRedactedThinking,
-		EventKiroRedactedReasoning,
 		EventReasoningRawDelta,
 		EventToolCallDelta,
 		EventToolCallEnd,
 		EventAssistantBoundary,
 		EventDone:
+		return nil
+	case EventKiroRedactedReasoning:
+		hasData := e.Data != ""
+		hasSignature := e.Signature != ""
+		if hasData == hasSignature {
+			return fmt.Errorf("%s requires exactly one opaque reasoning member", e.Type)
+		}
 		return nil
 	case EventToolCallStart:
 		if e.ID == "" || e.Name == "" {

@@ -9,6 +9,27 @@ const (
 	RoleToolResult MessageRole = "toolResult"
 )
 
+type KiroReasoningMember string
+
+const (
+	KiroReasoningRedactedContent KiroReasoningMember = "redactedContent"
+	KiroReasoningSignature       KiroReasoningMember = "signature"
+)
+
+func (m KiroReasoningMember) Valid() bool {
+	switch m {
+	case KiroReasoningRedactedContent, KiroReasoningSignature:
+		return true
+	default:
+		return false
+	}
+}
+
+type KiroReasoningState struct {
+	Member KiroReasoningMember
+	Value  string
+}
+
 type ContentType string
 
 const (
@@ -63,7 +84,7 @@ type Message struct {
 	Phase                    *MessagePhase
 	Model                    string
 	Timestamp                int64
-	KiroRedactedReasoning    string
+	KiroReasoning            KiroReasoningState
 	ToolCallID               string
 	ToolName                 string
 	ToolNamespace            string

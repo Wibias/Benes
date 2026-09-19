@@ -44,7 +44,7 @@ func TestCompileHistoryRequiresAlternationAndToolPairing(t *testing.T) {
 func TestCompileHistoryKeepsToolResultsAndRedactedOnTheWireShape(t *testing.T) {
 	got, err := CompileHistory(protocol.ParsedRequest{Context: protocol.Context{Messages: []protocol.Message{
 		{Role: protocol.RoleUser, Content: []protocol.ContentPart{{Type: protocol.ContentText, Text: "hi"}}},
-		{Role: protocol.RoleAssistant, KiroRedactedReasoning: "blob", Content: []protocol.ContentPart{
+		{Role: protocol.RoleAssistant, KiroReasoning: protocol.KiroReasoningState{Member: protocol.KiroReasoningRedactedContent, Value: "blob"}, Content: []protocol.ContentPart{
 			{Type: protocol.ContentText, Text: "ok"},
 			{Type: protocol.ContentToolCall, ToolCallID: "c1", ToolName: "lookup"},
 		}},
@@ -53,7 +53,7 @@ func TestCompileHistoryKeepsToolResultsAndRedactedOnTheWireShape(t *testing.T) {
 	if err != nil || len(got) != 3 {
 		t.Fatalf("got=%#v err=%v", got, err)
 	}
-	if got[1].Redacted != "blob" || len(got[1].ToolUses) != 1 || got[1].ToolUses[0].Name != "lookup" {
+	if got[1].Reasoning.Member != protocol.KiroReasoningRedactedContent || got[1].Reasoning.Value != "blob" || len(got[1].ToolUses) != 1 || got[1].ToolUses[0].Name != "lookup" {
 		t.Fatalf("assistant=%#v", got[1])
 	}
 	if got[2].Text != toolResultCarrier || len(got[2].ToolResults) != 1 || !got[2].ToolResults[0].Error || got[2].ToolResults[0].Text != "boom" {

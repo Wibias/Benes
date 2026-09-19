@@ -1,10 +1,12 @@
 package request
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"strings"
 	"testing"
 
+	"github.com/Wibias/Benes/internal/protocol"
 	benesreasoning "github.com/Wibias/Benes/internal/responses/reasoning"
 )
 
@@ -101,7 +103,7 @@ func TestDecodeReasoningKiroOnlyIsProviderStateNotThinkingText(t *testing.T) {
 	if !ok {
 		t.Fatal("reasoning item not recognized")
 	}
-	if !got.HasEnvelope || got.KiroRedacted != "kms" || got.EffectiveThinkingText != "" {
+	if !got.HasEnvelope || got.KiroReasoning.Member != protocol.KiroReasoningRedactedContent || got.KiroReasoning.Value != "kms" || got.EffectiveThinkingText != "" {
 		t.Fatalf("got %+v", got)
 	}
 }
@@ -163,3 +165,12 @@ func mustJSON(t *testing.T, v string) string {
 	}
 	return string(b)
 }
+
+func TestDecodeReasoningRejectsUnknownKiroMember(t *testing.T) {
+	encrypted := benesreasoning.Prefix + base64.StdEncoding.EncodeToString([]byte(`{"krc":"opaque","krk":"unknown"}`))
+	item := reasoningItem(t, `{"type":"reasoning","encrypted_content":`+mustJSON(t, encrypted)+`}`)
+	if _, ok, err := item.DecodeReasoning(); !ok || err == nil {
+		t.Fatalf("ok=%v err=%v", ok, err)
+	}
+}
+

@@ -449,3 +449,14 @@ func TestStreamDecodesOpaqueReasoningSignature(t *testing.T) {
 	}
 }
 
+func TestStreamRejectsConflictingOpaqueReasoningMembers(t *testing.T) {
+	frame := EncodeEventStreamMessage(
+		map[string]string{":event-type": "reasoningContentEvent"},
+		[]byte(`{"signature":"sig-1","redactedContent":"legacy"}`),
+	)
+	s := &stream{buf: frame}
+	if _, ok, err := s.consume(); !ok || err == nil {
+		t.Fatalf("ok=%v err=%v", ok, err)
+	}
+}
+

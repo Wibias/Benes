@@ -3,6 +3,8 @@ package reasoning
 import (
 	"encoding/base64"
 	"testing"
+
+	"github.com/Wibias/Benes/internal/protocol"
 )
 
 func TestEncodeMatchesTypeScriptWireFormat(t *testing.T) {
@@ -64,3 +66,27 @@ func TestDecodeMatchesTypeScriptTolerance(t *testing.T) {
 		})
 	}
 }
+
+func TestDecodeKiroKindCompatibilityAndValidation(t *testing.T) {
+	legacy := Prefix + base64.StdEncoding.EncodeToString([]byte(`{"krc":"legacy"}`))
+	got, ok := Decode(legacy)
+	if !ok || got.KiroRedacted != "legacy" || got.KiroKind != protocol.KiroReasoningRedactedContent {
+		t.Fatalf("legacy=%#v ok=%v", got, ok)
+	}
+	signature := Prefix + base64.StdEncoding.EncodeToString([]byte(`{"krc":"sig","krk":"signature"}`))
+	got, ok = Decode(signature)
+	if !ok || got.KiroRedacted != "sig" || got.KiroKind != protocol.KiroReasoningSignature {
+		t.Fatalf("signature=%#v ok=%v", got, ok)
+	}
+	for _, raw := range []string{
+		`{"krc":"x","krk":"unknown"}`,
+		`{"krk":"signature"}`,
+		`{"krc":"x","krk":7}`,
+	} {
+		encoded := Prefix + base64.StdEncoding.EncodeToString([]byte(raw))
+		if got, ok := Decode(encoded); ok {
+			t.Fatalf("malformed %s decoded as %#v", raw, got)
+		}
+	}
+}
+
