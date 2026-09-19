@@ -193,7 +193,6 @@ class DevtoolsConnection {
     const waiter = deferred<CdpReply>();
     this.#pending.set(id, { settle: waiter.resolve });
     // This test sends repository-owned probe source only to a loopback Chromium DevTools socket.
-    // codeql[js/file-access-to-http]
     this.#socket.send(JSON.stringify(sessionId ? { id, method, params, sessionId } : { id, method, params }));
     let timer: NodeJS.Timeout | undefined;
     const expired = new Promise<CdpReply>((resolve) => {
