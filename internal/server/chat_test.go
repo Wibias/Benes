@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Wibias/Benes/internal/capability"
 	"github.com/Wibias/Benes/internal/protocol"
 	providercontract "github.com/Wibias/Benes/internal/providers"
 	"github.com/Wibias/Benes/internal/resourcebudget"
@@ -309,6 +310,17 @@ func assertChatError(t *testing.T, rr *httptest.ResponseRecorder, wantType, want
 	if message, _ := errorBody["message"].(string); message == "" {
 		t.Fatalf("error=%#v", errorBody)
 	}
+}
+
+func TestChatCompletionsStructuredOutputCapabilityRefusalIsLocalBadRequest(t *testing.T) {
+	provider := &chatRouteProvider{openErr: capability.ErrStructuredOutputUnsupported}
+	h := newChatRouteHandler(t, provider, 0)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, chatRequest(`{"model":"openai-apikey/gpt-5.6","messages":[{"role":"user","content":"hi"}]}`))
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d body=%s", rr.Code, rr.Body.String())
+	}
+	assertChatError(t, rr, "invalid_request_error", "unsupported_structured_output")
 }
 
 func TestChatPhysicalSendBudgetExhaustionIsLocal429(t *testing.T) {

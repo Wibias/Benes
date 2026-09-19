@@ -185,7 +185,7 @@ func TestCompileRejectsCanonicalShapesOutsideMigratedNativeSubset(t *testing.T) 
 			req.Context.Messages = []protocol.Message{{Role: protocol.RoleAssistant, Content: []protocol.ContentPart{{Type: protocol.ContentThinking, Thinking: "secret"}}}}
 		}},
 		{"kiro replay", func(req *protocol.ParsedRequest) {
-			req.Context.Messages = []protocol.Message{{Role: protocol.RoleAssistant, KiroRedactedReasoning: "blob"}}
+			req.Context.Messages = []protocol.Message{{Role: protocol.RoleAssistant, KiroReasoning: protocol.KiroReasoningState{Member: protocol.KiroReasoningRedactedContent, Value: "blob"}}}
 		}},
 		{"undeclared call", func(req *protocol.ParsedRequest) {
 			req.Context.Messages = []protocol.Message{{Role: protocol.RoleAssistant, Content: []protocol.ContentPart{{Type: protocol.ContentToolCall, ToolCallID: "c", ToolName: "x", CustomWireName: "x"}}}}

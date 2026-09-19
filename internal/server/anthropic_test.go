@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Wibias/Benes/internal/capability"
 	"github.com/Wibias/Benes/internal/protocol"
 	providercontract "github.com/Wibias/Benes/internal/providers"
 	"github.com/Wibias/Benes/internal/resourcebudget"
@@ -403,6 +404,29 @@ func TestAnthropicDispatchCarriesForwardAuthorityWithoutLeakingDataPlaneBearer(t
 	if got.ForwardHeaders.Get("authorization") != "" || !got.ForwardHeaders.BlockedAuthorization() {
 		t.Fatalf("data-plane bearer leaked into forward authority: %#v", got.ForwardHeaders)
 	}
+}
+
+func TestAnthropicStructuredOutputCapabilityRefusalIsLocalBadRequest(t *testing.T) {
+	h, err := NewHandler(Options{
+		DataPlaneToken: "secret",
+		Providers: map[string]Provider{
+			"p": providerFuncAnthropic(func(context.Context, providercontract.DispatchRequest) (EventStream, error) {
+				return nil, capability.ErrStructuredOutputUnsupported
+			}),
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h = attachHandlerClose(t, h)
+	req := httptest.NewRequest(http.MethodPost, "/v1/messages", strings.NewReader(`{"model":"p/m","max_tokens":64,"messages":[{"role":"user","content":"x"}]}`))
+	req.Header.Set("Authorization", "Bearer secret")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status=%d body=%s", rr.Code, rr.Body.String())
+	}
+	assertAnthropicError(t, rr, "invalid_request_error", "unsupported_structured_output")
 }
 
 func TestAnthropicPhysicalSendBudgetExhaustionIsLocal429(t *testing.T) {

@@ -117,6 +117,10 @@ func (h *handler) handleChatCompletions(w http.ResponseWriter, r *http.Request, 
 			return
 		}
 		trace.Mark(timeline.StageUpstreamWaitHeaders, timeline.SideUpstream, timeline.MilestoneDispatch, false, "provider_open_failed")
+		if structuredOutputCapabilityRefusal(err) {
+			writeChatError(w, http.StatusBadRequest, unsupportedStructuredOutputMessage, "invalid_request_error", unsupportedStructuredOutputCode)
+			return
+		}
 		writeChatError(w, http.StatusBadGateway, publicProviderOpenMessage(err), "upstream_error", "")
 		return
 	}
