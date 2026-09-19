@@ -35,6 +35,7 @@ type ContentType string
 const (
 	ContentText     ContentType = "text"
 	ContentImage    ContentType = "image"
+	ContentFile     ContentType = "file"
 	ContentThinking ContentType = "thinking"
 	ContentToolCall ContentType = "toolCall"
 )
@@ -64,6 +65,9 @@ type ContentPart struct {
 	Type             ContentType
 	Text             string
 	ImageURL         string
+	FileID           string
+	FileData         string
+	Filename         string
 	Detail           string
 	Thinking         string
 	Signature        string

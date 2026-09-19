@@ -40,7 +40,7 @@ func TestInputImagesAndFilesPreserveSafeReferences(t *testing.T) {
 		{"type":"input_file","filename":"bare-name-only.txt"}
 	]}`)}})
 	parts := ctx.Messages[0].Content
-	if len(parts) != 5 {
+	if len(parts) != 6 {
 		t.Fatalf("parts=%+v", parts)
 	}
 	if parts[0].Type != protocol.ContentText || parts[0].Text != "look" {
@@ -49,12 +49,21 @@ func TestInputImagesAndFilesPreserveSafeReferences(t *testing.T) {
 	if parts[1].Type != protocol.ContentImage || parts[1].ImageURL != "data:image/png;base64,AAAA" || parts[1].Detail != "high" {
 		t.Fatalf("image=%+v", parts[1])
 	}
-	if parts[2].Text != "[image: file-img]" || parts[3].Text != "[file: file-doc]" || parts[4].Text != "[file: inline.txt]" {
-		t.Fatalf("refs=%+v", parts)
+	if parts[2].Type != protocol.ContentImage || parts[2].FileID != "file-img" {
+		t.Fatalf("image file ref=%+v", parts[2])
+	}
+	if parts[3].Type != protocol.ContentFile || parts[3].FileID != "file-doc" || parts[3].Filename != "secret.pdf" {
+		t.Fatalf("file ref=%+v", parts[3])
+	}
+	if parts[4].Type != protocol.ContentFile || parts[4].FileData != "VERY_SECRET_BASE64" || parts[4].Filename != "inline.txt" {
+		t.Fatalf("inline file=%+v", parts[4])
+	}
+	if parts[5].Type != protocol.ContentFile || parts[5].Filename != "bare-name-only.txt" {
+		t.Fatalf("filename-only file=%+v", parts[5])
 	}
 	for _, part := range parts {
 		if strings.Contains(part.Text, "VERY_SECRET_BASE64") {
-			t.Fatalf("inline file bytes leaked: %+v", part)
+			t.Fatalf("inline file bytes leaked into text: %+v", part)
 		}
 	}
 }
