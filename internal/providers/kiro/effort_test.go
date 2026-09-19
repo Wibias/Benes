@@ -18,3 +18,23 @@ func TestApplyNativeEffortOnlyForKnownFamilies(t *testing.T) {
 		t.Fatal("unsupported effort")
 	}
 }
+
+func TestApplyNativeEffortForGPT56LunaAndTerra(t *testing.T) {
+	for _, model := range []string{"gpt-5.6-luna", "gpt-5.6-terra"} {
+		t.Run(model, func(t *testing.T) {
+			payload := map[string]any{}
+			if err := ApplyNativeEffort(payload, model, "high"); err != nil {
+				t.Fatal(err)
+			}
+			fields, ok := payload["additionalModelRequestFields"].(map[string]any)
+			if !ok {
+				t.Fatalf("missing native request fields: %#v", payload)
+			}
+			reasoning, ok := fields["reasoning"].(map[string]any)
+			if !ok || reasoning["effort"] != "high" {
+				t.Fatalf("native reasoning=%#v payload=%#v", reasoning, payload)
+			}
+		})
+	}
+}
+

@@ -304,6 +304,7 @@ func projectCatalogModels(disk config.DiskConfig, specs []providerregistry.Spec)
 		if len(configured) == 0 && len(policy.RetainModels[spec.ID]) == 0 {
 			if defaultModel := defaultModelForProvider(disk.Providers[spec.ID]); defaultModel != "" {
 				configured = []catalog.ConfiguredModel{{ID: defaultModel}}
+				applyCuratedConfiguredContext(spec.ID, &configured[0])
 			}
 		}
 		if len(configured) > 0 {
@@ -387,6 +388,7 @@ func appendSynthesizedCombos(models []catalog.Model, disk config.DiskConfig) []c
 }
 
 type providerModelMetadata struct {
+	Models                  json.RawMessage      `json:"models"`
 	InputModalities       []string            `json:"inputModalities"`
 	ReasoningEfforts      []string            `json:"reasoningEfforts"`
 	ModelInputModalities  map[string][]string `json:"modelInputModalities"`
@@ -409,11 +411,18 @@ func configuredModelsForProvider(disk config.DiskConfig, providerID string) []ca
 
 	byID := make(map[string]catalog.ConfiguredModel, len(entries))
 	order := make([]string, 0, len(entries))
+	storedByID := map[string]modeldiscovery.CatalogEntry{}
+	for _, entry := range modeldiscovery.ParseStoredModels(metadata.Models) {
+		storedByID[entry.ID] = entry
+	}
 	for _, entry := range entries {
 		model := catalog.ConfiguredModel{
 			ID:            entry.ID,
 			ContextWindow: entry.ContextWindow,
 			MaxInput:      entry.MaxInput,
+		}
+		if storedByID[entry.ID].ContextWindow <= 0 {
+			applyCuratedConfiguredContext(providerID, &model)
 		}
 		if metadata.ReasoningEfforts != nil {
 			model.ReasoningEfforts = append([]string{}, metadata.ReasoningEfforts...)
@@ -450,6 +459,8 @@ func configuredModelsForProvider(disk config.DiskConfig, providerID string) []ca
 			}
 			if custom.ContextWindow > 0 {
 				model.ContextWindow = custom.ContextWindow
+				model.CuratedContextWindow = 0
+				model.CuratedContextEvidence = nil
 			}
 			if custom.InputModalities != nil {
 				model.Vision = visionCapabilityFromModalities(custom.InputModalities)
@@ -471,6 +482,18 @@ func configuredModelsForProvider(disk config.DiskConfig, providerID string) []ca
 		out = append(out, byID[id])
 	}
 	return out
+}
+
+func applyCuratedConfiguredContext(providerID string, model *catalog.ConfiguredModel) {
+	if model == nil || strings.TrimSpace(model.ID) == "" || model.CuratedContextWindow > 0 {
+		return
+	}
+	window, _, ok := catalog.CuratedContextFor(providerID, model.ID)
+	if !ok {
+		return
+	}
+	model.CuratedContextWindow = window.Tokens
+	model.CuratedContextEvidence = window.Evidence
 }
 
 func visionCapabilityFromModalities(modalities []string) catalog.CapabilityState {

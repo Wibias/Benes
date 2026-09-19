@@ -46,7 +46,7 @@ func TestHiddenTextAndKiroReplay(t *testing.T) {
 	}}
 	ctx := parse(t, in)
 	m := ctx.Messages[0]
-	if m.Content[0].Thinking != "secret" || m.KiroRedactedReasoning != "kms" {
+	if m.Content[0].Thinking != "secret" || m.KiroReasoning.Member != protocol.KiroReasoningRedactedContent || m.KiroReasoning.Value != "kms" {
 		t.Fatalf("%+v", m)
 	}
 }
