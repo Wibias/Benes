@@ -11,6 +11,7 @@ import (
 	"github.com/Wibias/Benes/internal/protocol"
 	providercontract "github.com/Wibias/Benes/internal/providers"
 	"github.com/Wibias/Benes/internal/router"
+	"github.com/Wibias/Benes/internal/resourcebudget"
 	"github.com/Wibias/Benes/internal/sessions"
 	"github.com/Wibias/Benes/internal/timeline"
 	"github.com/Wibias/Benes/internal/usage"
@@ -35,6 +36,7 @@ type diagnosticsRecorder struct {
 	// serialized outbound body. The configured tier is the request-scoped admission
 	// carried in the request context, not a second read of live settings.
 	requestedServiceTier string
+	physicalSendTurn     *resourcebudget.Turn
 	// sidecarPolicy is the request-scoped sidecar decision evidence. It is seeded
 	// when the request becomes a recorded data-plane request and is snapshotted
 	// at usage emission.
@@ -133,6 +135,30 @@ func (rec *diagnosticsRecorder) clientRequestedServiceTier() string {
 	return rec.requestedServiceTier
 }
 
+func (rec *diagnosticsRecorder) BindPhysicalSendTurn(turn *resourcebudget.Turn) {
+	if rec == nil || turn == nil {
+		return
+	}
+	rec.mu.Lock()
+	if rec.physicalSendTurn == nil {
+		rec.physicalSendTurn = turn
+	}
+	rec.mu.Unlock()
+}
+
+func (rec *diagnosticsRecorder) PhysicalSends() []resourcebudget.PhysicalSend {
+	if rec == nil {
+		return nil
+	}
+	rec.mu.Lock()
+	turn := rec.physicalSendTurn
+	rec.mu.Unlock()
+	if turn == nil {
+		return nil
+	}
+	return turn.PhysicalSends()
+}
+
 func (rec *diagnosticsRecorder) wasAdmitted() bool {
 	if rec == nil {
 		return false
@@ -204,6 +230,7 @@ func (h *handler) recordRequestTelemetry(r *http.Request, cap *statusCapture, st
 		record.CorrelationID = clipTelemetryString(diag.correlationID, diagnosticsStringMax)
 		record.LegacyID = clipTelemetryString(diag.legacyID, diagnosticsStringMax)
 		record.RequestedServiceTier = diag.clientRequestedServiceTier()
+		record.PhysicalSends = projectDiagnosticsPhysicalSends(diag.PhysicalSends())
 	}
 	if configuredServiceTier, admitted := admittedServiceTierFrom(r.Context()); admitted {
 		record.ConfiguredServiceTier = clipTelemetryString(configuredServiceTier, diagnosticsStringMax)

@@ -100,12 +100,15 @@ func discover(ctx context.Context) (authEP, tokenEP string, err error) {
 }
 
 func validateEndpoint(raw string) (string, error) {
-	parsed, err := url.Parse(raw)
+	value := strings.TrimSpace(raw)
+	parsed, err := url.Parse(value)
 	if err != nil {
 		return "", err
 	}
 	host := strings.ToLower(parsed.Hostname())
-	if parsed.Scheme != "https" || (host != "x.ai" && !strings.HasSuffix(host, ".x.ai")) {
+	trustedHost := host == "auth.x.ai" || host == "accounts.x.ai"
+	trustedPort := parsed.Port() == "" || parsed.Port() == "443"
+	if !strings.EqualFold(parsed.Scheme, "https") || parsed.User != nil || !trustedHost || !trustedPort {
 		return "", fmt.Errorf("xAI OAuth discovery returned an unexpected endpoint: %s", raw)
 	}
 	return parsed.String(), nil

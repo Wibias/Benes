@@ -672,3 +672,40 @@ func mustManagedTokenSource(t *testing.T, config ManagedTokenSourceConfig) *Mana
 	}
 	return source
 }
+
+func TestManagedTokenSourceClassifiesNestedRefreshErrors(t *testing.T) {
+	tests := []struct {
+		name   string
+		body   string
+		reason ManagedRefreshReason
+	}{
+		{
+			name:   "invalidated",
+			body:   `{"error":{"message":"session ended","type":"invalid_request_error","code":"refresh_token_invalidated"}}`,
+			reason: ManagedRefreshRevoked,
+		},
+		{
+			name:   "expired",
+			body:   `{"error":{"message":"session expired","type":"invalid_request_error","code":"refresh_token_expired"}}`,
+			reason: ManagedRefreshExpired,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			home := t.TempDir()
+			writeManagedStore(t, home, []byte(`{"acct":{"generation":1,"credential":{"accessToken":"old","refreshToken":"refresh","expiresAt":1,"chatgptAccountId":"chat"}}}`), 0o600)
+			store := mustManagedCredentialStore(t, home)
+			source := mustManagedTokenSource(t, ManagedTokenSourceConfig{
+				Store: store,
+				HTTPClient: &http.Client{Transport: tokenRoundTripFunc(func(*http.Request) (*http.Response, error) {
+					return tokenResponse(http.StatusUnauthorized, tc.body), nil
+				})},
+			})
+			_, err := source.Get(context.Background(), "acct")
+			var refreshErr *ManagedTokenRefreshError
+			if !errors.As(err, &refreshErr) || refreshErr.Reason != tc.reason {
+				t.Fatalf("err=%v reason=%v want=%v", err, refreshErr, tc.reason)
+			}
+		})
+	}
+}

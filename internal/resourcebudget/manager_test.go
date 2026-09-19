@@ -253,3 +253,52 @@ func TestAccumulatorOverflowFailsWithoutRetainingRejectedChunk(t *testing.T) {
 	}
 	acc.Close()
 }
+
+func TestPhysicalSendBudgetDefaultsToEightAndReleaseRefundsReservation(t *testing.T) {
+	m := NewManager(Limits{})
+	turn, err := m.AcquireTurn(context.Background(), "physical-sends")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer turn.Close()
+
+	for i := 0; i < 7; i++ {
+		lease, err := turn.ReservePhysicalSend("provider")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := lease.Commit(); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	refunded, err := turn.ReservePhysicalSend("unused")
+	if err != nil {
+		t.Fatal(err)
+	}
+	refunded.Release()
+
+	last, err := turn.ReservePhysicalSend("fallback")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := last.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	last.Release()
+
+	if _, err := turn.ReservePhysicalSend("too-many"); !errors.Is(err, ErrPhysicalSendBudgetExceeded) {
+		t.Fatalf("ninth committed physical send admission=%v", err)
+	}
+	records := turn.PhysicalSends()
+	if len(records) != 8 {
+		t.Fatalf("records=%#v", records)
+	}
+	if records[7].Reason != "fallback" {
+		t.Fatalf("last record=%#v", records[7])
+	}
+	if records[7].Ordinal != 9 {
+		t.Fatalf("released reservation ordinal was reused: %#v", records)
+	}
+}
+

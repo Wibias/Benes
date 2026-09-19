@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Wibias/Benes/internal/resourcebudget"
 )
 
 const (
@@ -46,6 +48,14 @@ func (p Transient5xxPolicy) BoundAttempts() int {
 }
 
 func DoTransient5xx(ctx context.Context, client *http.Client, req *http.Request, policy Transient5xxPolicy) (*http.Response, error) {
+	return doTransient5xx(ctx, client, req, policy, nil, "")
+}
+
+func DoTransient5xxForTurn(ctx context.Context, client *http.Client, req *http.Request, policy Transient5xxPolicy, turn *resourcebudget.Turn, reason string) (*http.Response, error) {
+	return doTransient5xx(ctx, client, req, policy, turn, reason)
+}
+
+func doTransient5xx(ctx context.Context, client *http.Client, req *http.Request, policy Transient5xxPolicy, turn *resourcebudget.Turn, reason string) (*http.Response, error) {
 	if client == nil {
 		return nil, fmt.Errorf("HTTP client is required")
 	}
@@ -83,7 +93,7 @@ func DoTransient5xx(ctx context.Context, client *http.Client, req *http.Request,
 		} else if req.Body != nil && attempt > 1 {
 			return nil, fmt.Errorf("transient 5xx retry requires a rewindable request body")
 		}
-		resp, err := client.Do(cloned)
+		resp, err := DoPhysicalSend(ctx, client, cloned, turn, reason)
 		if err != nil {
 			return nil, err
 		}

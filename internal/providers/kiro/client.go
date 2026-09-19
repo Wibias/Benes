@@ -144,7 +144,7 @@ func (c *Client) Open(ctx context.Context, dispatch providers.DispatchRequest) (
 	req.Header.Set("Content-Type", "application/x-amz-json-1.0")
 	req.Header.Set("Accept", "application/vnd.amazon.eventstream")
 	req.Header.Set("x-amz-target", generateTarget)
-	resp, err := c.postGenerate(ctx, req, payload, body)
+	resp, err := c.postGenerate(ctx, req, payload, body, dispatch.Turn)
 	if err != nil {
 		return nil, err
 	}
@@ -279,9 +279,16 @@ func (s *stream) consume() (protocol.Event, bool, error) {
 		var payload struct {
 			Content         string `json:"content"`
 			RedactedContent string `json:"redactedContent"`
+			Signature       string `json:"signature"`
 		}
 		if json.Unmarshal(msg.Payload, &payload) != nil {
 			break
+		}
+		if payload.RedactedContent != "" && payload.Signature != "" {
+			return protocol.Event{}, true, fmt.Errorf("Kiro reasoningContentEvent contains conflicting opaque members")
+		}
+		if payload.Signature != "" {
+			return protocol.Event{Type: protocol.EventKiroRedactedReasoning, Signature: payload.Signature}, true, nil
 		}
 		if payload.RedactedContent != "" {
 			return protocol.Event{Type: protocol.EventKiroRedactedReasoning, Data: payload.RedactedContent}, true, nil
@@ -427,8 +434,8 @@ func buildGeneratePayload(history []HistoryEntry, profileARN, model string) map[
 				}
 				arm["toolUses"] = uses
 			}
-			if entry.Redacted != "" {
-				arm["reasoningContent"] = map[string]any{"redactedContent": entry.Redacted}
+			if entry.Reasoning.Value != "" {
+				arm["reasoningContent"] = map[string]any{string(entry.Reasoning.Member): entry.Reasoning.Value}
 			}
 			item["assistantResponseMessage"] = arm
 		}

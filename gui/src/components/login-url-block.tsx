@@ -27,6 +27,22 @@ function copyLabelKey(outcome: CopyOutcome | null) {
   return COPY_LABEL_KEYS[outcome ?? "idle"];
 }
 
+function safeOAuthManualHref(raw: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+
+  if (parsed.username.length > 0 || parsed.password.length > 0) return null;
+  if (parsed.protocol === "https:") return parsed.href;
+  if (parsed.protocol !== "http:") return null;
+
+  const host = parsed.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "::1" ? parsed.href : null;
+}
+
 /**
  * External navigation for a URL the proxy could not open itself.
  *
@@ -64,6 +80,7 @@ export function LoginUrlBlock({ url }: { url: string }) {
   const translate = useT();
   const feedback = useCopyFeedback<string>();
   if (url.length === 0) return null;
+  const manualHref = safeOAuthManualHref(url);
 
   return (
     <div className={SURFACE_CLASS}>
@@ -78,9 +95,11 @@ export function LoginUrlBlock({ url }: { url: string }) {
           <span aria-live="polite">{translate(copyLabelKey(feedback.outcomeFor(url)))}</span>
         </button>
       </div>
-      <ManualOpenLink href={url} icon={<IconExternal style={GLYPH_SIZE} aria-hidden="true" />}>
-        {translate("prov.didntOpen")}
-      </ManualOpenLink>
+      {manualHref && (
+        <ManualOpenLink href={manualHref} icon={<IconExternal style={GLYPH_SIZE} aria-hidden="true" />}>
+          {translate("prov.didntOpen")}
+        </ManualOpenLink>
+      )}
     </div>
   );
 }

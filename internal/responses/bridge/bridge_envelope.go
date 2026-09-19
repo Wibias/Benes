@@ -1,6 +1,9 @@
 package bridge
 
-import benesreasoning "github.com/Wibias/Benes/internal/responses/reasoning"
+import (
+	"github.com/Wibias/Benes/internal/protocol"
+	benesreasoning "github.com/Wibias/Benes/internal/responses/reasoning"
+)
 
 func (b *Bridge) takeReasoningEnvelope(hiddenText string) string {
 	if b.pendingSignature == "" && len(b.pendingRedacted) == 0 {
@@ -46,12 +49,15 @@ func (b *Bridge) flushHiddenRawReasoning() []Frame {
 	return b.appendEnvelopeOnlyReasoning(encrypted)
 }
 
-func (b *Bridge) flushKiroRedactedReasoning() []Frame {
-	if b.pendingKiroRedacted == "" {
+func (b *Bridge) flushKiroReasoning() []Frame {
+	if b.pendingKiroReasoning.Value == "" {
 		return nil
 	}
-	encrypted, err := benesreasoning.Encode(benesreasoning.Envelope{KiroRedacted: b.pendingKiroRedacted})
-	b.pendingKiroRedacted = ""
+	encrypted, err := benesreasoning.Encode(benesreasoning.Envelope{
+		KiroRedacted: b.pendingKiroReasoning.Value,
+		KiroKind:     b.pendingKiroReasoning.Member,
+	})
+	b.pendingKiroReasoning = protocol.KiroReasoningState{}
 	if err != nil {
 		return nil
 	}
