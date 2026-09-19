@@ -41,6 +41,7 @@ func TestResponsesGlobalRequestLimitCannotBeRaisedByLargerProviderLimit(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
+	h = attachHandlerClose(t, h)
 	body := `{"model":"target/gpt-5.6","store":false,"input":"this inbound request is intentionally longer than the global sixty four byte request ceiling"}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/responses", strings.NewReader(body))
 	req.Header.Set("Authorization", "Bearer local-secret")
