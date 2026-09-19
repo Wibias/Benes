@@ -300,6 +300,51 @@ func TestFabricHandoff33_SequentialDelegationsNoSlotLeak(t *testing.T) {
 	}
 }
 
+// The resume Turn must be released before the terminal state is persisted: a run that
+// is observable as completed must not still hold a resource-budget slot. Without the
+// release in runSingleChildHandoff this hook observes ActiveTurns=1.
+func TestFabricHandoffResumeTurnReleasedBeforeTerminalPersist(t *testing.T) {
+	home := t.TempDir()
+	configPath := filepath.Join(home, "config.json")
+	if err := os.WriteFile(configPath, []byte(`{"fabric":{"enabled":true},"providers":{"openai-apikey":{"adapter":"openai-chat"}}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p := &fabricHandoffProvider{}
+	budget := resourcebudget.NewManager(resourcebudget.Limits{MaxActiveTurns: 2})
+	h, err := NewHandler(Options{
+		DataPlaneToken: "local-secret",
+		Providers:      map[string]Provider{"openai-apikey": p},
+		ConfigPath:     configPath,
+		ResourceBudget: budget,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := attachHandlerClose(t, h)
+	atPersist := make(chan int, 4)
+	SetFabricBeforeTerminalPersistTestHook(func() {
+		select {
+		case atPersist <- budget.Metrics().ActiveTurns:
+		default:
+		}
+	})
+	t.Cleanup(func() { SetFabricBeforeTerminalPersistTestHook(nil) })
+	id := fabricCreate(t, handler)
+	rr := fabricDo(handler, http.MethodPost, "/api/fabric/tasks/"+id+"/execute", `{"owner":"worker","model":"openai-apikey/gpt-primary","input":"do","delegation":{"model":"openai-apikey/gpt-child"}}`)
+	if rr.Code != http.StatusAccepted {
+		t.Fatalf("%d %s", rr.Code, rr.Body.String())
+	}
+	waitFabricRunState(t, handler, id, "completed")
+	select {
+	case got := <-atPersist:
+		if got != 0 {
+			t.Fatalf("ActiveTurns=%d when the terminal state was persisted, want 0: the resume turn must be released before completion is persisted", got)
+		}
+	default:
+		t.Fatal("terminal persist hook never fired")
+	}
+}
+
 func TestFabricHandoff34_ExactlyOneChildAfterTerminal(t *testing.T) {
 	repo := fabric.New(t.TempDir())
 	id, err := repo.Create(fabric.CreateTaskInput{Title: "t", Goal: "g"})

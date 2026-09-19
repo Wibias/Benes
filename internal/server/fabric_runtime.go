@@ -27,6 +27,7 @@ var (
 	fabricTestBeforeAuthorityReturn            func()
 	fabricTestAfterDurableReturnBeforePublish  func()
 	fabricTestAfterCancelSelected              func()
+	fabricTestBeforeTerminalPersist            func()
 )
 
 // SetFabricAuthorityHandoffTestHooks installs race hooks around the parent->child
@@ -47,6 +48,13 @@ func SetFabricAuthorityReturnTestHooks(beforeAuthority, afterDurableBeforePublis
 // the authority boundary (before waiting on the worker done channel).
 func SetFabricAfterCancelSelectedTestHook(fn func()) {
 	fabricTestAfterCancelSelected = fn
+}
+
+// SetFabricBeforeTerminalPersistTestHook runs inside finishPrimaryDrive immediately
+// before the terminal state is persisted, so a test can assert what is still held at
+// that boundary. Pass nil to clear.
+func SetFabricBeforeTerminalPersistTestHook(fn func()) {
+	fabricTestBeforeTerminalPersist = fn
 }
 
 // Linearizable terminal intents for one live run. First successful select wins;
