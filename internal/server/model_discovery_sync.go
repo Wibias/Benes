@@ -134,7 +134,7 @@ func (h *handler) persistDiscoveredProviderModels(provider string, discovered []
 	if err != nil {
 		return nil, err
 	}
-	existing := providerModelEntries(disk.Providers[provider])
+	existing := providerModelEntries(provider, disk.Providers[provider])
 	merged := mergeCatalogEntries(existing, discovered)
 	payload, err := marshalProviderModels(merged)
 	if err != nil {
@@ -170,6 +170,10 @@ func (h *handler) replaceProviderCatalog(provider string, entries []modeldiscove
 		}
 		if entry.ContextWindow > 0 {
 			model.Context = catalog.ContextWindow{Tokens: entry.ContextWindow, Source: catalog.ContextDiscovered}
+		} else if curated, _, ok := catalog.CuratedContextFor(provider, entry.ID); ok {
+			model.Context = curated
+		} else if strings.EqualFold(strings.TrimSpace(provider), "opencode-go") {
+			model.Context = catalog.EffectiveContextWindow(catalog.ContextInput{})
 		}
 		if entry.MaxInput > 0 {
 			model.MaxInput = entry.MaxInput
@@ -211,7 +215,16 @@ func (h *handler) codexSyncCredential() (accessToken, accountID string) {
 	return strings.TrimSpace(result.Credential.AccessToken), strings.TrimSpace(result.Credential.ChatGPTAccountID)
 }
 
-func providerModelEntries(raw json.RawMessage) []modeldiscovery.CatalogEntry {
+func providerModelEntries(provider string, raw json.RawMessage) []modeldiscovery.CatalogEntry {
+	if strings.EqualFold(strings.TrimSpace(provider), "opencode-go") {
+		var rec struct {
+			Models json.RawMessage `json:"models"`
+		}
+		if json.Unmarshal(raw, &rec) != nil {
+			return nil
+		}
+		return modeldiscovery.ParseStoredModels(rec.Models)
+	}
 	return modeldiscovery.ParseProviderCatalog(raw)
 }
 
