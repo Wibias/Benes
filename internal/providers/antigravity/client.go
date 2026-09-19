@@ -232,8 +232,11 @@ func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, e
 	if strings.Contains(strings.ToLower(model), "claude") {
 		req.Header.Set("anthropic-beta", InterleavedThinkingBeta)
 	}
-	response, err := c.httpClient.Do(req)
+	response, err := transport.DoPhysicalSend(ctx, c.httpClient, req, dispatch.Turn, "google-antigravity")
 	if err != nil {
+		if errors.Is(err, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+			return nil, err
+		}
 		if c.image {
 			return nil, ImageTransportFailure(true)
 		}

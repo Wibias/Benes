@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Wibias/Benes/internal/providers"
+	"github.com/Wibias/Benes/internal/resourcebudget"
 	"github.com/Wibias/Benes/internal/responses/continuation"
 	"github.com/Wibias/Benes/internal/responses/sse"
 	"github.com/Wibias/Benes/internal/transport"
@@ -168,9 +169,13 @@ func (c *ForwardClient) openAttempt(
 		req.Header.Set("ChatGPT-Account-Id", credential.ChatGPTAccountID)
 	}
 
-	response, err := c.httpClient.Do(req)
+	response, err := transport.DoPhysicalSend(ctx, c.httpClient, req, dispatch.Turn, "openai-responses-forward")
 	if err != nil {
 		bound.Release()
+		if errors.Is(err, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+			abandonForwardObserver(attempt.Observer)
+			return nil, continuation.Bound{}, fmt.Errorf("OpenAI Responses forward request failed: %w", err)
+		}
 		if attempt.Observer != nil {
 			if ctx.Err() != nil {
 				abandonForwardObserver(attempt.Observer)
@@ -223,6 +228,11 @@ func (c *ForwardClient) openAttempt(
 					if attempt.Observer != nil {
 						attempt.Observer.Observe(outcome)
 					}
+					if !canReplayForwardAccountBoundFiles(dispatch.Parsed, credential, retryAttempt.Credential) {
+						abandonForwardObserver(retryAttempt.Observer)
+						bound.Release()
+						return nil, continuation.Bound{}, statusErr
+					}
 					bound.Release()
 					return c.openAttempt(ctx, dispatch, retryAttempt, false)
 				}
@@ -246,6 +256,11 @@ func (c *ForwardClient) openAttempt(
 				attempt.Observer.Observe(outcome)
 			}
 			if retry {
+				if !canReplayForwardAccountBoundFiles(dispatch.Parsed, credential, retryAttempt.Credential) {
+					abandonForwardObserver(retryAttempt.Observer)
+					bound.Release()
+					return nil, continuation.Bound{}, statusErr
+				}
 				bound.Release()
 				return c.openAttempt(ctx, dispatch, retryAttempt, false)
 			}
@@ -265,6 +280,11 @@ func (c *ForwardClient) openAttempt(
 				attempt.Observer.Observe(outcome)
 			}
 			if retry {
+				if !canReplayForwardAccountBoundFiles(dispatch.Parsed, credential, retryAttempt.Credential) {
+					abandonForwardObserver(retryAttempt.Observer)
+					bound.Release()
+					return nil, continuation.Bound{}, statusErr
+				}
 				if retryAttempt.CommitQuotaRetry != nil {
 					retryAttempt.CommitQuotaRetry()
 				}

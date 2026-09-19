@@ -248,6 +248,9 @@ func (h *handler) acquireTurn(ctx context.Context, requestBytes int) (*resourceb
 		}
 	}
 	turn.SetPhase(resourcebudget.PhaseAdmission)
+	if diag := diagnosticsRecorderFrom(ctx); diag != nil {
+		diag.BindPhysicalSendTurn(turn)
+	}
 	return turn, nil
 }
 
@@ -730,6 +733,10 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		PreResolved:      &resolvedProbe, // sole Responses resolution authority
 	})
 	if openErr != nil {
+		if errors.Is(openErr, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+			writeError(w, http.StatusTooManyRequests, physicalSendBudgetErrorCode, physicalSendBudgetErrorMessage)
+			return
+		}
 		if writeResponsesOpenError(w, request, route.Model, routedCompaction, turn, openErr) {
 			return
 		}

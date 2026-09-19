@@ -352,3 +352,58 @@ func bytes32(b byte) []byte {
 func stringsHasPrefix(value, prefix string) bool {
 	return len(value) >= len(prefix) && value[:len(prefix)] == prefix
 }
+
+func TestOAuthContinuationOwnerSurvivesTokenRotationButRejectsDifferentAccount(t *testing.T) {
+	authority, turn := testAuthority(t)
+	defer turn.Close()
+
+	identityA := PhysicalIdentity{
+		Provider: "provider", Destination: "https://provider.example/v1",
+		Adapter: "responses", Model: "model", AuthClass: "oauth",
+		AccountHandle: "account-a", Secret: []byte("token-old"),
+	}
+	ownerA, durable, err := identityA.Resolve(authority.salt, authority.processSalt)
+	if err != nil || !durable {
+		t.Fatalf("owner=%#v durable=%v err=%v", ownerA, durable, err)
+	}
+	if err := authority.RememberProviderState(ownerA, durable, "thread-1", json.RawMessage(`{"state":"owned"}`)); err != nil {
+		t.Fatal(err)
+	}
+
+	rotatedA := identityA
+	rotatedA.Secret = []byte("token-new")
+	same, err := authority.Bind(BindRequest{
+		Identity: rotatedA,
+		Turn:     turn,
+		Request:  protocol.ParsedRequest{PreviousResponseID: "thread-1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer same.Release()
+	if !same.Hit || string(same.ProviderPayload()) != `{"state":"owned"}` {
+		t.Fatalf("same account token rotation lost state: hit=%v payload=%s owner=%#v", same.Hit, same.ProviderPayload(), same.Owner)
+	}
+	if !same.Owner.Matches(ownerA) {
+		t.Fatalf("same account token rotation changed owner: %#v vs %#v", same.Owner, ownerA)
+	}
+
+	identityB := identityA
+	identityB.AccountHandle = "account-b"
+	identityB.Secret = []byte("token-b")
+	foreign, err := authority.Bind(BindRequest{
+		Identity: identityB,
+		Turn:     turn,
+		Request:  protocol.ParsedRequest{PreviousResponseID: "thread-1"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer foreign.Release()
+	if foreign.Hit || len(foreign.ProviderPayload()) != 0 {
+		t.Fatalf("different OAuth account reused state: hit=%v payload=%s owner=%#v", foreign.Hit, foreign.ProviderPayload(), foreign.Owner)
+	}
+	if foreign.Owner.Matches(ownerA) {
+		t.Fatalf("different OAuth account shared owner: %#v", foreign.Owner)
+	}
+}

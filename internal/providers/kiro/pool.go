@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	"time"
 
 	"github.com/Wibias/Benes/internal/credentialpool"
+	"github.com/Wibias/Benes/internal/resourcebudget"
+	"github.com/Wibias/Benes/internal/transport"
 )
 
 const (
@@ -151,7 +154,7 @@ func clampRetryAt(now, resetAt time.Time) time.Time {
 	return resetAt
 }
 
-func (c *Client) postGenerate(ctx context.Context, req *http.Request, payload map[string]any, body []byte) (*http.Response, error) {
+func (c *Client) postGenerate(ctx context.Context, req *http.Request, payload map[string]any, body []byte, turn *resourcebudget.Turn) (*http.Response, error) {
 	account := c.account
 	pool := c.credentialPool()
 	attempt := 1
@@ -171,8 +174,11 @@ func (c *Client) postGenerate(ctx context.Context, req *http.Request, payload ma
 			return io.NopCloser(bytes.NewReader(attemptBody)), nil
 		}
 		applyKiroAuth(attemptReq, account)
-		resp, err := c.httpClient.Do(attemptReq)
+		resp, err := transport.DoPhysicalSend(ctx, c.httpClient, attemptReq, turn, "kiro")
 		if err != nil {
+			if errors.Is(err, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+				return nil, err
+			}
 			if attempt >= maxTransientAttempts {
 				return nil, err
 			}

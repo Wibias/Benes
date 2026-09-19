@@ -15,6 +15,7 @@ import (
 
 	"github.com/Wibias/Benes/internal/protocol"
 	providercontract "github.com/Wibias/Benes/internal/providers"
+	"github.com/Wibias/Benes/internal/resourcebudget"
 	"github.com/Wibias/Benes/internal/sessions"
 )
 
@@ -719,3 +720,50 @@ func latestResponsesDetail(t *testing.T, h http.Handler) diagnosticsRequestDetai
 	}
 	return getDiagnosticsDetail(t, h, row.RequestID)
 }
+
+func TestDiagnosticsExposeSafePhysicalSendOrdinalsAndReasons(t *testing.T) {
+	budget := resourcebudget.NewManager(resourcebudget.Limits{MaxPhysicalSends: 4})
+	provider := providerFunc(func(_ context.Context, dispatch providercontract.DispatchRequest) (EventStream, error) {
+		first, err := dispatch.Turn.ReservePhysicalSend("openai_responses")
+		if err != nil {
+			return nil, err
+		}
+		if err := first.Commit(); err != nil {
+			return nil, err
+		}
+		first.Release()
+
+		unsafe, err := dispatch.Turn.ReservePhysicalSend("Bearer SECRET-ACCOUNT-123")
+		if err != nil {
+			return nil, err
+		}
+		if err := unsafe.Commit(); err != nil {
+			return nil, err
+		}
+		unsafe.Release()
+
+		return &sliceStream{events: []protocol.Event{{Type: protocol.EventDone}}}, nil
+	})
+	h, err := NewHandler(Options{
+		DataPlaneToken: "local-secret",
+		Providers:      map[string]Provider{"openai-apikey": provider},
+		ResourceBudget: budget,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h = attachHandlerClose(t, h)
+	postOK(t, h, "/v1/responses", `{"model":"openai-apikey/gpt-5.6","store":false,"stream":false,"input":"hi"}`, "physical-send-diag")
+	detail := latestResponsesDetail(t, h)
+	raw := diagnosticsGET(t, h, "/api/diagnostics/requests/"+detail.RequestID).Body.String()
+	if !strings.Contains(raw, `"physicalSends"`) ||
+		!strings.Contains(raw, `"ordinal":1`) ||
+		!strings.Contains(raw, `"reason":"openai_responses"`) ||
+		!strings.Contains(raw, `"ordinal":2`) {
+		t.Fatalf("missing physical send evidence: %s", raw)
+	}
+	if strings.Contains(raw, "SECRET-ACCOUNT-123") || strings.Contains(raw, "Bearer") {
+		t.Fatalf("unsafe physical send reason leaked: %s", raw)
+	}
+}
+

@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/Wibias/Benes/internal/protocol"
 	"github.com/Wibias/Benes/internal/providers"
+	"github.com/Wibias/Benes/internal/resourcebudget"
 )
 
 type Target struct {
@@ -82,6 +84,10 @@ func (w *Walker) Open(ctx context.Context, dispatch providers.DispatchRequest) (
 		opened, openErr := target.Provider.Open(ctx, child)
 		if openErr != nil {
 			if errors.Is(openErr, context.Canceled) || errors.Is(openErr, context.DeadlineExceeded) {
+				return Result{}, openErr
+			}
+			if errors.Is(openErr, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+				w.noteAttempt(member.ID, Result{Status: http.StatusTooManyRequests, Message: openErr.Error(), Code: "physical_send_budget_exhausted"})
 				return Result{}, openErr
 			}
 			result := ClassifyOpenError(openErr)
