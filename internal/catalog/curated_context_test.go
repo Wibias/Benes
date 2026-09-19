@@ -53,7 +53,7 @@ func TestCuratedContextForIsProviderScopedAndPinned(t *testing.T) {
 	}
 	if got.Evidence == nil ||
 		got.Evidence.Source != "models.dev" ||
-		got.Evidence.Revision != "dff014f67f04d7f17b6a7024510c77dd4a5b47e5" ||
+		got.Evidence.Revision != "6303a062a3782391f3147e9db1100ee93139abbb" ||
 		got.Evidence.Path != "models/alibaba/qwen3.8-max.toml" {
 		t.Fatalf("evidence=%#v", got.Evidence)
 	}
