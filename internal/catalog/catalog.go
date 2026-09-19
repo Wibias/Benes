@@ -17,6 +17,7 @@ type ContextSource string
 const (
 	ContextDiscovered          ContextSource = "discovered"
 	ContextOperator            ContextSource = "operator"
+	ContextCuratedMetadata     ContextSource = "curated_metadata"
 	ContextStatic              ContextSource = "static"
 	ContextCap                 ContextSource = "cap"
 	ContextConservativeDefault ContextSource = "conservative_default"
@@ -29,18 +30,27 @@ const (
 	WindowOverride WindowMode = "override"
 )
 
+type ContextEvidence struct {
+	Source   string `json:"source"`
+	Revision string `json:"revision"`
+	Path     string `json:"path"`
+}
+
 type ContextInput struct {
-	Discovered   int
-	Operator     int
-	OperatorMode WindowMode
-	Static       int
-	Cap          int
-	CapDisabled  bool
+	Discovered      int
+	Operator        int
+	OperatorMode    WindowMode
+	Curated         int
+	CuratedEvidence *ContextEvidence
+	Static          int
+	Cap             int
+	CapDisabled     bool
 }
 
 type ContextWindow struct {
-	Tokens int           `json:"tokens"`
-	Source ContextSource `json:"source"`
+	Tokens   int              `json:"tokens"`
+	Source   ContextSource    `json:"source"`
+	Evidence *ContextEvidence `json:"evidence,omitempty"`
 }
 
 func EffectiveContextWindow(in ContextInput) ContextWindow {
@@ -56,6 +66,9 @@ func EffectiveContextWindow(in ContextInput) ContextWindow {
 	} else if in.Operator > 0 {
 		tokens = in.Operator
 		source = ContextOperator
+	} else if in.Curated > 0 {
+		tokens = in.Curated
+		source = ContextCuratedMetadata
 	} else if in.Static > 0 {
 		tokens = in.Static
 		source = ContextStatic
@@ -67,7 +80,11 @@ func EffectiveContextWindow(in ContextInput) ContextWindow {
 		}
 	}
 	if tokens > 0 {
-		return ContextWindow{Tokens: tokens, Source: source}
+		window := ContextWindow{Tokens: tokens, Source: source}
+		if source == ContextCuratedMetadata {
+			window.Evidence = cloneContextEvidence(in.CuratedEvidence)
+		}
+		return window
 	}
 	return ContextWindow{Tokens: ConservativeContextWindow, Source: ContextConservativeDefault}
 }
@@ -157,9 +174,11 @@ type Policy struct {
 }
 
 type ConfiguredModel struct {
-	ID               string
-	ContextWindow    int
-	MaxInput         int
+	ID                     string
+	ContextWindow          int
+	CuratedContextWindow   int
+	CuratedContextEvidence *ContextEvidence
+	MaxInput               int
 	ReasoningEfforts []string
 	Vision           CapabilityState
 }
@@ -332,10 +351,12 @@ func Project(in ProjectionInput) ([]Model, error) {
 		}
 		staticTokens := cfg.ContextWindow
 		ctx := EffectiveContextWindow(ContextInput{
-			Discovered:   discoveredTokens,
-			Operator:     contextPolicy.Tokens,
-			OperatorMode: contextPolicy.Mode,
-			Static:       staticTokens,
+			Discovered:      discoveredTokens,
+			Operator:        contextPolicy.Tokens,
+			OperatorMode:    contextPolicy.Mode,
+			Curated:         cfg.CuratedContextWindow,
+			CuratedEvidence: cfg.CuratedContextEvidence,
+			Static:          staticTokens,
 			Cap:          capTokens,
 			CapDisabled:  in.Policy.ProviderContextCapDisabled[in.ProviderID],
 		})
@@ -343,7 +364,11 @@ func Project(in ProjectionInput) ([]Model, error) {
 		if standardInput <= 0 {
 			standardInput = base.MaxInput
 		}
-		base.AdvertisedTokens, base.StandardTokens = advertisedCatalogWindows(discoveredTokens, staticTokens, standardInput)
+		advertisedStatic := staticTokens
+		if discoveredTokens <= 0 && cfg.CuratedContextWindow > 0 {
+			advertisedStatic = cfg.CuratedContextWindow
+		}
+		base.AdvertisedTokens, base.StandardTokens = advertisedCatalogWindows(discoveredTokens, advertisedStatic, standardInput)
 		base.Context = ctx
 		if cfg.MaxInput > 0 {
 			base.MaxInput = cfg.MaxInput
@@ -397,13 +422,19 @@ func Project(in ProjectionInput) ([]Model, error) {
 		}
 		contextPolicy := contextPolicyFor(in.Policy, in.ProviderID, id)
 		ctx := EffectiveContextWindow(ContextInput{
-			Operator:     contextPolicy.Tokens,
-			OperatorMode: contextPolicy.Mode,
-			Static:       cfg.ContextWindow,
+			Operator:        contextPolicy.Tokens,
+			OperatorMode:    contextPolicy.Mode,
+			Curated:         cfg.CuratedContextWindow,
+			CuratedEvidence: cfg.CuratedContextEvidence,
+			Static:          cfg.ContextWindow,
 			Cap:          in.Policy.ProviderContextCaps[in.ProviderID],
 			CapDisabled:  in.Policy.ProviderContextCapDisabled[in.ProviderID],
 		})
-		advertised, standard := advertisedCatalogWindows(0, cfg.ContextWindow, cfg.MaxInput)
+		advertisedStatic := cfg.ContextWindow
+		if cfg.CuratedContextWindow > 0 {
+			advertisedStatic = cfg.CuratedContextWindow
+		}
+		advertised, standard := advertisedCatalogWindows(0, advertisedStatic, cfg.MaxInput)
 		maxInput := cfg.MaxInput
 		if maxInput > ctx.Tokens && ctx.Tokens > 0 {
 			maxInput = ctx.Tokens
@@ -552,6 +583,14 @@ func advertisedCatalogWindows(discovered, static, maxInput int) (advertised, sta
 		standard = maxInput
 	}
 	return advertised, standard
+}
+
+func cloneContextEvidence(value *ContextEvidence) *ContextEvidence {
+	if value == nil {
+		return nil
+	}
+	cloned := *value
+	return &cloned
 }
 
 func discoveredContext(tokens int) ContextWindow {

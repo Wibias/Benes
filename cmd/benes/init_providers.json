@@ -1416,9 +1416,6 @@
         "baseUrl": "https://opencode.ai/zen/go/v1",
         "authMode": "key",
         "defaultModel": "kimi-k2.7-code",
-        "modelContextWindows": {
-          "kimi-k3": 262144
-        },
         "modelInputModalities": {
           "kimi-k3": [
             "text",
