@@ -70,12 +70,14 @@ type ChatOptions struct {
 }
 
 type Capability struct {
-	SupportsServiceTier      *bool
-	ModelSupportsServiceTier map[string]bool
-	ChatServiceTier          bool
-	NoStructuredOutputModels []string
-	HostedWebSearch          bool
-	WebSearchModels          []string
+	SupportsServiceTier           *bool
+	ModelSupportsServiceTier      map[string]bool
+	ChatServiceTier               bool
+	SupportsStructuredOutput      *bool
+	ModelSupportsStructuredOutput map[string]bool
+	NoStructuredOutputModels      []string
+	HostedWebSearch               bool
+	WebSearchModels               []string
 }
 
 type APIKeySlot struct {
@@ -258,6 +260,7 @@ func Build(ctx context.Context, specs []Spec, options Options) (map[string]provi
 				Keys:              googleKeySlots(spec),
 				DestinationPolicy: spec.DestinationPolicy,
 				TransportOptions:  transportOptions,
+				Capability:        capabilityPolicy(spec, specAuthClass(spec)),
 			})
 		case ProtocolGoogleVertex:
 			provider, err = google.New(ctx, google.Config{
@@ -269,6 +272,7 @@ func Build(ctx context.Context, specs []Spec, options Options) (map[string]provi
 				Keys:              googleKeySlots(spec),
 				DestinationPolicy: spec.DestinationPolicy,
 				TransportOptions:  transportOptions,
+				Capability:        capabilityPolicy(spec, specAuthClass(spec)),
 			})
 		}
 		if err != nil {
@@ -415,6 +419,17 @@ func validProviderID(id string) bool {
 	return true
 }
 
+func cloneBoolMap(values map[string]bool) map[string]bool {
+	if values == nil {
+		return nil
+	}
+	cloned := make(map[string]bool, len(values))
+	for key, value := range values {
+		cloned[key] = value
+	}
+	return cloned
+}
+
 func cloneOptionalStrings(values []string) []string {
 	if values == nil {
 		return nil
@@ -432,8 +447,10 @@ func capabilityPolicy(spec Spec, authClass string) capability.Policy {
 		AuthClass:                authClass,
 		SupportsServiceTier:      spec.Capability.SupportsServiceTier,
 		ModelSupportsServiceTier: spec.Capability.ModelSupportsServiceTier,
-		ChatServiceTier:          spec.Capability.ChatServiceTier,
-		NoStructuredOutputModels: append([]string(nil), spec.Capability.NoStructuredOutputModels...),
+		ChatServiceTier:               spec.Capability.ChatServiceTier,
+		SupportsStructuredOutput:      spec.Capability.SupportsStructuredOutput,
+		ModelSupportsStructuredOutput: cloneBoolMap(spec.Capability.ModelSupportsStructuredOutput),
+		NoStructuredOutputModels:      append([]string(nil), spec.Capability.NoStructuredOutputModels...),
 	}
 }
 
