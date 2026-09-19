@@ -142,11 +142,20 @@ func TestClient401ReplayIsBoundedToOneRefresh(t *testing.T) {
 	}
 }
 
-func TestClient401RefreshFailureDoesNotHopAccounts(t *testing.T) {
+func TestClient401RefreshFailureFailsOverToEligibleAccount(t *testing.T) {
 	var seen []string
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		seen = append(seen, r.Header.Get("Authorization"))
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		auth := r.Header.Get("Authorization")
+		seen = append(seen, auth)
+		if auth == "Bearer stale-a" {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if auth != "Bearer token-b" {
+			t.Errorf("unexpected authorization: %q", auth)
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, ccaOK)
 	}))
 	defer upstream.Close()
 
@@ -165,12 +174,72 @@ func TestClient401RefreshFailureDoesNotHopAccounts(t *testing.T) {
 	}, false)
 	client.authority = authority
 
-	_, err := client.Open(context.Background(), providers.DispatchRequest{Parsed: protocol.ParsedRequest{UpstreamModelID: "gemini-3.7-flash"}})
-	if err == nil || err.Error() != "Cloud Code Assist authentication recovery failed" {
-		t.Fatalf("err=%v", err)
+	stream, err := client.Open(context.Background(), providers.DispatchRequest{Parsed: protocol.ParsedRequest{UpstreamModelID: "gemini-3.7-flash"}})
+	if err != nil {
+		t.Fatalf("refresh failure should use another eligible account before output: %v", err)
 	}
-	if len(seen) != 1 || seen[0] != "Bearer stale-a" {
-		t.Fatalf("auth-triggered account hop: %v", seen)
+	defer stream.Close()
+	event, err := stream.Next()
+	if err != nil || event.Text != "ok" {
+		t.Fatalf("event=%#v err=%v", event, err)
+	}
+	if len(seen) != 2 || seen[0] != "Bearer stale-a" || seen[1] != "Bearer token-b" {
+		t.Fatalf("account recovery=%v", seen)
+	}
+}
+
+func TestClient401RotatesAfterRefreshedAccountStillUnauthorized(t *testing.T) {
+	var seen []string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		seen = append(seen, auth)
+		switch auth {
+		case "Bearer stale-a", "Bearer fresh-a":
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+		case "Bearer token-b":
+			w.Header().Set("Content-Type", "text/event-stream")
+			_, _ = io.WriteString(w, ccaOK)
+		default:
+			t.Errorf("unexpected authorization: %q", auth)
+		}
+	}))
+	defer upstream.Close()
+
+	authority := &scriptedAccountAuthority{
+		current: map[string]Account{
+			"a": {ID: "a", Token: "stale-a", ProjectID: "project-a-old"},
+			"b": {ID: "b", Token: "token-b", ProjectID: "project-b"},
+		},
+		refresh: func(context.Context, Account) (Account, error) {
+			return Account{ID: "a", Token: "fresh-a", ProjectID: "project-a-new"}, nil
+		},
+	}
+	client := newTestClient(t, upstream, []Account{
+		{ID: "a", Token: "stale-a", ProjectID: "project-a-old"},
+		{ID: "b", Token: "token-b", ProjectID: "project-b"},
+	}, false)
+	client.authority = authority
+
+	stream, err := client.Open(context.Background(), providers.DispatchRequest{Parsed: protocol.ParsedRequest{UpstreamModelID: "gemini-3.7-flash"}})
+	if err != nil {
+		t.Fatalf("second 401 should fail over after one same-account refresh: %v", err)
+	}
+	defer stream.Close()
+	event, err := stream.Next()
+	if err != nil || event.Text != "ok" {
+		t.Fatalf("event=%#v err=%v", event, err)
+	}
+	if authority.refreshes.Load() != 1 {
+		t.Fatalf("refreshes=%d, want 1", authority.refreshes.Load())
+	}
+	want := []string{"Bearer stale-a", "Bearer fresh-a", "Bearer token-b"}
+	if len(seen) != len(want) {
+		t.Fatalf("authorization sequence=%v", seen)
+	}
+	for i := range want {
+		if seen[i] != want[i] {
+			t.Fatalf("authorization sequence=%v", seen)
+		}
 	}
 }
 
