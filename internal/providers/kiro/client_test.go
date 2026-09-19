@@ -430,3 +430,22 @@ func TestStreamDecodesReasoningAndProviderUsage(t *testing.T) {
 		t.Fatalf("usage=%#v err=%v", done, err)
 	}
 }
+
+func TestStreamDecodesOpaqueReasoningSignature(t *testing.T) {
+	frame := EncodeEventStreamMessage(
+		map[string]string{":event-type": "reasoningContentEvent"},
+		[]byte(`{"signature":"sig-1"}`),
+	)
+	s := &stream{buf: frame}
+	ev, ok, err := s.consume()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("signature reasoning frame was ignored")
+	}
+	if ev.Type != protocol.EventKiroRedactedReasoning || ev.Signature != "sig-1" || ev.Data != "" {
+		t.Fatalf("event=%#v", ev)
+	}
+}
+
