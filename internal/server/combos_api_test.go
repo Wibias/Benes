@@ -203,6 +203,7 @@ func TestCombosAPIPreserveLegacyRoundRobinFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	h = attachHandlerClose(t, h)
 	get := httptest.NewRequest(http.MethodGet, "/api/combos", nil)
 	get.Host = "127.0.0.1"
 	getRR := httptest.NewRecorder()
@@ -263,6 +264,7 @@ func TestCombosAPIPreserveStickyWithoutInventingWeights(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	h = attachHandlerClose(t, h)
 	put := httptest.NewRequest(http.MethodPut, "/api/combos", strings.NewReader(`{"id":"sticky_failover","combo":{"targets":[{"provider":"openai-apikey","model":"gpt-4o"}],"strategy":"failover","stickyLimit":7,"alias":"sticky-kept"}}`))
 	put.Host = "127.0.0.1"
 	put.Header.Set("Content-Type", "application/json")
@@ -321,6 +323,7 @@ func TestCombosAPIRejectRoundRobinUnlessAlreadyStored(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	h = attachHandlerClose(t, h)
 	// Existing RR may be re-saved / renamed.
 	rename := httptest.NewRequest(http.MethodPut, "/api/combos", strings.NewReader(`{"id":"legacy_rr_renamed","renameFrom":"legacy_rr","combo":{"targets":[{"provider":"openai-apikey","model":"gpt-4o","weight":2}],"strategy":"round-robin","stickyLimit":2,"alias":"renamed"}}`))
 	rename.Host = "127.0.0.1"
