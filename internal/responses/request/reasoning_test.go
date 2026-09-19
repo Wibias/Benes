@@ -166,11 +166,15 @@ func mustJSON(t *testing.T, v string) string {
 	return string(b)
 }
 
-func TestDecodeReasoningRejectsUnknownKiroMember(t *testing.T) {
+func TestDecodeReasoningUnknownKiroMemberDoesNotInventReplay(t *testing.T) {
 	encrypted := benesreasoning.Prefix + base64.StdEncoding.EncodeToString([]byte(`{"krc":"opaque","krk":"unknown"}`))
-	item := reasoningItem(t, `{"type":"reasoning","encrypted_content":`+mustJSON(t, encrypted)+`}`)
-	if _, ok, err := item.DecodeReasoning(); !ok || err == nil {
+	item := reasoningItem(t, `{"type":"reasoning","summary":[{"text":"visible"}],"encrypted_content":`+mustJSON(t, encrypted)+`}`)
+	got, ok, err := item.DecodeReasoning()
+	if err != nil || !ok {
 		t.Fatalf("ok=%v err=%v", ok, err)
+	}
+	if got.HasEnvelope || got.KiroReasoning.Value != "" || got.EffectiveThinkingText != "visible" {
+		t.Fatalf("got=%+v", got)
 	}
 }
 
