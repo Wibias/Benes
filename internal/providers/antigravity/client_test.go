@@ -137,6 +137,38 @@ func TestClientRotatesAccountOnAccountScoped403(t *testing.T) {
 	}
 }
 
+func TestClientAccountScoped403DoesNotRotateHardPinnedAccount(t *testing.T) {
+	var seen []string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = append(seen, r.Header.Get("Authorization"))
+		if r.Header.Get("Authorization") == "Bearer ta" {
+			http.Error(w, `{"error":{"status":"PERMISSION_DENIED","message":"account requires verification"}}`, http.StatusForbidden)
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, ccaOK)
+	}))
+	defer upstream.Close()
+
+	client := newTestClient(t, upstream, []Account{
+		{ID: "a", Token: "ta", ProjectID: "pa"},
+		{ID: "b", Token: "tb", ProjectID: "pb"},
+	}, false)
+	_, err := client.Open(context.Background(), providers.DispatchRequest{
+		Parsed: protocol.ParsedRequest{UpstreamModelID: "gemini-3.7-flash"},
+		PhysicalPin: &providers.PhysicalPin{
+			CredentialRef: "a",
+			AuthClass:     "oauth",
+		},
+	})
+	if err == nil || !strings.Contains(err.Error(), string(FailurePermission)) {
+		t.Fatalf("err=%v", err)
+	}
+	if len(seen) != 1 || seen[0] != "Bearer ta" {
+		t.Fatalf("hard-pinned request rotated accounts: %v", seen)
+	}
+}
+
 func TestClientDoesNotRotateGeoblocked403(t *testing.T) {
 	var hits int
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
