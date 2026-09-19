@@ -100,6 +100,10 @@ func (h *handler) handleAnthropicMessages(w http.ResponseWriter, r *http.Request
 	stream = h.watchSession(r.Context(), provider, stream, err)
 	if err != nil {
 		trace.Mark(timeline.StageUpstreamWaitHeaders, timeline.SideUpstream, timeline.MilestoneDispatch, false, "provider_open_failed")
+		if structuredOutputCapabilityRefusal(err) {
+			writeAnthropicError(w, http.StatusBadRequest, unsupportedStructuredOutputMessage, "invalid_request_error", unsupportedStructuredOutputCode)
+			return
+		}
 		writeAnthropicError(w, http.StatusBadGateway, publicProviderOpenMessage(err), "api_error", "")
 		return
 	}

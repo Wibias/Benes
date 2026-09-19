@@ -87,3 +87,19 @@ func TestCompileEnvelopeImageModalitiesAndMissingProject(t *testing.T) {
 		t.Fatal("missing project must fail closed")
 	}
 }
+
+func TestCompileEnvelopeRejectsUnprovenStructuredOutput(t *testing.T) {
+	_, err := CompileDispatchEnvelope(protocol.ParsedRequest{
+		UpstreamModelID: "gemini-3.7-flash",
+		Context: protocol.Context{Messages: []protocol.Message{{
+			Role: protocol.RoleUser,
+			Content: []protocol.ContentPart{{Type: protocol.ContentText, Text: "answer"}},
+		}}},
+		Options:          protocol.RequestOptions{TextFormat: &protocol.TextFormat{Type: "json_object"}},
+		StructuredOutput: true,
+	}, Account{ID: "acct", Token: "tok", ProjectID: "proj-1"}, false)
+	if err == nil || !strings.Contains(strings.ToLower(err.Error()), "structured output") {
+		t.Fatalf("err=%v want structured-output refusal", err)
+	}
+}
+

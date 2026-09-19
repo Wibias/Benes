@@ -537,3 +537,30 @@ func TestProjectProviderSpecsRejectsTransientRetryOn5xxForGoogle(t *testing.T) {
 		t.Fatalf("projection=%#v", projection)
 	}
 }
+
+func TestProjectProviderSpecsProjectsStructuredOutputEvidence(t *testing.T) {
+	projection := ProjectProviderSpecs(DiskConfig{Providers: map[string]json.RawMessage{
+		"google": providerJSON(t, `{
+			"adapter":"google",
+			"baseUrl":"https://generativelanguage.googleapis.com",
+			"apiKey":"gk",
+			"supportsStructuredOutput":false,
+			"modelSupportsStructuredOutput":{"gemini-3.7-flash":true},
+			"noStructuredOutputModels":["legacy"]
+		}`),
+	}})
+	if len(projection.Skipped) != 0 || len(projection.Specs) != 1 {
+		t.Fatalf("projection=%#v", projection)
+	}
+	cap := projection.Specs[0].Capability
+	if cap.SupportsStructuredOutput == nil || *cap.SupportsStructuredOutput {
+		t.Fatalf("provider structured default=%#v", cap.SupportsStructuredOutput)
+	}
+	if !cap.ModelSupportsStructuredOutput["gemini-3.7-flash"] {
+		t.Fatalf("model structured support=%#v", cap.ModelSupportsStructuredOutput)
+	}
+	if len(cap.NoStructuredOutputModels) != 1 || cap.NoStructuredOutputModels[0] != "legacy" {
+		t.Fatalf("structured deny=%#v", cap.NoStructuredOutputModels)
+	}
+}
+
