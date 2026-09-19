@@ -254,6 +254,7 @@ func TestRoutingProfilesAPIPreservesExplicitZeroMinQuotaHeadroom(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	h = attachHandlerClose(t, h)
 
 	createBody := `{"mode":"create","id":"zero-quota","profile":{"alias":"Zero Quota","candidates":[{"provider":"openai-apikey","model":"gpt-5.4"}],"require":{"minQuotaHeadroom":0,"tools":false}}}`
 	put := httptest.NewRequest(http.MethodPut, "/api/routing-profiles", strings.NewReader(createBody))
