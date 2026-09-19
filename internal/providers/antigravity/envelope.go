@@ -28,6 +28,9 @@ type Envelope struct {
 }
 
 func CompileDispatchEnvelope(parsed protocol.ParsedRequest, account Account, image bool) (Envelope, error) {
+	if parsed.StructuredOutput || parsed.Options.TextFormat != nil {
+		return Envelope{}, fmt.Errorf("Cloud Code Assist structured output is unsupported by the verified transport contract")
+	}
 	model := strings.TrimSpace(parsed.UpstreamModelID)
 	if model == "" {
 		model = strings.TrimSpace(parsed.ModelID)

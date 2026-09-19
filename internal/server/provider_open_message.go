@@ -1,15 +1,25 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/Wibias/Benes/internal/authpublic"
+	"github.com/Wibias/Benes/internal/capability"
 )
 
-const providerOpenDetailMaxRunes = 240
+const (
+	providerOpenDetailMaxRunes          = 240
+	unsupportedStructuredOutputCode     = "unsupported_structured_output"
+	unsupportedStructuredOutputMessage  = "Structured output is not supported by the selected provider/model."
+)
+
+func structuredOutputCapabilityRefusal(err error) bool {
+	return errors.Is(err, capability.ErrStructuredOutputUnsupported)
+}
 
 func publicProviderOpenMessage(err error) string {
 	if err == nil {

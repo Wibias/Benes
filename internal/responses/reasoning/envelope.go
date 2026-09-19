@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io"
 	"strings"
+
+	"github.com/Wibias/Benes/internal/protocol"
 )
 
 const Prefix = "benesr1:"
@@ -14,7 +16,8 @@ type Envelope struct {
 	Signature    string   `json:"sig,omitempty"`
 	Redacted     []string `json:"red,omitempty"`
 	Text         string   `json:"txt,omitempty"`
-	KiroRedacted string   `json:"krc,omitempty"`
+	KiroRedacted string                       `json:"krc,omitempty"`
+	KiroKind     protocol.KiroReasoningMember `json:"krk,omitempty"`
 }
 
 func Encode(envelope Envelope) (string, error) {
@@ -63,8 +66,29 @@ func Decode(encryptedContent string) (Envelope, bool) {
 	if text, ok := obj["txt"].(string); ok && text != "" {
 		envelope.Text = text
 	}
-	if krc, ok := obj["krc"].(string); ok && krc != "" {
+	if krcRaw, exists := obj["krc"]; exists {
+		krc, ok := krcRaw.(string)
+		if !ok || krc == "" {
+			return Envelope{}, false
+		}
 		envelope.KiroRedacted = krc
+	}
+	if kindRaw, exists := obj["krk"]; exists {
+		kind, ok := kindRaw.(string)
+		if !ok || kind == "" {
+			return Envelope{}, false
+		}
+		envelope.KiroKind = protocol.KiroReasoningMember(kind)
+	}
+	if envelope.KiroRedacted != "" {
+		if envelope.KiroKind == "" {
+			envelope.KiroKind = protocol.KiroReasoningRedactedContent
+		}
+		if !envelope.KiroKind.Valid() {
+			return Envelope{}, false
+		}
+	} else if envelope.KiroKind != "" {
+		return Envelope{}, false
 	}
 
 	if envelope.Signature == "" && len(envelope.Redacted) == 0 && envelope.Text == "" && envelope.KiroRedacted == "" {
