@@ -109,8 +109,8 @@ func TestDescribeBoundsTimeoutCancelAndQuota(t *testing.T) {
 func TestDescribeFailsClosedOnEOFBeforeDone(t *testing.T) {
 	p := &fakeProvider{evs: []protocol.Event{{Type: protocol.EventTextDelta, Text: "partial description"}}}
 	got, err := New(p, 0, 0, 0).Describe(context.Background(), proven(), Request{Images: []string{pngDataURL()}})
-	if err == nil {
-		t.Fatalf("unexpected success: %#v", got)
+	if !errors.Is(err, ErrIncompleteResult) {
+		t.Fatalf("err=%v want=%v got=%#v", err, ErrIncompleteResult, got)
 	}
 	if got.Description != "" {
 		t.Fatalf("partial description escaped: %#v", got)
@@ -123,8 +123,8 @@ func TestDescribeFailsClosedWhenDescriptionLimitExceeded(t *testing.T) {
 		{Type: protocol.EventDone},
 	}}
 	got, err := New(p, 0, 0, 4).Describe(context.Background(), proven(), Request{Images: []string{pngDataURL()}})
-	if err == nil {
-		t.Fatalf("unexpected clipped success: %#v", got)
+	if !errors.Is(err, ErrDescriptionTooLarge) {
+		t.Fatalf("err=%v want=%v got=%#v", err, ErrDescriptionTooLarge, got)
 	}
 	if got.Description != "" {
 		t.Fatalf("clipped description escaped: %#v", got)
