@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -12,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Wibias/Benes/internal/resourcebudget"
 	"github.com/Wibias/Benes/internal/timeline"
 	"github.com/Wibias/Benes/internal/transport"
 )
@@ -67,6 +69,14 @@ func QuotaExhausted(body []byte) bool {
 }
 
 func Do(ctx context.Context, client *http.Client, req *http.Request, policy RetryPolicy) (*http.Response, error) {
+	return do(ctx, client, req, policy, nil, "")
+}
+
+func DoForTurn(ctx context.Context, client *http.Client, req *http.Request, policy RetryPolicy, turn *resourcebudget.Turn, reason string) (*http.Response, error) {
+	return do(ctx, client, req, policy, turn, reason)
+}
+
+func do(ctx context.Context, client *http.Client, req *http.Request, policy RetryPolicy, turn *resourcebudget.Turn, reason string) (*http.Response, error) {
 	if client == nil {
 		client = transport.DefaultUnpinnedClient()
 	}
@@ -108,8 +118,11 @@ func Do(ctx context.Context, client *http.Client, req *http.Request, policy Retr
 		} else if req.Body != nil && attempt > 1 {
 			return nil, fmt.Errorf("Google retry requires a rewindable request body")
 		}
-		resp, err := client.Do(cloned)
+		resp, err := transport.DoPhysicalSend(ctx, client, cloned, turn, reason)
 		if err != nil {
+			if errors.Is(err, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+				return nil, err
+			}
 			lastErr = err
 			if attempt == attempts {
 				return nil, err

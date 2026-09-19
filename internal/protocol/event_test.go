@@ -95,3 +95,24 @@ func TestEventValidateAllowsHeartbeat(t *testing.T) {
 		t.Fatalf("Validate() heartbeat: %v", err)
 	}
 }
+
+func TestKiroOpaqueReasoningEventRequiresExactlyOneMember(t *testing.T) {
+	if err := (Event{Type: EventKiroRedactedReasoning, Data: "opaque"}).Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if err := (Event{Type: EventKiroRedactedReasoning, Signature: "sig"}).Validate(); err != nil {
+		t.Fatal(err)
+	}
+	for _, event := range []Event{
+		{Type: EventKiroRedactedReasoning},
+		{Type: EventKiroRedactedReasoning, Data: "opaque", Signature: "sig"},
+	} {
+		if err := event.Validate(); err == nil {
+			t.Fatalf("event=%#v accepted", event)
+		}
+	}
+	if !KiroReasoningRedactedContent.Valid() || !KiroReasoningSignature.Valid() || KiroReasoningMember("unknown").Valid() {
+		t.Fatal("Kiro reasoning member validation mismatch")
+	}
+}
+

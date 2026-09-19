@@ -513,11 +513,45 @@ func safeManagedExpiryMillis(now time.Time, expiresInSeconds float64) int64 {
 
 func classifyManagedRefreshFailure(body []byte) ManagedRefreshReason {
 	var payload struct {
-		Error            string `json:"error"`
-		ErrorDescription string `json:"error_description"`
+		Error            json.RawMessage `json:"error"`
+		ErrorDescription string          `json:"error_description"`
+		Code             string          `json:"code"`
+		Message          string          `json:"message"`
 	}
-	_ = json.Unmarshal(body, &payload)
-	text := strings.ToLower(payload.Error + " " + payload.ErrorDescription)
+	if json.Unmarshal(body, &payload) != nil {
+		return ManagedRefreshUnknown
+	}
+
+	codes := []string{payload.Code}
+	texts := []string{payload.ErrorDescription, payload.Message}
+	if len(payload.Error) > 0 && string(payload.Error) != "null" {
+		var flat string
+		if json.Unmarshal(payload.Error, &flat) == nil {
+			codes = append(codes, flat)
+			texts = append(texts, flat)
+		} else {
+			var nested struct {
+				Code    string `json:"code"`
+				Message string `json:"message"`
+				Type    string `json:"type"`
+			}
+			if json.Unmarshal(payload.Error, &nested) == nil {
+				codes = append(codes, nested.Code)
+				texts = append(texts, nested.Message, nested.Type)
+			}
+		}
+	}
+
+	for _, code := range codes {
+		switch strings.ToLower(strings.TrimSpace(code)) {
+		case "refresh_token_invalidated", "invalid_refresh_token":
+			return ManagedRefreshRevoked
+		case "refresh_token_expired":
+			return ManagedRefreshExpired
+		}
+	}
+
+	text := strings.ToLower(strings.Join(texts, " "))
 	switch {
 	case strings.Contains(text, "invalidated"), strings.Contains(text, "revoked"):
 		return ManagedRefreshRevoked

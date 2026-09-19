@@ -323,3 +323,25 @@ func TestChatCompletionsStructuredOutputCapabilityRefusalIsLocalBadRequest(t *te
 	assertChatError(t, rr, "invalid_request_error", "unsupported_structured_output")
 }
 
+func TestChatPhysicalSendBudgetExhaustionIsLocal429(t *testing.T) {
+	budget := resourcebudget.NewManager(resourcebudget.Limits{MaxPhysicalSends: 1})
+	provider := providerFuncChat(func(context.Context, providercontract.DispatchRequest) (EventStream, error) {
+		return nil, resourcebudget.ErrPhysicalSendBudgetExceeded
+	})
+	h, err := NewHandler(Options{
+		DataPlaneToken: "local-secret",
+		Providers:      map[string]Provider{"openai-apikey": provider},
+		ResourceBudget: budget,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h = attachHandlerClose(t, h)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, chatRequest(`{"model":"openai-apikey/gpt-5.6","messages":[{"role":"user","content":"hi"}]}`))
+	if rr.Code != http.StatusTooManyRequests {
+		t.Fatalf("status=%d body=%s", rr.Code, rr.Body.String())
+	}
+	assertChatError(t, rr, "server_error", "physical_send_budget_exhausted")
+}
+

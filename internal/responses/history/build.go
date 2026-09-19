@@ -110,9 +110,9 @@ func Build(req *request.Request, now int64) (protocol.Context, error) {
 				if !ok {
 					return protocol.Context{}, fmt.Errorf("input[%d]: reasoning item not recognized", i)
 				}
-				if r.KiroRedacted != "" && r.EffectiveThinkingText == "" {
+				if r.KiroReasoning.Value != "" && r.EffectiveThinkingText == "" {
 					if len(ctx.Messages) > 0 && ctx.Messages[len(ctx.Messages)-1].Role == protocol.RoleAssistant {
-						ctx.Messages[len(ctx.Messages)-1].KiroRedactedReasoning = r.KiroRedacted
+						ctx.Messages[len(ctx.Messages)-1].KiroReasoning = r.KiroReasoning
 					}
 					continue
 				}

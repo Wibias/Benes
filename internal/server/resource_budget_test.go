@@ -98,3 +98,30 @@ func TestHealthzDoesNotConsumeResourceBudget(t *testing.T) {
 		t.Fatalf("active turns=%d", budget.Metrics().ActiveTurns)
 	}
 }
+
+func TestResponsesPhysicalSendBudgetExhaustionIsLocal429(t *testing.T) {
+	budget := resourcebudget.NewManager(resourcebudget.Limits{MaxPhysicalSends: 1})
+	provider := providerFunc(func(context.Context, providercontract.DispatchRequest) (EventStream, error) {
+		return nil, resourcebudget.ErrPhysicalSendBudgetExceeded
+	})
+	h, err := NewHandler(Options{
+		DataPlaneToken: "local-secret",
+		Providers:      map[string]Provider{"openai-apikey": provider},
+		ResourceBudget: budget,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h = attachHandlerClose(t, h)
+	req := httptest.NewRequest(http.MethodPost, "/v1/responses", strings.NewReader(`{"model":"openai-apikey/gpt-5.6","input":"hi"}`))
+	req.Header.Set("Authorization", "Bearer local-secret")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTooManyRequests {
+		t.Fatalf("status=%d body=%s", rr.Code, rr.Body.String())
+	}
+	if !strings.Contains(rr.Body.String(), "physical_send_budget_exhausted") {
+		t.Fatalf("body=%s", rr.Body.String())
+	}
+}
+

@@ -111,6 +111,11 @@ func (h *handler) handleChatCompletions(w http.ResponseWriter, r *http.Request, 
 	}
 	stream = h.watchSession(r.Context(), provider, stream, err)
 	if err != nil {
+		if errors.Is(err, resourcebudget.ErrPhysicalSendBudgetExceeded) {
+			trace.Mark(timeline.StageUpstreamWaitHeaders, timeline.SideLocal, timeline.MilestoneDispatch, false, physicalSendBudgetErrorCode)
+			writeChatError(w, http.StatusTooManyRequests, physicalSendBudgetErrorMessage, "server_error", physicalSendBudgetErrorCode)
+			return
+		}
 		trace.Mark(timeline.StageUpstreamWaitHeaders, timeline.SideUpstream, timeline.MilestoneDispatch, false, "provider_open_failed")
 		if structuredOutputCapabilityRefusal(err) {
 			writeChatError(w, http.StatusBadRequest, unsupportedStructuredOutputMessage, "invalid_request_error", unsupportedStructuredOutputCode)

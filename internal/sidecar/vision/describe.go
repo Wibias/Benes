@@ -18,8 +18,10 @@ import (
 var (
 	ErrTooManyImages = errors.New("vision sidecar image count exceeds the bound")
 	ErrImageTooLarge = errors.New("vision sidecar image exceeds the byte bound")
-	ErrBadImage      = errors.New("vision sidecar image is not a bounded data URL")
-	ErrEmptyResult   = errors.New("vision sidecar returned no description")
+	ErrBadImage            = errors.New("vision sidecar image is not a bounded data URL")
+	ErrEmptyResult         = errors.New("vision sidecar returned no description")
+	ErrIncompleteResult    = errors.New("vision sidecar stream ended before completion")
+	ErrDescriptionTooLarge = errors.New("vision sidecar description exceeds the bound")
 )
 
 const (
@@ -98,19 +100,24 @@ func (c *Client) Describe(ctx context.Context, candidate sidecar.Candidate, req 
 	}
 	defer stream.Close()
 	var b strings.Builder
+	descriptionRunes := 0
 	for {
 		if err := ctx.Err(); err != nil {
 			return Result{}, err
 		}
 		ev, nextErr := stream.Next()
 		if nextErr == io.EOF {
-			break
+			return Result{}, ErrIncompleteResult
 		}
 		if nextErr != nil {
 			return Result{}, nextErr
 		}
 		if ev.Type == protocol.EventDone {
-			break
+			text := strings.TrimSpace(b.String())
+			if text == "" {
+				return Result{}, ErrEmptyResult
+			}
+			return Result{ProviderID: candidate.ProviderID, ModelID: candidate.ModelID, Description: text}, nil
 		}
 		if ev.Type == protocol.EventError {
 			if ev.HTTPStatus == 429 {
@@ -119,17 +126,14 @@ func (c *Client) Describe(ctx context.Context, candidate sidecar.Candidate, req 
 			return Result{}, fmt.Errorf("vision sidecar failed: %s", strings.TrimSpace(ev.Message))
 		}
 		if ev.Type == protocol.EventTextDelta {
-			b.WriteString(ev.Text)
-			if utf8.RuneCountInString(b.String()) > c.maxDescription {
-				break
+			deltaRunes := utf8.RuneCountInString(ev.Text)
+			if descriptionRunes+deltaRunes > c.maxDescription {
+				return Result{}, ErrDescriptionTooLarge
 			}
+			b.WriteString(ev.Text)
+			descriptionRunes += deltaRunes
 		}
 	}
-	text := sidecar.BoundText(strings.TrimSpace(b.String()), c.maxDescription)
-	if text == "" {
-		return Result{}, ErrEmptyResult
-	}
-	return Result{ProviderID: candidate.ProviderID, ModelID: candidate.ModelID, Description: text}, nil
 }
 
 func boundImages(images []string, maxCount, maxBytes int) ([]string, error) {
