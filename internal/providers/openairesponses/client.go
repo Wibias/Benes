@@ -119,6 +119,7 @@ func New(config Config) (*Client, error) {
 		continuation: config.Continuation,
 		capability:   config.Capability,
 		transient5xx: config.Transient5xx,
+		userAgent:    providers.NormalizeUserAgent(config.UserAgent),
 	}, nil
 }
 
