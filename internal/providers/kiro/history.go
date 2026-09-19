@@ -33,7 +33,7 @@ type HistoryEntry struct {
 	Images      []Image
 	ToolUses    []ToolUse
 	ToolResults []ToolResult
-	Redacted    string
+	Reasoning   protocol.KiroReasoningState
 }
 
 func CompileHistory(parsed protocol.ParsedRequest) ([]HistoryEntry, error) {
@@ -78,13 +78,21 @@ func CompileHistoryWithRegistry(parsed protocol.ParsedRequest, names *ToolNameRe
 				ids = append(ids, id)
 				uses = append(uses, ToolUse{ID: id, Name: alias, Input: part.Arguments})
 			}
+			reasoning := message.KiroReasoning
+			if reasoning.Value == "" {
+				if reasoning.Member != "" {
+					return nil, fmt.Errorf("Kiro reasoning member is present without opaque value")
+				}
+			} else if !reasoning.Member.Valid() {
+				return nil, fmt.Errorf("Kiro reasoning member %q is unsupported", reasoning.Member)
+			}
 			if strings.TrimSpace(text) == "" && len(ids) == 0 {
-				if message.KiroRedactedReasoning != "" {
+				if reasoning.Value != "" {
 					continue
 				}
 				return nil, fmt.Errorf("Kiro assistant messages must not be empty")
 			}
-			out = append(out, HistoryEntry{Role: "assistant", Text: text, ToolIDs: ids, ToolUses: uses, Redacted: message.KiroRedactedReasoning})
+			out = append(out, HistoryEntry{Role: "assistant", Text: text, ToolIDs: ids, ToolUses: uses, Reasoning: reasoning})
 		case protocol.RoleToolResult:
 			if message.ContainsEncryptedContent {
 				return nil, fmt.Errorf("Kiro cannot translate encrypted tool output")

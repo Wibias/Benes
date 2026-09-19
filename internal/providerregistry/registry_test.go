@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Wibias/Benes/internal/capability"
 	"github.com/Wibias/Benes/internal/credentials"
 	"github.com/Wibias/Benes/internal/providers/antigravity"
 	"github.com/Wibias/Benes/internal/providers/google"
@@ -299,3 +300,24 @@ func TestAntigravityAccountsBindProjectNotProviderID(t *testing.T) {
 		t.Fatalf("explicit=%#v", explicit)
 	}
 }
+
+func TestCapabilityPolicyPreservesStructuredOutputEvidence(t *testing.T) {
+	providerDefault := false
+	policy := capabilityPolicy(Spec{
+		ID:       "google",
+		Protocol: ProtocolGoogle,
+		Capability: Capability{
+			SupportsStructuredOutput: &providerDefault,
+			ModelSupportsStructuredOutput: map[string]bool{
+				"gemini-3.7-flash": true,
+			},
+		},
+	}, "api-key")
+	if supported, known := capability.StructuredOutputSupport(policy, "gemini-3.7-flash"); !known || !supported {
+		t.Fatalf("exact support=%v known=%v", supported, known)
+	}
+	if supported, known := capability.StructuredOutputSupport(policy, "unknown-model"); !known || supported {
+		t.Fatalf("provider default support=%v known=%v", supported, known)
+	}
+}
+

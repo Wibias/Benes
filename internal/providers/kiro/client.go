@@ -279,9 +279,16 @@ func (s *stream) consume() (protocol.Event, bool, error) {
 		var payload struct {
 			Content         string `json:"content"`
 			RedactedContent string `json:"redactedContent"`
+			Signature       string `json:"signature"`
 		}
 		if json.Unmarshal(msg.Payload, &payload) != nil {
 			break
+		}
+		if payload.RedactedContent != "" && payload.Signature != "" {
+			return protocol.Event{}, true, fmt.Errorf("Kiro reasoningContentEvent contains conflicting opaque members")
+		}
+		if payload.Signature != "" {
+			return protocol.Event{Type: protocol.EventKiroRedactedReasoning, Signature: payload.Signature}, true, nil
 		}
 		if payload.RedactedContent != "" {
 			return protocol.Event{Type: protocol.EventKiroRedactedReasoning, Data: payload.RedactedContent}, true, nil
@@ -427,8 +434,8 @@ func buildGeneratePayload(history []HistoryEntry, profileARN, model string) map[
 				}
 				arm["toolUses"] = uses
 			}
-			if entry.Redacted != "" {
-				arm["reasoningContent"] = map[string]any{"redactedContent": entry.Redacted}
+			if entry.Reasoning.Value != "" {
+				arm["reasoningContent"] = map[string]any{string(entry.Reasoning.Member): entry.Reasoning.Value}
 			}
 			item["assistantResponseMessage"] = arm
 		}
