@@ -60,8 +60,6 @@ func (item Item) DecodeReasoning() (ReasoningItem, bool, error) {
 			if envelope.Text != "" {
 				out.EffectiveThinkingText = envelope.Text
 			}
-		} else if strings.HasPrefix(encrypted, benesreasoning.Prefix) {
-			return ReasoningItem{}, true, fmt.Errorf("invalid Benes reasoning envelope")
 		}
 	}
 	if out.EffectiveThinkingText == "" {
