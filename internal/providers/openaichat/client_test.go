@@ -676,3 +676,34 @@ func TestChatClientDoesNotRetry503WhenPolicyDisabled(t *testing.T) {
 		t.Fatalf("hits=%d", hits)
 	}
 }
+
+func TestChatClientConfiguredUserAgentOverridesCallerFallback(t *testing.T) {
+	trip := &captureRoundTrip{}
+	client, err := New(Config{
+		Endpoint:   "https://compat.example/v1/chat/completions",
+		APIKey:     "key",
+		HTTPClient: &http.Client{Transport: trip},
+		UserAgent:  "provider-agent/1",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	stream, err := client.Open(context.Background(), providers.DispatchRequest{
+		Parsed: protocol.ParsedRequest{
+			UpstreamModelID: "model",
+			Context: protocol.Context{Messages: []protocol.Message{{
+				Role: protocol.RoleUser,
+				Content: []protocol.ContentPart{{Type: protocol.ContentText, Text: "hi"}},
+			}}},
+		},
+		ForwardHeaders: providers.NewForwardHeaders(map[string]string{"user-agent": "caller-agent/2"}),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = stream.Close()
+	if got := trip.requests[0].Header.Get("User-Agent"); got != "provider-agent/1" {
+		t.Fatalf("user-agent=%q", got)
+	}
+}
+

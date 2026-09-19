@@ -54,6 +54,7 @@ var forwardHeaderNames = [...]string{
 	"session_id",
 	"session-id",
 	"thread-id",
+	"user-agent",
 	"x-client-request-id",
 	"x-codex-beta-features",
 	"x-codex-installation-id",
@@ -93,6 +94,9 @@ func newForwardHeaders(values map[string]string, blockedAuthorization bool) Forw
 		normalized := strings.ToLower(name)
 		if normalized == "authorization" && blockedAuthorization {
 			continue
+		}
+		if normalized == "user-agent" {
+			value = NormalizeUserAgent(value)
 		}
 		if _, allowed := forwardHeaderSet[normalized]; !allowed || value == "" {
 			continue

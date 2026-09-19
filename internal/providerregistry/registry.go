@@ -104,6 +104,7 @@ type Spec struct {
 	GatewayRouting          gatewayrouting.Settings
 	Transient5xx            transport.Transient5xxPolicy
 	OpenCodeSessionOverride string
+	UserAgent               string
 	CatalogModels           []string
 	Project                 string
 	Accounts                []antigravity.Account
@@ -165,6 +166,7 @@ func Build(ctx context.Context, specs []Spec, options Options) (map[string]provi
 					TransportOptions:    transportOptions,
 					CredentialAuthority: forwardAuthorityForSpec(spec, options),
 					Continuation:        options.Continuation,
+					UserAgent:           spec.UserAgent,
 				})
 			} else {
 				provider, err = openairesponses.NewHardened(ctx, openairesponses.Config{
@@ -179,6 +181,7 @@ func Build(ctx context.Context, specs []Spec, options Options) (map[string]provi
 					CredentialRef:     spec.CredentialRef,
 					Capability:        capabilityPolicy(spec, specAuthClass(spec)),
 					Transient5xx:      spec.Transient5xx,
+					UserAgent:         spec.UserAgent,
 				})
 			}
 		case ProtocolOpenAIChat:
@@ -200,6 +203,7 @@ func Build(ctx context.Context, specs []Spec, options Options) (map[string]provi
 				ProviderID:     spec.ID,
 				GatewayRouting: spec.GatewayRouting.Clone(),
 				Transient5xx:   spec.Transient5xx,
+				UserAgent:      spec.UserAgent,
 			})
 			if err == nil && usesOpenCodeGoMixedWire(spec) {
 				provider, err = wrapOpenCodeGoMixedWire(ctx, spec, provider, transportOptions, options)
@@ -302,6 +306,14 @@ func validateSpecs(specs []Spec) error {
 		}
 		if spec.Protocol == ProtocolAnthropicMessages && len(spec.APIKeyPool) > 0 {
 			return fmt.Errorf("provider %q: Anthropic Messages does not support an API key pool", spec.ID)
+		}
+		if spec.UserAgent != "" {
+			if spec.Protocol != ProtocolOpenAIChat && spec.Protocol != ProtocolOpenAIResponses {
+				return fmt.Errorf("provider %q: user agent is only supported for openai-chat or openai-responses", spec.ID)
+			}
+			if providers.NormalizeUserAgent(spec.UserAgent) == "" {
+				return fmt.Errorf("provider %q: invalid user agent", spec.ID)
+			}
 		}
 		if spec.OpenCodeSessionOverride != "" {
 			if !usesOpenCodeGoMixedWire(spec) {

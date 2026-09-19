@@ -299,3 +299,27 @@ func TestAntigravityAccountsBindProjectNotProviderID(t *testing.T) {
 		t.Fatalf("explicit=%#v", explicit)
 	}
 }
+
+func TestBuildOpenAICompatibleConfiguredUserAgent(t *testing.T) {
+	for _, protocol := range []Protocol{ProtocolOpenAIChat, ProtocolOpenAIResponses} {
+		t.Run(string(protocol), func(t *testing.T) {
+			registry, err := Build(context.Background(), []Spec{{
+				ID: "p", Protocol: protocol, Endpoint: "https://example.com/v1",
+				APIKey: "k", UserAgent: "provider-agent/1",
+			}}, Options{TransportOptions: transport.ClientOptions{}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if registry["p"] == nil {
+				t.Fatal("provider missing")
+			}
+		})
+	}
+	if _, err := Build(context.Background(), []Spec{{
+		ID: "google", Protocol: ProtocolGoogle, Endpoint: "https://generativelanguage.googleapis.com",
+		APIKey: "k", UserAgent: "provider-agent/1",
+	}}, Options{TransportOptions: transport.ClientOptions{}}); err == nil {
+		t.Fatal("non OpenAI-compatible provider accepted configured user agent")
+	}
+}
+

@@ -10,6 +10,7 @@ import (
 	"github.com/Wibias/Benes/internal/credentials"
 	"github.com/Wibias/Benes/internal/gatewayrouting"
 	"github.com/Wibias/Benes/internal/providerregistry"
+	"github.com/Wibias/Benes/internal/providers"
 	"github.com/Wibias/Benes/internal/providers/xaicapability"
 	"github.com/Wibias/Benes/internal/transport"
 )
@@ -50,6 +51,7 @@ var projectionKnownFields = map[string]struct{}{
 	"disabled":                           {},
 	"keyOptional":                        {},
 	"headers":                            {},
+	"userAgent":                          {},
 	"modelAdapters":                      {},
 	"upstreamHttpVersion":                {},
 	"responsesPath":                      {},
@@ -300,6 +302,20 @@ func projectProviderSpec(id string, raw json.RawMessage) (providerregistry.Spec,
 		codexAccountMode = providerregistry.CodexAccountModePool
 	}
 
+	userAgent, userAgentPresent, userAgentValid := optionalString(provider, "userAgent")
+	if !userAgentValid {
+		return providerregistry.Spec{}, projectionSkip(id, "invalid_field", "userAgent")
+	}
+	if userAgentPresent {
+		userAgent = strings.TrimSpace(userAgent)
+		if providers.NormalizeUserAgent(userAgent) == "" {
+			return providerregistry.Spec{}, projectionSkip(id, "invalid_field", "userAgent")
+		}
+		if protocol != providerregistry.ProtocolOpenAIChat && protocol != providerregistry.ProtocolOpenAIResponses {
+			return providerregistry.Spec{}, projectionSkip(id, "unsupported_field", "userAgent")
+		}
+	}
+
 	spec := providerregistry.Spec{
 		ID:                      id,
 		Protocol:                protocol,
@@ -311,6 +327,7 @@ func projectProviderSpec(id string, raw json.RawMessage) (providerregistry.Spec,
 		CredentialRef:           credRef,
 		MaxUpstreamBodyBytes:    maxUpstreamBodyBytes,
 		OpenCodeSessionOverride: openCodeSessionOverride,
+		UserAgent:               userAgent,
 		DestinationPolicy: transport.DestinationPolicy{
 			AllowPrivateNetwork: allowPrivate,
 		},

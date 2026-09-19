@@ -32,6 +32,7 @@ type ForwardConfig struct {
 	TransportOptions    transport.ClientOptions
 	CredentialAuthority ForwardCredentialAuthority
 	Continuation        *continuation.Authority
+	UserAgent           string
 }
 
 type ForwardClient struct {
@@ -45,6 +46,7 @@ type ForwardClient struct {
 	sseLimits           sse.Limits
 	credentialAuthority ForwardCredentialAuthority
 	continuation        *continuation.Authority
+	userAgent            string
 }
 
 func NewForward(config ForwardConfig) (*ForwardClient, error) {
@@ -83,6 +85,7 @@ func NewForward(config ForwardConfig) (*ForwardClient, error) {
 		},
 		credentialAuthority: authority,
 		continuation:        config.Continuation,
+		userAgent:            providers.NormalizeUserAgent(config.UserAgent),
 	}, nil
 }
 
@@ -163,6 +166,7 @@ func (c *ForwardClient) openAttempt(
 			req.Header.Set(name, value)
 		}
 	}
+	providers.ApplyUserAgent(req.Header, c.userAgent, dispatch.ForwardHeaders)
 	req.Header.Set("Authorization", credential.Authorization)
 	if credential.ChatGPTAccountID != "" {
 		req.Header.Set("ChatGPT-Account-Id", credential.ChatGPTAccountID)
