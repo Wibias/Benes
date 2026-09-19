@@ -90,3 +90,23 @@ func TestEvaluatePolicyCandidatesSkipsNonForwardWhenEncryptedCodexRequired(t *te
 		t.Fatalf("eligible=%v selected=%v", eligible, selected)
 	}
 }
+
+func TestEvaluatePolicyCandidatesUsesModelStructuredOutputEvidence(t *testing.T) {
+	need := true
+	record := routingProfileRecord{
+		Require: routingProfileRequire{StructuredOutput: &need},
+		Candidates: []routingProfileCandidate{
+			{Provider: "google", Model: "gemini-3.7-flash"},
+			{Provider: "google-antigravity", Model: "gemini-3.7-flash"},
+		},
+	}
+	views := []policyCandidateView{
+		{Provider: "google", Model: "gemini-3.7-flash", Adapter: "google", Structured: catalog.CapabilityTrue},
+		{Provider: "google-antigravity", Model: "gemini-3.7-flash", Adapter: "google", Structured: catalog.CapabilityFalse},
+	}
+	eligible, rows, selected := evaluatePolicyCandidates(record, views, policyRequestEvidence{})
+	if len(eligible) != 1 || eligible[0].Provider != "google" || selected != 0 {
+		t.Fatalf("eligible=%#v selected=%v rows=%#v", eligible, selected, rows)
+	}
+}
+

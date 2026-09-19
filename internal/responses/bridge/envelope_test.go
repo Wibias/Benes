@@ -1,6 +1,9 @@
 package bridge
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/Wibias/Benes/internal/protocol"
@@ -184,3 +187,53 @@ func TestIncompleteFlushesPendingRedactedReasoning(t *testing.T) {
 		t.Fatalf("terminal=%s", frames[len(frames)-1].Name)
 	}
 }
+
+func kiroEnvelopeObject(t *testing.T, item map[string]any) map[string]any {
+	t.Helper()
+	raw, ok := item["encrypted_content"].(string)
+	if !ok || !strings.HasPrefix(raw, benesreasoning.Prefix) {
+		t.Fatalf("missing Kiro envelope: %#v", item)
+	}
+	payload, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(raw, benesreasoning.Prefix))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var object map[string]any
+	if err := json.Unmarshal(payload, &object); err != nil {
+		t.Fatal(err)
+	}
+	return object
+}
+
+func TestKiroSignatureEventPersistsMemberIdentityInEnvelope(t *testing.T) {
+	b := newReplayTestBridge(false)
+	frames := handleAll(t, b,
+		protocol.Event{Type: protocol.EventKiroRedactedReasoning, Signature: "sig-1"},
+		protocol.Event{Type: protocol.EventDone},
+	)
+	items := outputDoneItems(frames)
+	if len(items) != 1 {
+		t.Fatalf("got %d done items, want 1", len(items))
+	}
+	object := kiroEnvelopeObject(t, items[0])
+	if object["krc"] != "sig-1" || object["krk"] != "signature" {
+		t.Fatalf("envelope=%#v", object)
+	}
+}
+
+func TestKiroRedactedEventPersistsExplicitLegacyMember(t *testing.T) {
+	b := newReplayTestBridge(false)
+	frames := handleAll(t, b,
+		protocol.Event{Type: protocol.EventKiroRedactedReasoning, Data: "legacy"},
+		protocol.Event{Type: protocol.EventDone},
+	)
+	items := outputDoneItems(frames)
+	if len(items) != 1 {
+		t.Fatalf("got %d done items, want 1", len(items))
+	}
+	object := kiroEnvelopeObject(t, items[0])
+	if object["krc"] != "legacy" || object["krk"] != "redactedContent" {
+		t.Fatalf("envelope=%#v", object)
+	}
+}
+

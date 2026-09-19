@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Wibias/Benes/internal/protocol"
 	benesreasoning "github.com/Wibias/Benes/internal/responses/reasoning"
 )
 
@@ -16,10 +17,10 @@ type ReasoningItem struct {
 	VisibleText           string
 	EffectiveThinkingText string
 	EncryptedContent      string
-	HasEnvelope              bool
+	HasEnvelope           bool
 	Signature             string
 	Redacted              []string
-	KiroRedacted          string
+	KiroReasoning         protocol.KiroReasoningState
 }
 
 func (item Item) DecodeReasoning() (ReasoningItem, bool, error) {
@@ -53,7 +54,9 @@ func (item Item) DecodeReasoning() (ReasoningItem, bool, error) {
 			out.HasEnvelope = true
 			out.Signature = envelope.Signature
 			out.Redacted = append([]string(nil), envelope.Redacted...)
-			out.KiroRedacted = envelope.KiroRedacted
+			if envelope.KiroRedacted != "" {
+				out.KiroReasoning = protocol.KiroReasoningState{Member: envelope.KiroKind, Value: envelope.KiroRedacted}
+			}
 			if envelope.Text != "" {
 				out.EffectiveThinkingText = envelope.Text
 			}
