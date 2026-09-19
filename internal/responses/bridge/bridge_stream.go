@@ -240,7 +240,7 @@ func (b *Bridge) handleDone(event protocol.Event) ([]Frame, error) {
 	if b.compactionRequest {
 		frames = append(frames, b.closeWebSearch("completed", nil, nil)...)
 		frames = append(frames, b.flushHiddenReasoningEnvelope()...)
-		frames = append(frames, b.flushKiroRedactedReasoning()...)
+		frames = append(frames, b.flushKiroReasoning()...)
 		frames = append(frames, b.emitCompactionItem()...)
 		response := b.snapshot("completed", responseUsage(b.model, b.requestedTier, event.Usage), event.EndTurn)
 		frames = append(frames, b.emit("response.completed", map[string]any{"response": response}))
@@ -257,7 +257,7 @@ func (b *Bridge) handleDone(event protocol.Event) ([]Frame, error) {
 	}
 	frames = append(frames, b.closeWebSearch("completed", nil, nil)...)
 	frames = append(frames, b.flushHiddenReasoningEnvelope()...)
-	frames = append(frames, b.flushKiroRedactedReasoning()...)
+	frames = append(frames, b.flushKiroReasoning()...)
 	response := b.snapshot("completed", responseUsage(b.model, b.requestedTier, event.Usage), event.EndTurn)
 
 	frames = append(frames, b.emit("response.completed", map[string]any{"response": response}))

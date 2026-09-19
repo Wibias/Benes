@@ -81,3 +81,69 @@ func requireProjectedModel(t *testing.T, models []catalog.Model, id string) cata
 	t.Fatalf("model %q not found in %#v", id, models)
 	return catalog.Model{}
 }
+
+func TestProjectCatalogModelsUsesCuratedOpenCodeGoContextEvidence(t *testing.T) {
+	provider := json.RawMessage(`{
+		"adapter":"openai-chat",
+		"baseUrl":"https://opencode.ai/zen/go/v1",
+		"models":["qwen3.8-max","unknown-model"]
+	}`)
+	disk := config.DiskConfig{
+		Providers: map[string]json.RawMessage{"opencode-go": provider},
+		Raw:       json.RawMessage(`{"providers":{"opencode-go":` + string(provider) + `}}`),
+	}
+	models := projectCatalogModels(disk, []providerregistry.Spec{{
+		ID:       "opencode-go",
+		Protocol: providerregistry.ProtocolOpenAIChat,
+		Endpoint: "https://opencode.ai/zen/go/v1",
+	}})
+
+	qwen := requireProjectedModel(t, models, "opencode-go/qwen3.8-max")
+	if qwen.Context.Tokens != 1_000_000 || string(qwen.Context.Source) != "curated_metadata" {
+		t.Fatalf("qwen context=%#v", qwen.Context)
+	}
+	requireContextEvidence(t, qwen.Context, "models.dev", "6303a062a3782391f3147e9db1100ee93139abbb", "models/alibaba/qwen3.8-max.toml")
+
+	unknown := requireProjectedModel(t, models, "opencode-go/unknown-model")
+	if unknown.Context.Tokens != catalog.ConservativeContextWindow || unknown.Context.Source != catalog.ContextConservativeDefault {
+		t.Fatalf("unknown context=%#v", unknown.Context)
+	}
+	requireNoContextEvidence(t, unknown.Context)
+}
+
+func requireContextEvidence(t *testing.T, ctx catalog.ContextWindow, source, revision, path string) {
+	t.Helper()
+	raw, err := json.Marshal(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body struct {
+		Evidence *struct {
+			Source   string `json:"source"`
+			Revision string `json:"revision"`
+			Path     string `json:"path"`
+		} `json:"evidence"`
+	}
+	if err := json.Unmarshal(raw, &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Evidence == nil || body.Evidence.Source != source || body.Evidence.Revision != revision || body.Evidence.Path != path {
+		t.Fatalf("context evidence=%s", raw)
+	}
+}
+
+func requireNoContextEvidence(t *testing.T, ctx catalog.ContextWindow) {
+	t.Helper()
+	raw, err := json.Marshal(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(raw, &body); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := body["evidence"]; ok {
+		t.Fatalf("unexpected context evidence=%s", raw)
+	}
+}
+

@@ -124,7 +124,7 @@ func validateCanonicalRequest(req protocol.ParsedRequest, catalog *tools.Catalog
 		if message.Role == protocol.RoleToolResult && strings.TrimSpace(message.ToolCallID) == "" {
 			return fmt.Errorf("%w: messages[%d] tool result is missing call_id", ErrUnsupportedRequestShape, mi)
 		}
-		if message.KiroRedactedReasoning != "" || message.ContainsEncryptedContent {
+		if message.KiroReasoning.Value != "" || message.ContainsEncryptedContent {
 			return fmt.Errorf("%w: messages[%d] replay state", ErrUnsupportedRequestShape, mi)
 		}
 		for pi, part := range message.Content {

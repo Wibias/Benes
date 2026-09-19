@@ -108,6 +108,16 @@ func writeResponsesOpenError(
 }
 
 func canonicalResponsesOpenError(err error) *providercontract.OpenError {
+	if structuredOutputCapabilityRefusal(err) {
+		retryable := false
+		return &providercontract.OpenError{
+			StatusCode: http.StatusBadRequest,
+			ErrorType:  "invalid_request_error",
+			Code:       unsupportedStructuredOutputCode,
+			Message:    unsupportedStructuredOutputMessage,
+			Retryable:  &retryable,
+		}
+	}
 	var openErr *providercontract.OpenError
 	if errors.As(err, &openErr) && openErr != nil && openErr.Code == "context_length_exceeded" {
 		return openErr

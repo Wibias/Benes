@@ -70,6 +70,8 @@ var projectionKnownFields = map[string]struct{}{
 	"supportsServiceTier":                {},
 	"modelSupportsServiceTier":           {},
 	"chatServiceTier":                    {},
+	"supportsStructuredOutput":           {},
+	"modelSupportsStructuredOutput":      {},
 	"noStructuredOutputModels":           {},
 	"hostedWebSearch":                    {},
 	"webSearchModels":                    {},
@@ -411,6 +413,20 @@ func projectProviderSpec(id string, raw json.RawMessage) (providerregistry.Spec,
 			return providerregistry.Spec{}, projectionSkip(id, "invalid_field", "modelSupportsServiceTier")
 		}
 		spec.Capability.ModelSupportsServiceTier = values
+	}
+	if raw, exists := provider["supportsStructuredOutput"]; exists {
+		var value bool
+		if json.Unmarshal(raw, &value) != nil {
+			return providerregistry.Spec{}, projectionSkip(id, "invalid_field", "supportsStructuredOutput")
+		}
+		spec.Capability.SupportsStructuredOutput = &value
+	}
+	if raw, exists := provider["modelSupportsStructuredOutput"]; exists {
+		var values map[string]bool
+		if json.Unmarshal(raw, &values) != nil || values == nil {
+			return providerregistry.Spec{}, projectionSkip(id, "invalid_field", "modelSupportsStructuredOutput")
+		}
+		spec.Capability.ModelSupportsStructuredOutput = values
 	}
 	if names, valid := optionalStringList(provider, "noStructuredOutputModels"); !valid {
 		return providerregistry.Spec{}, projectionSkip(id, "invalid_field", "noStructuredOutputModels")
