@@ -282,7 +282,8 @@ func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, e
 		if c.image {
 			return nil, ImageTransportFailure(true)
 		}
-		if kind != FailureGeoblock && allowAccountFailover && accountHops < maxPreStreamFailover && c.hasSelectableAccount() && c.pool.AllowPreStreamFailover() {
+		accountScopedFailure := response.StatusCode == http.StatusTooManyRequests || kind == FailurePermission
+		if accountScopedFailure && kind != FailureGeoblock && allowAccountFailover && accountHops < maxPreStreamFailover && c.hasSelectableAccount() && c.pool.AllowPreStreamFailover() {
 			return c.open(ctx, dispatch, endpoint, accountHops+1, peerFailed, refreshedAccountID, nil, allowAccountFailover)
 		}
 		return nil, fmt.Errorf("Cloud Code Assist account %s is %s", account.ID, kind)
