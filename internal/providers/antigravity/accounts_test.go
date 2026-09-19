@@ -47,6 +47,12 @@ func TestPoolCapsPreStreamFailoverAndClassifiesFailures(t *testing.T) {
 	if ClassifyStatus(429, "rate", false) != FailureRateLimit {
 		t.Fatal("rate")
 	}
+	if ClassifyStatus(403, `{"error":{"status":"VALIDATION_REQUIRED"}}`, false) != FailurePermission {
+		t.Fatal("account permission")
+	}
+	if ClassifyStatus(403, `{"error":{"status":"PERMISSION_DENIED","message":"project forbidden"}}`, false) == FailurePermission {
+		t.Fatal("generic forbidden must not be account-scoped")
+	}
 }
 
 func TestSelectAllowsMissingProjectForLaterDiscovery(t *testing.T) {
