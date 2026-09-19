@@ -2,6 +2,7 @@ package google
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -99,7 +100,44 @@ func CompileRequest(parsed protocol.ParsedRequest) (map[string]any, error) {
 			body["toolConfig"] = cfg
 		}
 	}
+	if parsed.StructuredOutput || parsed.Options.TextFormat != nil {
+		generationConfig, err := structuredGenerationConfig(parsed.Options.TextFormat)
+		if err != nil {
+			return nil, err
+		}
+		body["generationConfig"] = generationConfig
+	}
 	return body, nil
+}
+
+func structuredGenerationConfig(format *protocol.TextFormat) (map[string]any, error) {
+	if format == nil {
+		return nil, fmt.Errorf("Google structured output requires an explicit format")
+	}
+	out := map[string]any{"responseMimeType": "application/json"}
+	switch strings.TrimSpace(format.Type) {
+	case "json_object":
+		return out, nil
+	case "json_schema":
+		if len(format.Schema) == 0 {
+			return nil, fmt.Errorf("Google JSON schema structured output requires a schema")
+		}
+		raw, err := json.Marshal(format.Schema)
+		if err != nil {
+			return nil, fmt.Errorf("encode Google response JSON schema: %w", err)
+		}
+		var schema map[string]any
+		if err := json.Unmarshal(raw, &schema); err != nil || schema == nil {
+			if err == nil {
+				err = fmt.Errorf("schema must be a JSON object")
+			}
+			return nil, fmt.Errorf("clone Google response JSON schema: %w", err)
+		}
+		out["responseJsonSchema"] = schema
+		return out, nil
+	default:
+		return nil, fmt.Errorf("Google structured output format %q is unsupported", format.Type)
+	}
 }
 
 func repairedToolTurns(calls []pendingCall, results []protocol.Message) []map[string]any {

@@ -253,3 +253,59 @@ func TestCompileRequestRepairsParallelToolResultsInCallOrder(t *testing.T) {
 		t.Fatalf("missing=%q", missing)
 	}
 }
+
+func TestCompileRequestProjectsJSONSchemaStructuredOutput(t *testing.T) {
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"answer": map[string]any{"type": "string"},
+		},
+		"required": []string{"answer"},
+	}
+	body, err := CompileRequest(protocol.ParsedRequest{
+		Context: protocol.Context{Messages: []protocol.Message{{
+			Role: protocol.RoleUser,
+			Content: []protocol.ContentPart{{Type: protocol.ContentText, Text: "answer"}},
+		}}},
+		Options: protocol.RequestOptions{TextFormat: &protocol.TextFormat{
+			Type: "json_schema", Name: "answer", Schema: schema,
+		}},
+		StructuredOutput: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gc, ok := body["generationConfig"].(map[string]any)
+	if !ok {
+		t.Fatalf("generationConfig=%#v", body["generationConfig"])
+	}
+	if gc["responseMimeType"] != "application/json" {
+		t.Fatalf("generationConfig=%#v", gc)
+	}
+	got, ok := gc["responseJsonSchema"].(map[string]any)
+	if !ok || got["type"] != "object" {
+		t.Fatalf("responseJsonSchema=%#v", gc["responseJsonSchema"])
+	}
+}
+
+func TestCompileRequestProjectsJSONObjectWithoutInventingSchema(t *testing.T) {
+	body, err := CompileRequest(protocol.ParsedRequest{
+		Context: protocol.Context{Messages: []protocol.Message{{
+			Role: protocol.RoleUser,
+			Content: []protocol.ContentPart{{Type: protocol.ContentText, Text: "answer"}},
+		}}},
+		Options:          protocol.RequestOptions{TextFormat: &protocol.TextFormat{Type: "json_object"}},
+		StructuredOutput: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gc, ok := body["generationConfig"].(map[string]any)
+	if !ok || gc["responseMimeType"] != "application/json" {
+		t.Fatalf("generationConfig=%#v", body["generationConfig"])
+	}
+	if _, ok := gc["responseJsonSchema"]; ok {
+		t.Fatalf("json_object invented schema: %#v", gc)
+	}
+}
+
