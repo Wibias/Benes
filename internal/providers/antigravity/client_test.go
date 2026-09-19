@@ -103,6 +103,72 @@ func TestClientRotatesAccountOnBoundedPreStream429(t *testing.T) {
 	}
 }
 
+func TestClientRotatesAccountOnAccountScoped403(t *testing.T) {
+	var seen []string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		seen = append(seen, r.Header.Get("Authorization")+" "+string(raw))
+		if strings.Contains(string(raw), `"project":"pa"`) {
+			http.Error(w, `{"error":{"status":"PERMISSION_DENIED","message":"account requires verification"}}`, http.StatusForbidden)
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, ccaOK)
+	}))
+	defer upstream.Close()
+
+	client := newTestClient(t, upstream, []Account{
+		{ID: "a", Token: "ta", ProjectID: "pa"},
+		{ID: "b", Token: "tb", ProjectID: "pb"},
+	}, false)
+	stream, err := client.Open(context.Background(), providers.DispatchRequest{
+		Parsed: protocol.ParsedRequest{UpstreamModelID: "gemini-3.7-flash"},
+	})
+	if err != nil {
+		t.Fatalf("account-scoped 403 should use another eligible account before output: %v", err)
+	}
+	defer stream.Close()
+	event, err := stream.Next()
+	if err != nil || event.Text != "ok" {
+		t.Fatalf("event=%#v err=%v", event, err)
+	}
+	if len(seen) != 2 || !strings.Contains(seen[0], "Bearer ta") || !strings.Contains(seen[1], `"project":"pb"`) {
+		t.Fatalf("rotation=%v", seen)
+	}
+}
+
+func TestClientAccountScoped403DoesNotRotateHardPinnedAccount(t *testing.T) {
+	var seen []string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = append(seen, r.Header.Get("Authorization"))
+		if r.Header.Get("Authorization") == "Bearer ta" {
+			http.Error(w, `{"error":{"status":"PERMISSION_DENIED","message":"account requires verification"}}`, http.StatusForbidden)
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, ccaOK)
+	}))
+	defer upstream.Close()
+
+	client := newTestClient(t, upstream, []Account{
+		{ID: "a", Token: "ta", ProjectID: "pa"},
+		{ID: "b", Token: "tb", ProjectID: "pb"},
+	}, false)
+	_, err := client.Open(context.Background(), providers.DispatchRequest{
+		Parsed: protocol.ParsedRequest{UpstreamModelID: "gemini-3.7-flash"},
+		PhysicalPin: &providers.PhysicalPin{
+			CredentialRef: "a",
+			AuthClass:     "oauth",
+		},
+	})
+	if err == nil || !strings.Contains(err.Error(), string(FailurePermission)) {
+		t.Fatalf("err=%v", err)
+	}
+	if len(seen) != 1 || seen[0] != "Bearer ta" {
+		t.Fatalf("hard-pinned request rotated accounts: %v", seen)
+	}
+}
+
 func TestClientDoesNotRotateGeoblocked403(t *testing.T) {
 	var hits int
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

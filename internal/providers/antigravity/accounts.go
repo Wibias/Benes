@@ -14,9 +14,11 @@ var ErrNoUsableAccount = errors.New("no usable Cloud Code Assist account remains
 type FailureKind string
 
 const (
-	FailureRateLimit FailureKind = "rate_limit"
-	FailureQuota     FailureKind = "quota"
-	FailureGeoblock  FailureKind = "geoblock"
+	FailureRateLimit  FailureKind = "rate_limit"
+	FailureQuota      FailureKind = "quota"
+	FailureGeoblock   FailureKind = "geoblock"
+	FailurePermission FailureKind = "permission"
+	FailureAuth       FailureKind = "auth"
 )
 
 const (
@@ -117,7 +119,15 @@ func ClassifyStatus(status int, body string, geoblocked bool) FailureKind {
 	if strings.Contains(lower, "resource_exhausted") && isQuotaBody(lower) {
 		return FailureQuota
 	}
+	if status == http.StatusForbidden && isAccountPermissionBody(lower) {
+		return FailurePermission
+	}
 	return FailureRateLimit
+}
+
+func isAccountPermissionBody(lower string) bool {
+	return strings.Contains(lower, "validation_required") ||
+		(strings.Contains(lower, "permission_denied") && strings.Contains(lower, "verification"))
 }
 
 func isGeoblockBody(lower string) bool {

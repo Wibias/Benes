@@ -121,24 +121,27 @@ func (c *Client) Open(ctx context.Context, dispatch providers.DispatchRequest) (
 		return nil, fmt.Errorf("antigravity client is required")
 	}
 	var pinned *Account
+	allowAccountFailover := true
 	if pin := dispatch.PhysicalPin; pin != nil && strings.TrimSpace(pin.CredentialRef) != "" {
 		acct, err := c.accountByID(strings.TrimSpace(pin.CredentialRef))
 		if err != nil {
 			return nil, err
 		}
 		pinned = &acct
+		allowAccountFailover = false
 	} else if dispatch.PreferCommitted || antigravityDispatchOwnsContinuation(dispatch) {
 		acct, err := c.selectAccount(ctx, nil)
 		if err != nil {
 			return nil, err
 		}
 		pinned = &acct
+		allowAccountFailover = false
 	}
 	endpoint := c.endpoint
 	if pin := dispatch.PhysicalPin; pin != nil && strings.TrimSpace(pin.Destination) != "" {
 		endpoint = strings.TrimSpace(pin.Destination)
 	}
-	return c.open(ctx, dispatch, endpoint, 0, false, false, pinned)
+	return c.open(ctx, dispatch, endpoint, 0, false, "", pinned, allowAccountFailover)
 }
 
 func (c *Client) accountByID(id string) (Account, error) {
@@ -167,7 +170,7 @@ func antigravityDispatchOwnsContinuation(dispatch providers.DispatchRequest) boo
 	return false
 }
 
-func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, endpoint string, accountHops int, peerFailed, authReplayed bool, pinned *Account) (providers.EventStream, error) {
+func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, endpoint string, accountHops int, peerFailed bool, refreshedAccountID string, pinned *Account, allowAccountFailover bool) (providers.EventStream, error) {
 	model := strings.TrimSpace(dispatch.Parsed.UpstreamModelID)
 	if model == "" {
 		model = strings.TrimSpace(dispatch.Parsed.ModelID)
@@ -247,18 +250,26 @@ func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, e
 		if c.image {
 			return nil, ImageTransportFailure(true)
 		}
-		if !authReplayed && c.authority != nil {
+		refreshFailed := false
+		if refreshedAccountID != account.ID && c.authority != nil {
 			fresh, refreshErr := c.authority.RefreshAfterUnauthorized(ctx, account)
 			if refreshErr != nil {
 				if errors.Is(refreshErr, context.Canceled) || errors.Is(refreshErr, context.DeadlineExceeded) {
 					return nil, refreshErr
 				}
-				return nil, fmt.Errorf("Cloud Code Assist authentication recovery failed")
+				refreshFailed = true
+			} else if strings.TrimSpace(fresh.ID) == "" || fresh.ID != account.ID || strings.TrimSpace(fresh.Token) == "" || strings.TrimSpace(fresh.ProjectID) == "" {
+				refreshFailed = true
+			} else {
+				return c.open(ctx, dispatch, endpoint, accountHops, peerFailed, account.ID, &fresh, allowAccountFailover)
 			}
-			if strings.TrimSpace(fresh.ID) == "" || fresh.ID != account.ID || strings.TrimSpace(fresh.Token) == "" || strings.TrimSpace(fresh.ProjectID) == "" {
-				return nil, fmt.Errorf("Cloud Code Assist authentication recovery failed")
-			}
-			return c.open(ctx, dispatch, endpoint, accountHops, peerFailed, true, &fresh)
+		}
+		c.mark(account.ID, FailureAuth, 0)
+		if allowAccountFailover && accountHops < maxPreStreamFailover && c.hasSelectableAccount() && c.pool.AllowPreStreamFailover() {
+			return c.open(ctx, dispatch, endpoint, accountHops+1, peerFailed, refreshedAccountID, nil, allowAccountFailover)
+		}
+		if refreshFailed {
+			return nil, fmt.Errorf("Cloud Code Assist authentication recovery failed")
 		}
 		return nil, fmt.Errorf("Cloud Code Assist upstream returned HTTP %d", response.StatusCode)
 	}
@@ -271,8 +282,9 @@ func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, e
 		if c.image {
 			return nil, ImageTransportFailure(true)
 		}
-		if response.StatusCode == http.StatusTooManyRequests && kind != FailureGeoblock && pinned == nil && accountHops < maxPreStreamFailover && c.pool.AllowPreStreamFailover() {
-			return c.open(ctx, dispatch, endpoint, accountHops+1, peerFailed, authReplayed, nil)
+		accountScopedFailure := response.StatusCode == http.StatusTooManyRequests || kind == FailurePermission
+		if accountScopedFailure && kind != FailureGeoblock && allowAccountFailover && accountHops < maxPreStreamFailover && c.hasSelectableAccount() && c.pool.AllowPreStreamFailover() {
+			return c.open(ctx, dispatch, endpoint, accountHops+1, peerFailed, refreshedAccountID, nil, allowAccountFailover)
 		}
 		return nil, fmt.Errorf("Cloud Code Assist account %s is %s", account.ID, kind)
 	}
@@ -285,7 +297,7 @@ func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, e
 		probe := NewDecoder(bytes.NewReader(nil), 1)
 		if pinned == nil && !peerFailed && class != "" && c.pool.AllowPreStreamFailover() && probe.AllowPeerFailover(class) == nil {
 			if peer, ok := Peer(c.destination); ok {
-				return c.open(ctx, dispatch, peer, accountHops, true, authReplayed, nil)
+				return c.open(ctx, dispatch, peer, accountHops, true, refreshedAccountID, nil, allowAccountFailover)
 			}
 		}
 		return nil, fmt.Errorf("Cloud Code Assist upstream returned HTTP %d", response.StatusCode)
@@ -304,7 +316,7 @@ func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, e
 		if (firstErr == io.EOF || class != "") && decoder.AllowPeerFailover(classOrEmpty(firstErr, class)) == nil {
 			if peer, ok := Peer(c.destination); ok {
 				_ = response.Body.Close()
-				return c.open(ctx, dispatch, peer, accountHops, true, authReplayed, nil)
+				return c.open(ctx, dispatch, peer, accountHops, true, refreshedAccountID, nil, allowAccountFailover)
 			}
 		}
 	}
@@ -346,6 +358,14 @@ func (c *Client) selectAccount(ctx context.Context, pinned *Account) (Account, e
 		return Account{}, fmt.Errorf("Cloud Code Assist account snapshot unavailable")
 	}
 	return fresh, nil
+}
+
+func (c *Client) hasSelectableAccount() bool {
+	if c == nil || c.pool == nil {
+		return false
+	}
+	_, err := c.pool.Select(c.accounts)
+	return err == nil
 }
 
 func commonAccountSourcePath(accounts []Account) string {
@@ -426,6 +446,10 @@ func (c *Client) mark(accountID string, kind FailureKind, retryAfter time.Durati
 		class = credentialpool.FailureQuotaExhausted
 	case FailureGeoblock:
 		class = credentialpool.FailureGeoBlocked
+	case FailurePermission:
+		class = credentialpool.FailurePermissionDenied
+	case FailureAuth:
+		class = credentialpool.FailureAuthUnusable
 	}
 	retryAt := time.Time{}
 	if retryAfter > 0 {
