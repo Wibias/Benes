@@ -307,7 +307,6 @@ func projectProviderSpec(id string, raw json.RawMessage) (providerregistry.Spec,
 		return providerregistry.Spec{}, projectionSkip(id, "invalid_field", "userAgent")
 	}
 	if userAgentPresent {
-		userAgent = strings.TrimSpace(userAgent)
 		if providers.NormalizeUserAgent(userAgent) == "" {
 			return providerregistry.Spec{}, projectionSkip(id, "invalid_field", "userAgent")
 		}
