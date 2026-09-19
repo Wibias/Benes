@@ -105,3 +105,39 @@ func TestDescribeBoundsTimeoutCancelAndQuota(t *testing.T) {
 		t.Fatalf("timeout=%v", err)
 	}
 }
+
+func TestDescribeFailsClosedOnEOFBeforeDone(t *testing.T) {
+	p := &fakeProvider{evs: []protocol.Event{{Type: protocol.EventTextDelta, Text: "partial description"}}}
+	got, err := New(p, 0, 0, 0).Describe(context.Background(), proven(), Request{Images: []string{pngDataURL()}})
+	if err == nil {
+		t.Fatalf("unexpected success: %#v", got)
+	}
+	if got.Description != "" {
+		t.Fatalf("partial description escaped: %#v", got)
+	}
+}
+
+func TestDescribeFailsClosedWhenDescriptionLimitExceeded(t *testing.T) {
+	p := &fakeProvider{evs: []protocol.Event{
+		{Type: protocol.EventTextDelta, Text: "12345"},
+		{Type: protocol.EventDone},
+	}}
+	got, err := New(p, 0, 0, 4).Describe(context.Background(), proven(), Request{Images: []string{pngDataURL()}})
+	if err == nil {
+		t.Fatalf("unexpected clipped success: %#v", got)
+	}
+	if got.Description != "" {
+		t.Fatalf("clipped description escaped: %#v", got)
+	}
+}
+
+func TestDescribeAllowsExactDescriptionLimitAfterDone(t *testing.T) {
+	p := &fakeProvider{evs: []protocol.Event{
+		{Type: protocol.EventTextDelta, Text: "12345"},
+		{Type: protocol.EventDone},
+	}}
+	got, err := New(p, 0, 0, 5).Describe(context.Background(), proven(), Request{Images: []string{pngDataURL()}})
+	if err != nil || got.Description != "12345" {
+		t.Fatalf("err=%v got=%#v", err, got)
+	}
+}
