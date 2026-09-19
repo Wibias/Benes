@@ -537,3 +537,85 @@ func TestDefaultDiscoverProviderModelsUsesCursorUsableModels(t *testing.T) {
 		t.Fatalf("entries=%#v", entries)
 	}
 }
+
+func TestReplaceProviderCatalogUsesCuratedContextOnlyWhenDiscoveryOmitsIt(t *testing.T) {
+	h := &handler{}
+	h.replaceProviderCatalog("opencode-go", []modeldiscovery.CatalogEntry{
+		{ID: "qwen3.8-max"},
+		{ID: "gpt-5.6-luna", ContextWindow: 900_000},
+		{ID: "unknown-model"},
+	})
+
+	qwen := requireCatalogModel(t, h.catalogModels, "opencode-go/qwen3.8-max")
+	if qwen.Context.Tokens != 1_000_000 || string(qwen.Context.Source) != "curated_metadata" {
+		t.Fatalf("qwen context=%#v", qwen.Context)
+	}
+	requireDiscoveryContextEvidence(t, qwen.Context, "models.dev", "6303a062a3782391f3147e9db1100ee93139abbb", "models/alibaba/qwen3.8-max.toml")
+
+	luna := requireCatalogModel(t, h.catalogModels, "opencode-go/gpt-5.6-luna")
+	if luna.Context.Tokens != 900_000 || luna.Context.Source != catalog.ContextDiscovered {
+		t.Fatalf("live context lost to curated metadata: %#v", luna.Context)
+	}
+	requireDiscoveryNoContextEvidence(t, luna.Context)
+
+	unknown := requireCatalogModel(t, h.catalogModels, "opencode-go/unknown-model")
+	if unknown.Context.Tokens != catalog.ConservativeContextWindow || unknown.Context.Source != catalog.ContextConservativeDefault {
+		t.Fatalf("unknown context=%#v", unknown.Context)
+	}
+	requireDiscoveryNoContextEvidence(t, unknown.Context)
+
+	h.replaceProviderCatalog("other", []modeldiscovery.CatalogEntry{{ID: "qwen3.8-max"}})
+	other := requireCatalogModel(t, h.catalogModels, "other/qwen3.8-max")
+	if other.Context.Tokens != 0 || other.Context.Source != "" {
+		t.Fatalf("OpenCode Go fallback crossed provider boundary: %#v", other.Context)
+	}
+	requireDiscoveryNoContextEvidence(t, other.Context)
+}
+
+func requireCatalogModel(t *testing.T, models []catalog.Model, id string) catalog.Model {
+	t.Helper()
+	for _, model := range models {
+		if model.ID == id {
+			return model
+		}
+	}
+	t.Fatalf("model %q missing from %#v", id, models)
+	return catalog.Model{}
+}
+
+func requireDiscoveryContextEvidence(t *testing.T, ctx catalog.ContextWindow, source, revision, path string) {
+	t.Helper()
+	raw, err := json.Marshal(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body struct {
+		Evidence *struct {
+			Source   string `json:"source"`
+			Revision string `json:"revision"`
+			Path     string `json:"path"`
+		} `json:"evidence"`
+	}
+	if err := json.Unmarshal(raw, &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Evidence == nil || body.Evidence.Source != source || body.Evidence.Revision != revision || body.Evidence.Path != path {
+		t.Fatalf("context evidence=%s", raw)
+	}
+}
+
+func requireDiscoveryNoContextEvidence(t *testing.T, ctx catalog.ContextWindow) {
+	t.Helper()
+	raw, err := json.Marshal(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(raw, &body); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := body["evidence"]; ok {
+		t.Fatalf("unexpected context evidence=%s", raw)
+	}
+}
+
