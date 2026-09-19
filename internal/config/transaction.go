@@ -286,7 +286,6 @@ func revisionFor(source DiskConfigSource, raw []byte) Revision {
 	_, _ = hash.Write([]byte(source))
 	_, _ = hash.Write([]byte{0})
 	// This digest is a non-secret optimistic-concurrency revision token, not a password hash.
-	// codeql[go/weak-sensitive-data-hashing]
 	_, _ = hash.Write(raw)
 	return Revision(hex.EncodeToString(hash.Sum(nil)))
 }
