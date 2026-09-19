@@ -1,6 +1,10 @@
 package providers
 
-import "testing"
+import (
+	"net/http"
+	"strings"
+	"testing"
+)
 
 func TestForwardHeadersDefensivelyCopyFilterAndLookupCaseInsensitively(t *testing.T) {
 	source := map[string]string{
@@ -50,7 +54,7 @@ func TestForwardHeadersBlockProxyAdmissionAuthorization(t *testing.T) {
 
 func TestForwardHeaderNamesReturnsCopy(t *testing.T) {
 	names := ForwardHeaderNames()
-	if len(names) != 17 {
+	if len(names) != 18 {
 		t.Fatalf("names=%v", names)
 	}
 	names[0] = "mutated"
@@ -58,3 +62,30 @@ func TestForwardHeaderNamesReturnsCopy(t *testing.T) {
 		t.Fatalf("allowlist mutated: %q", got)
 	}
 }
+
+func TestForwardHeadersUserAgentIsBoundedAndSingleLine(t *testing.T) {
+	valid := NewForwardHeaders(map[string]string{"User-Agent": "codex-cli/9.9 compat"})
+	if got := valid.Get("user-agent"); got != "codex-cli/9.9 compat" {
+		t.Fatalf("valid user-agent=%q", got)
+	}
+	for _, value := range []string{
+		" leading",
+		"trailing ",
+		"line\nbreak",
+		"carriage\rreturn",
+		strings.Repeat("x", MaxUserAgentBytes+1),
+	} {
+		if got := NewForwardHeaders(map[string]string{"User-Agent": value}).Get("user-agent"); got != "" {
+			t.Fatalf("unsafe user-agent %q survived as %q", value, got)
+		}
+	}
+}
+
+func TestApplyUserAgentConfiguredValueWinsCallerFallback(t *testing.T) {
+	header := make(http.Header)
+	ApplyUserAgent(header, "provider-agent/1", NewForwardHeaders(map[string]string{"User-Agent": "caller-agent/2"}))
+	if got := header.Get("User-Agent"); got != "provider-agent/1" {
+		t.Fatalf("user-agent=%q", got)
+	}
+}
+

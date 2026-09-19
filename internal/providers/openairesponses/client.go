@@ -46,6 +46,7 @@ type Config struct {
 	CredentialRef     credentials.Ref
 	Capability        capability.Policy
 	Transient5xx      transport.Transient5xxPolicy
+	UserAgent          string
 }
 
 type Client struct {
@@ -60,6 +61,7 @@ type Client struct {
 	continuation      *continuation.Authority
 	capability        capability.Policy
 	transient5xx      transport.Transient5xxPolicy
+	userAgent          string
 }
 
 func New(config Config) (*Client, error) {
@@ -117,6 +119,7 @@ func New(config Config) (*Client, error) {
 		continuation: config.Continuation,
 		capability:   config.Capability,
 		transient5xx: config.Transient5xx,
+		userAgent:    providers.NormalizeUserAgent(config.UserAgent),
 	}, nil
 }
 
@@ -336,6 +339,7 @@ func (c *Client) Open(ctx context.Context, dispatch providers.DispatchRequest) (
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "text/event-stream")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
+	providers.ApplyUserAgent(req.Header, c.userAgent, dispatch.ForwardHeaders)
 	if xaicapability.IsOAuthProxyEndpoint(c.endpoint) {
 		xaicapability.ApplyCLIHeaders(req.Header)
 	}

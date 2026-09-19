@@ -87,6 +87,7 @@ func wrapOpenCodeGoMixedWire(ctx context.Context, spec Spec, chat providers.Resp
 		CredentialRef:     spec.CredentialRef,
 		Capability:        policy,
 		Transient5xx:      spec.Transient5xx,
+		UserAgent:         spec.UserAgent,
 	})
 	if err != nil {
 		return nil, err

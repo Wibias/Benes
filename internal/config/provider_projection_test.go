@@ -564,3 +564,44 @@ func TestProjectProviderSpecsProjectsStructuredOutputEvidence(t *testing.T) {
 	}
 }
 
+func TestProjectProviderSpecsProjectsBoundedOpenAICompatibleUserAgent(t *testing.T) {
+	projection := ProjectProviderSpecs(DiskConfig{Providers: map[string]json.RawMessage{
+		"compat": providerJSON(t, `{
+			"adapter":"openai-chat",
+			"baseUrl":"https://compat.example/v1",
+			"apiKey":"k",
+			"userAgent":"provider-agent/1"
+		}`),
+	}})
+	if len(projection.Skipped) != 0 || len(projection.Specs) != 1 {
+		t.Fatalf("projection=%#v", projection)
+	}
+	if got := projection.Specs[0].UserAgent; got != "provider-agent/1" {
+		t.Fatalf("user-agent=%q", got)
+	}
+
+	invalid := ProjectProviderSpecs(DiskConfig{Providers: map[string]json.RawMessage{
+		"compat": providerJSON(t, `{
+			"adapter":"openai-chat",
+			"baseUrl":"https://compat.example/v1",
+			"apiKey":"k",
+			"userAgent":"bad\nagent"
+		}`),
+	}})
+	if len(invalid.Skipped) != 1 || invalid.Skipped[0].Field != "userAgent" {
+		t.Fatalf("invalid=%#v", invalid)
+	}
+
+	unsupported := ProjectProviderSpecs(DiskConfig{Providers: map[string]json.RawMessage{
+		"google": providerJSON(t, `{
+			"adapter":"google",
+			"baseUrl":"https://generativelanguage.googleapis.com",
+			"apiKey":"k",
+			"userAgent":"provider-agent/1"
+		}`),
+	}})
+	if len(unsupported.Skipped) != 1 || unsupported.Skipped[0].Code != "unsupported_field" || unsupported.Skipped[0].Field != "userAgent" {
+		t.Fatalf("unsupported=%#v", unsupported)
+	}
+}
+

@@ -412,3 +412,32 @@ func TestOpenStopsTransientRetriesAtTurnPhysicalSendBudget(t *testing.T) {
 	}
 }
 
+func TestResponsesClientConfiguredUserAgentOverridesCallerFallback(t *testing.T) {
+	var gotUA string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotUA = r.Header.Get("User-Agent")
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_ua_override\",\"status\":\"completed\",\"output\":[]}}\n\n")
+	}))
+	t.Cleanup(upstream.Close)
+
+	client, err := New(Config{
+		Endpoint: upstream.URL, APIKey: "key", HTTPClient: upstream.Client(),
+		MaxStreamBytes: 1 << 20, InactivityTimeout: time.Second,
+		UserAgent: "provider-agent/1",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	dispatch := canonicalRequest(t, `{"model":"openai-apikey/gpt-5.6","store":false,"input":"hi"}`, "gpt-5.6")
+	dispatch.ForwardHeaders = providers.NewForwardHeaders(map[string]string{"user-agent": "caller-agent/2"})
+	stream, err := client.Open(context.Background(), dispatch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = stream.Close()
+	if gotUA != "provider-agent/1" {
+		t.Fatalf("user-agent=%q", gotUA)
+	}
+}
+
