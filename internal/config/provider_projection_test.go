@@ -559,7 +559,7 @@ func TestProjectProviderSpecsProjectsBoundedOpenAICompatibleUserAgent(t *testing
 			"adapter":"openai-chat",
 			"baseUrl":"https://compat.example/v1",
 			"apiKey":"k",
-			"userAgent":"bad\\nagent"
+			"userAgent":"bad\nagent"
 		}`),
 	}})
 	if len(invalid.Skipped) != 1 || invalid.Skipped[0].Field != "userAgent" {
