@@ -54,7 +54,7 @@ func TestForwardHeadersBlockProxyAdmissionAuthorization(t *testing.T) {
 
 func TestForwardHeaderNamesReturnsCopy(t *testing.T) {
 	names := ForwardHeaderNames()
-	if len(names) != 17 {
+	if len(names) != 18 {
 		t.Fatalf("names=%v", names)
 	}
 	names[0] = "mutated"
