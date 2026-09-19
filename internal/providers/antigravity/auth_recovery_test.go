@@ -243,6 +243,70 @@ func TestClient401RotatesAfterRefreshedAccountStillUnauthorized(t *testing.T) {
 	}
 }
 
+func TestClient401GivesEachFailedOverAccountOneRefresh(t *testing.T) {
+	var seen []string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		seen = append(seen, auth)
+		switch auth {
+		case "Bearer stale-a", "Bearer fresh-a", "Bearer stale-b":
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+		case "Bearer fresh-b":
+			w.Header().Set("Content-Type", "text/event-stream")
+			_, _ = io.WriteString(w, ccaOK)
+		default:
+			t.Errorf("unexpected authorization: %q", auth)
+		}
+	}))
+	defer upstream.Close()
+
+	authority := &scriptedAccountAuthority{
+		current: map[string]Account{
+			"a": {ID: "a", Token: "stale-a", ProjectID: "project-a-old"},
+			"b": {ID: "b", Token: "stale-b", ProjectID: "project-b-old"},
+		},
+		refresh: func(_ context.Context, stale Account) (Account, error) {
+			switch stale.ID {
+			case "a":
+				return Account{ID: "a", Token: "fresh-a", ProjectID: "project-a-new"}, nil
+			case "b":
+				return Account{ID: "b", Token: "fresh-b", ProjectID: "project-b-new"}, nil
+			default:
+				return Account{}, errors.New("unexpected account")
+			}
+		},
+	}
+	client := newTestClient(t, upstream, []Account{
+		{ID: "a", Token: "stale-a", ProjectID: "project-a-old"},
+		{ID: "b", Token: "stale-b", ProjectID: "project-b-old"},
+	}, false)
+	client.authority = authority
+
+	stream, err := client.Open(context.Background(), providers.DispatchRequest{
+		Parsed: protocol.ParsedRequest{UpstreamModelID: "gemini-3.7-flash"},
+	})
+	if err != nil {
+		t.Fatalf("second account should retain its own one-refresh recovery: %v", err)
+	}
+	defer stream.Close()
+	event, err := stream.Next()
+	if err != nil || event.Text != "ok" {
+		t.Fatalf("event=%#v err=%v", event, err)
+	}
+	if authority.refreshes.Load() != 2 {
+		t.Fatalf("refreshes=%d, want 2", authority.refreshes.Load())
+	}
+	want := []string{"Bearer stale-a", "Bearer fresh-a", "Bearer stale-b", "Bearer fresh-b"}
+	if len(seen) != len(want) {
+		t.Fatalf("authorization sequence=%v", seen)
+	}
+	for i := range want {
+		if seen[i] != want[i] {
+			t.Fatalf("authorization sequence=%v", seen)
+		}
+	}
+}
+
 func TestClient401RejectsRefreshedSnapshotFromDifferentAccount(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
