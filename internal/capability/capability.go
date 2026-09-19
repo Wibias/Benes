@@ -1,6 +1,8 @@
 package capability
 
 import (
+	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -9,15 +11,19 @@ import (
 	"github.com/Wibias/Benes/internal/requestpolicy"
 )
 
+var ErrStructuredOutputUnsupported = errors.New("structured output is unsupported")
+
 type Policy struct {
-	ProviderID               string
-	Protocol                 string
-	Endpoint                 string
-	AuthClass                string
-	SupportsServiceTier      *bool
-	ModelSupportsServiceTier map[string]bool
-	ChatServiceTier          bool
-	NoStructuredOutputModels []string
+	ProviderID                    string
+	Protocol                      string
+	Endpoint                      string
+	AuthClass                     string
+	SupportsServiceTier           *bool
+	ModelSupportsServiceTier      map[string]bool
+	ChatServiceTier               bool
+	SupportsStructuredOutput      *bool
+	ModelSupportsStructuredOutput map[string]bool
+	NoStructuredOutputModels      []string
 }
 
 // Apply resolves the admitted request tier against explicit client intent and then
@@ -28,11 +34,11 @@ func Apply(req *protocol.ParsedRequest, policy Policy, configuredServiceTier str
 		return nil
 	}
 	model := firstNonEmpty(req.UpstreamModelID, req.ModelID)
+	if err := RequireStructuredOutput(req, policy, model); err != nil {
+		return err
+	}
 	req.Options.ServiceTier = requestpolicy.ResolveServiceTier(req.Options.ServiceTier, configuredServiceTier)
 	req.Options.ServiceTier = DecideServiceTier(policy, model, req.Options.ServiceTier)
-	if !AllowStructuredOutput(policy, model) {
-		req.Options.TextFormat = nil
-	}
 	tier, err := xaicapability.ApplyPriority(req.Options.ServiceTier, policy.AuthClass, policy.Endpoint)
 	if err != nil {
 		return err
@@ -51,8 +57,51 @@ func DecideServiceTier(policy Policy, modelID string, requested *string) *string
 	return requested
 }
 
+func StructuredOutputSupport(policy Policy, modelID string) (supported bool, known bool) {
+	if exactListed(policy.NoStructuredOutputModels, modelID) {
+		return false, true
+	}
+	if value, ok := exactModelValue(policy.ModelSupportsStructuredOutput, modelID); ok {
+		return value, true
+	}
+	if policy.SupportsStructuredOutput != nil {
+		return *policy.SupportsStructuredOutput, true
+	}
+	switch strings.ToLower(strings.TrimSpace(policy.Protocol)) {
+	case "openai-responses", "openai-chat":
+		return true, true
+	case "":
+		return true, false
+	default:
+		return false, false
+	}
+}
+
 func AllowStructuredOutput(policy Policy, modelID string) bool {
-	return !exactListed(policy.NoStructuredOutputModels, modelID)
+	supported, known := StructuredOutputSupport(policy, modelID)
+	return supported || !known
+}
+
+func RequireStructuredOutput(req *protocol.ParsedRequest, policy Policy, modelID string) error {
+	if req == nil || (!req.StructuredOutput && req.Options.TextFormat == nil) {
+		return nil
+	}
+	supported, known := StructuredOutputSupport(policy, modelID)
+	if known && supported {
+		return nil
+	}
+	provider := strings.TrimSpace(policy.ProviderID)
+	if provider == "" {
+		provider = strings.TrimSpace(policy.Protocol)
+	}
+	if provider == "" {
+		provider = "provider"
+	}
+	modelID = strings.TrimSpace(modelID)
+	if modelID == "" {
+		return fmt.Errorf("%w for %s", ErrStructuredOutputUnsupported, provider)
+	}
+	return fmt.Errorf("%w for %s model %s", ErrStructuredOutputUnsupported, provider, modelID)
 }
 
 func SupportsServiceTier(policy Policy, modelID string) *bool {

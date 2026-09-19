@@ -62,7 +62,7 @@ type Bridge struct {
 	pendingRedacted     []string
 	hiddenThinkingText  string
 	hiddenRawReasoning  string
-	pendingKiroRedacted string
+	pendingKiroReasoning protocol.KiroReasoningState
 	compactionRequest   bool
 	compactionText      string
 }
@@ -192,7 +192,11 @@ func (b *Bridge) Handle(event protocol.Event) ([]Frame, error) {
 		b.pendingRedacted = append(b.pendingRedacted, event.Data)
 		return nil, nil
 	case protocol.EventKiroRedactedReasoning:
-		b.pendingKiroRedacted = event.Data
+		if event.Signature != "" {
+			b.pendingKiroReasoning = protocol.KiroReasoningState{Member: protocol.KiroReasoningSignature, Value: event.Signature}
+		} else {
+			b.pendingKiroReasoning = protocol.KiroReasoningState{Member: protocol.KiroReasoningRedactedContent, Value: event.Data}
+		}
 		return nil, nil
 	case protocol.EventReasoningRawDelta:
 		return b.handleRawReasoning(event)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/Wibias/Benes/internal/capability"
 	"github.com/Wibias/Benes/internal/catalog"
 	"github.com/Wibias/Benes/internal/compat"
 	"github.com/Wibias/Benes/internal/config"
@@ -17,7 +18,7 @@ func (h *handler) policyCandidateViews(record routingProfileRecord) []policyCand
 			catalogByID[model.ID] = model
 		}
 	}
-	adapters, authModes := h.providerRoutingMeta()
+	adapters, authModes, structured := h.providerRoutingMeta()
 	views := make([]policyCandidateView, 0, len(record.Candidates))
 	for _, candidate := range record.Candidates {
 		view := policyCandidateView{
@@ -25,6 +26,15 @@ func (h *handler) policyCandidateViews(record routingProfileRecord) []policyCand
 			Model:    candidate.Model,
 			Adapter:  adapters[candidate.Provider],
 			AuthMode: authModes[candidate.Provider],
+		}
+		if supportPolicy, ok := structured[candidate.Provider]; ok {
+			if supported, known := capability.StructuredOutputSupport(supportPolicy, candidate.Model); known {
+				if supported {
+					view.Structured = catalog.CapabilityTrue
+				} else {
+					view.Structured = catalog.CapabilityFalse
+				}
+			}
 		}
 		if model, ok := catalogByID[candidate.Provider+"/"+candidate.Model]; ok {
 			view.ContextTokens = model.Context.Tokens
@@ -35,26 +45,37 @@ func (h *handler) policyCandidateViews(record routingProfileRecord) []policyCand
 	return views
 }
 
-func (h *handler) providerRoutingMeta() (adapters map[string]string, authModes map[string]string) {
+func (h *handler) providerRoutingMeta() (adapters map[string]string, authModes map[string]string, structured map[string]capability.Policy) {
 	adapters = map[string]string{}
 	authModes = map[string]string{}
+	structured = map[string]capability.Policy{}
 	if h == nil || strings.TrimSpace(h.configPath) == "" {
-		return adapters, authModes
+		return adapters, authModes, structured
 	}
 	disk, err := config.LoadDiskConfig(h.configPath, 0)
 	if err != nil {
-		return adapters, authModes
+		return adapters, authModes, structured
 	}
 	for id, raw := range disk.Providers {
 		adapters[id] = compat.ProviderAdapter(raw)
 		var body struct {
-			AuthMode string `json:"authMode"`
+			AuthMode                      string          `json:"authMode"`
+			SupportsStructuredOutput      *bool           `json:"supportsStructuredOutput"`
+			ModelSupportsStructuredOutput map[string]bool `json:"modelSupportsStructuredOutput"`
+			NoStructuredOutputModels      []string        `json:"noStructuredOutputModels"`
 		}
 		if json.Unmarshal(raw, &body) == nil {
 			authModes[id] = strings.TrimSpace(body.AuthMode)
+			structured[id] = capability.Policy{
+				ProviderID:                    id,
+				Protocol:                      adapters[id],
+				SupportsStructuredOutput:      body.SupportsStructuredOutput,
+				ModelSupportsStructuredOutput: body.ModelSupportsStructuredOutput,
+				NoStructuredOutputModels:      body.NoStructuredOutputModels,
+			}
 		}
 	}
-	return adapters, authModes
+	return adapters, authModes, structured
 }
 
 type policyRequestEvidence struct {
@@ -74,6 +95,7 @@ type policyCandidateView struct {
 	Model         string
 	ContextTokens int
 	Vision        catalog.CapabilityState
+	Structured    catalog.CapabilityState
 	Adapter       string
 	AuthMode      string
 }
@@ -180,11 +202,17 @@ func filterPolicyCandidates(record routingProfileRecord, views []policyCandidate
 			}
 		}
 		if needStructured {
-			supported, known := adapterSupportsStructured(view.Adapter)
-			if !known {
-				exclusions = appendUnknown(exclusions, unknownMode, "unknown-capability")
-			} else if !supported {
+			switch view.Structured {
+			case catalog.CapabilityTrue:
+			case catalog.CapabilityFalse:
 				exclusions = append(exclusions, map[string]any{"code": "capability-unsatisfied"})
+			default:
+				supported, known := adapterSupportsStructured(view.Adapter)
+				if !known {
+					exclusions = appendUnknown(exclusions, unknownMode, "unknown-capability")
+				} else if !supported {
+					exclusions = append(exclusions, map[string]any{"code": "capability-unsatisfied"})
+				}
 			}
 		}
 		if needLocal && !adapterIsLocal(view.Adapter) {

@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/Wibias/Benes/internal/capability"
 	"github.com/Wibias/Benes/internal/protocol"
 	"github.com/Wibias/Benes/internal/providers"
 	"github.com/Wibias/Benes/internal/resourcebudget"
@@ -32,6 +33,7 @@ type Config struct {
 	DestinationPolicy transport.DestinationPolicy
 	TransportOptions  transport.ClientOptions
 	ADC               ADCEnv
+	Capability        capability.Policy
 }
 
 type Client struct {
@@ -48,6 +50,7 @@ type Client struct {
 	catalogEfforts map[string][]string
 	keys           *KeyPool
 	adc            ADCEnv
+	capability     capability.Policy
 }
 
 func New(ctx context.Context, config Config) (*Client, error) {
@@ -74,6 +77,13 @@ func New(ctx context.Context, config Config) (*Client, error) {
 		}
 	default:
 		return nil, fmt.Errorf("Google kind %q is unsupported", kind)
+	}
+	if strings.TrimSpace(config.Capability.Protocol) == "" {
+		if kind == KindVertex {
+			config.Capability.Protocol = "google-vertex"
+		} else {
+			config.Capability.Protocol = "google"
+		}
 	}
 	if config.HTTPClient == nil {
 		dest := AIStudioAPI
@@ -112,6 +122,7 @@ func New(ctx context.Context, config Config) (*Client, error) {
 		catalogEfforts: config.CatalogEfforts,
 		keys:           NewKeyPool(AIStudioAPI, config.Keys),
 		adc:            config.ADC,
+		capability:     config.Capability,
 	}, nil
 }
 
@@ -121,6 +132,9 @@ func (c *Client) Open(ctx context.Context, dispatch providers.DispatchRequest) (
 	}
 	identity, err := ResolveIdentity(c.kind, firstNonEmpty(dispatch.Parsed.UpstreamModelID, dispatch.Parsed.ModelID), c.rename)
 	if err != nil {
+		return nil, err
+	}
+	if err := capability.RequireStructuredOutput(&dispatch.Parsed, c.capability, identity.PublicID); err != nil {
 		return nil, err
 	}
 	if err := c.resolveAccessToken(ctx); err != nil {
