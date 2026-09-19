@@ -1,6 +1,10 @@
 package providers
 
-import "testing"
+import (
+	"net/http"
+	"strings"
+	"testing"
+)
 
 func TestForwardHeadersDefensivelyCopyFilterAndLookupCaseInsensitively(t *testing.T) {
 	source := map[string]string{
