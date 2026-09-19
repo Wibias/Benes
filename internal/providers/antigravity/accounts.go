@@ -42,7 +42,6 @@ type accountState struct {
 type Pool struct {
 	mu       sync.Mutex
 	cooldown map[string]accountState
-	attempts int
 	now      func() time.Time
 }
 
@@ -84,28 +83,6 @@ func (p *Pool) Mark(accountID string, kind FailureKind, retryAfter time.Duration
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.cooldown[accountID] = accountState{until: p.now().Add(wait), kind: kind}
-}
-
-func (p *Pool) AllowPreStreamFailover() bool {
-	if p == nil {
-		return false
-	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if p.attempts >= maxPreStreamFailover {
-		return false
-	}
-	p.attempts++
-	return true
-}
-
-func (p *Pool) ResetAttempts() {
-	if p == nil {
-		return
-	}
-	p.mu.Lock()
-	p.attempts = 0
-	p.mu.Unlock()
 }
 
 func ClassifyStatus(status int, body string, geoblocked bool) FailureKind {
