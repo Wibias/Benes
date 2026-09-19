@@ -369,3 +369,43 @@ func TestForwardCredentialAuthorityFailuresStayBeforeNetwork(t *testing.T) {
 		})
 	}
 }
+
+func TestForwardUserAgentUsesConfiguredOverrideThenCallerFallback(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		caller     string
+		want       string
+	}{
+		{name: "caller fallback", caller: "caller-agent/2", want: "caller-agent/2"},
+		{name: "configured override", configured: "provider-agent/1", caller: "caller-agent/2", want: "provider-agent/1"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client, err := NewForward(ForwardConfig{
+				Endpoint:  testCanonicalForwardResponsesEndpoint,
+				UserAgent: tc.configured,
+				HTTPClient: forwardSSEClient(t, func(request *http.Request) {
+					if got := request.Header.Get("User-Agent"); got != tc.want {
+						t.Errorf("User-Agent=%q want=%q", got, tc.want)
+					}
+				}),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			dispatch := canonicalRequest(t, `{"model":"openai/gpt-5.6","store":false}`, "gpt-5.6")
+			dispatch.ForwardHeaders = providers.NewForwardHeaders(map[string]string{
+				"authorization": "Bearer caller-oauth",
+				"user-agent":    tc.caller,
+			})
+			stream, err := client.Open(context.Background(), dispatch)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer stream.Close()
+			if _, err := stream.Next(); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
