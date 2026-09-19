@@ -8,6 +8,8 @@ import (
 
 	"github.com/Wibias/Benes/internal/capability"
 	"github.com/Wibias/Benes/internal/credentials"
+	"github.com/Wibias/Benes/internal/protocol"
+	"github.com/Wibias/Benes/internal/providers"
 	"github.com/Wibias/Benes/internal/providers/antigravity"
 	"github.com/Wibias/Benes/internal/providers/google"
 	"github.com/Wibias/Benes/internal/providers/kiro"
@@ -341,6 +343,57 @@ func TestBuildOpenAICompatibleConfiguredUserAgent(t *testing.T) {
 		APIKey: "k", UserAgent: "provider-agent/1",
 	}}, Options{TransportOptions: transport.ClientOptions{}}); err == nil {
 		t.Fatal("non OpenAI-compatible provider accepted configured user agent")
+	}
+}
+
+func TestOpenCodeGoResponsesSiblingKeepsConfiguredUserAgentPrecedence(t *testing.T) {
+	var gotPath string
+	var gotUserAgent string
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotUserAgent = r.Header.Get("User-Agent")
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = fmt.Fprint(w, "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp_ua\",\"status\":\"completed\",\"output\":[]}}\n\n")
+	}))
+	t.Cleanup(upstream.Close)
+
+	registry, err := Build(context.Background(), []Spec{{
+		ID:          "opencode-go",
+		Protocol:    ProtocolOpenAIChat,
+		Endpoint:    upstream.URL + "/v1/chat/completions",
+		APIKey:      "key",
+		UserAgent:   "provider-agent/1",
+		DestinationPolicy: transport.DestinationPolicy{AllowPrivateNetwork: true},
+	}}, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stream, err := registry["opencode-go"].Open(context.Background(), providers.DispatchRequest{
+		Parsed: protocol.ParsedRequest{
+			Source:          protocol.RequestSourceResponses,
+			ModelID:         "opencode-go/gpt-5.6-luna",
+			UpstreamModelID: "gpt-5.6-luna",
+			Raw:             []byte(`{"model":"gpt-5.6-luna","input":"hi"}`),
+			Context: protocol.Context{Messages: []protocol.Message{{
+				Role: protocol.RoleUser,
+				Content: []protocol.ContentPart{{Type: protocol.ContentText, Text: "hi"}},
+			}}},
+		},
+		ForwardHeaders: providers.NewForwardHeaders(map[string]string{"user-agent": "caller-agent/2"}),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer stream.Close()
+	if _, err := stream.Next(); err != nil {
+		t.Fatal(err)
+	}
+	if gotPath != "/v1/responses" {
+		t.Fatalf("path=%q", gotPath)
+	}
+	if gotUserAgent != "provider-agent/1" {
+		t.Fatalf("user-agent=%q want provider-agent/1", gotUserAgent)
 	}
 }
 
