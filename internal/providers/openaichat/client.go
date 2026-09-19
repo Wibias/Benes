@@ -192,7 +192,7 @@ func (c *Client) Open(ctx context.Context, dispatch providers.DispatchRequest) (
 	}
 	req.ContentLength = int64(len(body))
 
-	response, err := transport.DoTransient5xx(ctx, c.httpClient, req, c.transient5xx)
+	response, err := transport.DoTransient5xxForTurn(ctx, c.httpClient, req, c.transient5xx, dispatch.Turn, "openai-chat")
 	if err != nil {
 		return nil, fmt.Errorf("OpenAI Chat request failed: %w", err)
 	}

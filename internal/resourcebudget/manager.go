@@ -11,8 +11,10 @@ var (
 	ErrTurnBudgetExceeded    = errors.New("turn byte budget exceeded")
 	ErrProcessBudgetExceeded = errors.New("process byte budget exceeded")
 	ErrTurnClosed            = errors.New("turn is closed")
-	ErrPostCommitRetry       = errors.New("ordinary retry is forbidden after downstream semantic commit")
-	ErrInvalidReservation    = errors.New("reservation bytes must be non-negative")
+	ErrPostCommitRetry            = errors.New("ordinary retry is forbidden after downstream semantic commit")
+	ErrInvalidReservation         = errors.New("reservation bytes must be non-negative")
+	ErrPhysicalSendBudgetExceeded = errors.New("physical send budget exhausted")
+	ErrPhysicalSendLeaseReleased  = errors.New("physical send reservation was released")
 )
 
 type Class string
@@ -38,10 +40,11 @@ const (
 )
 
 type Limits struct {
-	MaxActiveTurns  int
-	MaxProcessBytes int64
-	MaxTurnBytes    int64
-	ClassBytes      map[Class]int64
+	MaxActiveTurns   int
+	MaxProcessBytes  int64
+	MaxTurnBytes     int64
+	MaxPhysicalSends int
+	ClassBytes       map[Class]int64
 }
 
 type Metrics struct {
@@ -80,9 +83,13 @@ type Turn struct {
 	committed     bool
 	attemptActive bool
 	phase         Phase
-	readers       int
-	totalBytes    int64
-	bytes         map[Class]int64
+	readers                 int
+	totalBytes              int64
+	bytes                   map[Class]int64
+	physicalSendReserved    int
+	physicalSendCommitted   int
+	nextPhysicalSendOrdinal int
+	physicalSendRecords     []PhysicalSend
 }
 
 type Reservation struct {
@@ -106,6 +113,9 @@ func NewManager(limits Limits) *Manager {
 	}
 	if limits.MaxTurnBytes <= 0 {
 		limits.MaxTurnBytes = 64 << 20
+	}
+	if limits.MaxPhysicalSends <= 0 {
+		limits.MaxPhysicalSends = 8
 	}
 	classLimits := make(map[Class]int64, len(limits.ClassBytes))
 	for class, value := range limits.ClassBytes {
