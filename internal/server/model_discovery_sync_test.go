@@ -550,7 +550,7 @@ func TestReplaceProviderCatalogUsesCuratedContextOnlyWhenDiscoveryOmitsIt(t *tes
 	if qwen.Context.Tokens != 1_000_000 || string(qwen.Context.Source) != "curated_metadata" {
 		t.Fatalf("qwen context=%#v", qwen.Context)
 	}
-	requireDiscoveryContextEvidence(t, qwen.Context, "models.dev", "dff014f67f04d7f17b6a7024510c77dd4a5b47e5", "models/alibaba/qwen3.8-max.toml")
+	requireDiscoveryContextEvidence(t, qwen.Context, "models.dev", "6303a062a3782391f3147e9db1100ee93139abbb", "models/alibaba/qwen3.8-max.toml")
 
 	luna := requireCatalogModel(t, h.catalogModels, "opencode-go/gpt-5.6-luna")
 	if luna.Context.Tokens != 900_000 || luna.Context.Source != catalog.ContextDiscovered {
