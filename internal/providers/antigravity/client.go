@@ -265,7 +265,7 @@ func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, e
 			}
 		}
 		c.mark(account.ID, FailureAuth, 0)
-		if allowAccountFailover && accountHops < maxPreStreamFailover && c.hasSelectableAccount() && c.pool.AllowPreStreamFailover() {
+		if allowAccountFailover && accountHops < maxPreStreamFailover && c.hasSelectableAccount() {
 			return c.open(ctx, dispatch, endpoint, accountHops+1, peerFailed, refreshedAccountID, nil, allowAccountFailover)
 		}
 		if refreshFailed {
@@ -283,7 +283,7 @@ func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, e
 			return nil, ImageTransportFailure(true)
 		}
 		accountScopedFailure := response.StatusCode == http.StatusTooManyRequests || kind == FailurePermission
-		if accountScopedFailure && kind != FailureGeoblock && allowAccountFailover && accountHops < maxPreStreamFailover && c.hasSelectableAccount() && c.pool.AllowPreStreamFailover() {
+		if accountScopedFailure && kind != FailureGeoblock && allowAccountFailover && accountHops < maxPreStreamFailover && c.hasSelectableAccount() {
 			return c.open(ctx, dispatch, endpoint, accountHops+1, peerFailed, refreshedAccountID, nil, allowAccountFailover)
 		}
 		return nil, fmt.Errorf("Cloud Code Assist account %s is %s", account.ID, kind)
@@ -295,7 +295,7 @@ func (c *Client) open(ctx context.Context, dispatch providers.DispatchRequest, e
 		}
 		class := failoverClass(response.StatusCode)
 		probe := NewDecoder(bytes.NewReader(nil), 1)
-		if pinned == nil && !peerFailed && class != "" && c.pool.AllowPreStreamFailover() && probe.AllowPeerFailover(class) == nil {
+		if pinned == nil && !peerFailed && class != "" && probe.AllowPeerFailover(class) == nil {
 			if peer, ok := Peer(c.destination); ok {
 				return c.open(ctx, dispatch, peer, accountHops, true, refreshedAccountID, nil, allowAccountFailover)
 			}

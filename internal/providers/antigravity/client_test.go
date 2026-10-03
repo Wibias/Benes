@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/Wibias/Benes/internal/protocol"
 	"github.com/Wibias/Benes/internal/providers"
@@ -166,6 +167,49 @@ func TestClientAccountScoped403DoesNotRotateHardPinnedAccount(t *testing.T) {
 	}
 	if len(seen) != 1 || seen[0] != "Bearer ta" {
 		t.Fatalf("hard-pinned request rotated accounts: %v", seen)
+	}
+}
+
+func TestClientPreStreamFailoverBudgetIsPerRequest(t *testing.T) {
+	now := time.Unix(1_700_000_000, 0)
+	var seen []string
+
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		seen = append(seen, r.Header.Get("Authorization")+" "+string(raw))
+		if strings.Contains(string(raw), `"project":"pa"`) {
+			http.Error(w, "rate limited", http.StatusTooManyRequests)
+			return
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, ccaOK)
+	}))
+	defer upstream.Close()
+
+	client := newTestClient(t, upstream, []Account{
+		{ID: "a", Token: "ta", ProjectID: "pa"},
+		{ID: "b", Token: "tb", ProjectID: "pb"},
+	}, false)
+	client.pool.now = func() time.Time { return now }
+
+	for request := 1; request <= maxPreStreamFailover+1; request++ {
+		stream, err := client.Open(context.Background(), providers.DispatchRequest{
+			Parsed: protocol.ParsedRequest{UpstreamModelID: "gemini-3.7-flash"},
+		})
+		if err != nil {
+			t.Fatalf("request %d lost its own failover budget: %v", request, err)
+		}
+		event, err := stream.Next()
+		_ = stream.Close()
+		if err != nil || event.Text != "ok" {
+			t.Fatalf("request %d event=%#v err=%v", request, event, err)
+		}
+		now = now.Add(defaultCooldown + time.Second)
+	}
+
+	wantAttempts := 2 * (maxPreStreamFailover + 1)
+	if len(seen) != wantAttempts {
+		t.Fatalf("physical attempts=%d, want %d: %v", len(seen), wantAttempts, seen)
 	}
 }
 

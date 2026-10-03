@@ -28,16 +28,7 @@ func TestPoolSkipsCooledAccountsAndBindsProjectToSameSnapshot(t *testing.T) {
 	}
 }
 
-func TestPoolCapsPreStreamFailoverAndClassifiesFailures(t *testing.T) {
-	pool := NewPool()
-	for i := 0; i < maxPreStreamFailover; i++ {
-		if !pool.AllowPreStreamFailover() {
-			t.Fatalf("attempt %d denied", i)
-		}
-	}
-	if pool.AllowPreStreamFailover() {
-		t.Fatal("unbounded carousel")
-	}
+func TestClassifyFailures(t *testing.T) {
 	if ClassifyStatus(403, `{"error":{"status":"FAILED_PRECONDITION"}}`, false) != FailureGeoblock {
 		t.Fatal("geoblock")
 	}
